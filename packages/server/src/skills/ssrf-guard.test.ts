@@ -82,6 +82,9 @@ describe("isBlockedResolvedAddress (reuses the literal-IP ruleset)", () => {
     ["fd12:3456::1", 6], // unique-local
     ["::ffff:127.0.0.1", 6], // IPv4-mapped loopback
     ["::ffff:169.254.169.254", 6], // IPv4-mapped metadata
+    ["::7f00:1", 6], // IPv4-compatible loopback (127.0.0.1 in hex)
+    ["::a9fe:a9fe", 6], // IPv4-compatible metadata (169.254.169.254 in hex)
+    ["::a00:1", 6], // IPv4-compatible private (10.0.0.1 in hex)
   ] as const)("blocks private/loopback/link-local IPv6 %s", (ip, fam) => {
     expect(isBlockedResolvedAddress(ip, fam)).toBe(true);
   });

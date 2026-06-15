@@ -403,6 +403,9 @@ describe("assertSafeHttpUrl (SSRF guard)", () => {
     "http://[fd12:3456::1]/x", // unique-local
     "http://[::ffff:127.0.0.1]/x", // IPv4-mapped loopback
     "http://[::ffff:169.254.169.254]/x", // IPv4-mapped metadata
+    "http://[::169.254.169.254]/x", // IPv4-compatible metadata (canonicalizes to ::a9fe:a9fe)
+    "http://[::127.0.0.1]/x", // IPv4-compatible loopback (canonicalizes to ::7f00:1)
+    "http://[::10.0.0.1]/x", // IPv4-compatible private (canonicalizes to ::a00:1)
   ])("rejects private/loopback/link-local IPv6 %s", (u) => {
     expectInputInvalid(() => assertSafeHttpUrl(u), /blocked|loopback|private/);
   });
@@ -438,6 +441,19 @@ describe("assertSafeHttpUrl (SSRF guard)", () => {
     expect(isBlockedIpv4("8.8.8.8")).toBe(false);
     expect(isBlockedIpv6("::1")).toBe(true);
     expect(isBlockedIpv6("2606:4700:4700::1111")).toBe(false);
+  });
+
+  it("blocks IPv4-compatible IPv6 (::a.b.c.d) in canonicalized hex form", () => {
+    // The WHATWG URL parser rewrites ::169.254.169.254 -> ::a9fe:a9fe etc., so
+    // the classifier must decode the trailing hextets and judge by the IPv4.
+    expect(isBlockedIpv6("::a9fe:a9fe")).toBe(true); // 169.254.169.254 metadata
+    expect(isBlockedIpv6("::7f00:1")).toBe(true); // 127.0.0.1 loopback
+    expect(isBlockedIpv6("::a00:1")).toBe(true); // 10.0.0.1 private
+    expect(isBlockedIpv6("::ac10:1")).toBe(true); // 172.16.0.1 private
+    expect(isBlockedIpv6("::c0a8:1")).toBe(true); // 192.168.0.1 private
+    // A public IPv4 embedded in a compatible/mapped address stays allowed.
+    expect(isBlockedIpv6("::ffff:808:808")).toBe(false); // 8.8.8.8 (mapped)
+    expect(isBlockedIpv6("::808:808")).toBe(false); // 8.8.8.8 (compatible)
   });
 });
 

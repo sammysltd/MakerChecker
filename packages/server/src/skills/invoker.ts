@@ -787,10 +787,12 @@ export function isBlockedIpv6(ip: string): boolean {
   const dotted = addr.match(/(?:::ffff:|::)(\d+\.\d+\.\d+\.\d+)$/);
   if (dotted?.[1]) return isBlockedIpv4(dotted[1]);
 
-  // IPv4-mapped written in hex form. The WHATWG URL parser canonicalizes
-  // ::ffff:127.0.0.1 -> ::ffff:7f00:1, so decode the trailing two hextets
-  // back into an IPv4 address to prevent bypass via the v6 encoding.
-  const hexMapped = addr.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+  // IPv4-mapped (::ffff:...) and IPv4-compatible (::...) addresses written in
+  // hex form. The WHATWG URL parser canonicalizes the dotted tail to hex, so
+  // ::ffff:127.0.0.1 -> ::ffff:7f00:1 and ::127.0.0.1 -> ::7f00:1. Decode the
+  // trailing two hextets back into an IPv4 address and classify by it, so a
+  // private/loopback/metadata target cannot slip through either v6 encoding.
+  const hexMapped = addr.match(/^::(?:ffff:)?([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
   if (hexMapped?.[1] && hexMapped[2]) {
     const hi = Number.parseInt(hexMapped[1], 16);
     const lo = Number.parseInt(hexMapped[2], 16);
