@@ -1,10 +1,12 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { generateKeyPairSync } from "node:crypto";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { SCHEMA_VERSION } from "@makerchecker/shared";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
+import { main } from "../cli.js";
 import { createTestDb, withTransaction, type TestDb } from "../../test/test-db.js";
 import {
   exportBundle,
@@ -295,6 +297,114 @@ describe("export bundles", () => {
     } finally {
       await otherDb.drop();
       rmSync(otherKeyDir, { recursive: true, force: true });
+    }
+  });
+
+  it("accepts a bundle matching the pinned key and rejects a key mismatch", async () => {
+    const keys = await ensureInstanceKeys(bundleDb.pool, keyDir);
+    const bundle = await exportBundle(bundleDb.pool, keys, { schemaVersion: SCHEMA_VERSION });
+    await expect(
+      verifyBundle(bundle, { expectedPublicKeyPem: keys.publicKeyPem }),
+    ).resolves.toMatchObject({ ok: true });
+    const { publicKey } = generateKeyPairSync("ed25519");
+    const otherPem = publicKey.export({ type: "spki", format: "pem" }).toString();
+    const mismatch = await verifyBundle(bundle, { expectedPublicKeyPem: otherPem });
+    expect(mismatch.ok).toBe(false);
+    if (!mismatch.ok) expect(mismatch.reason).toContain("pinned key");
+  });
+
+  it("ADVERSARIAL: an attacker-signed bundle verifies bare but is caught by key pinning", async () => {
+    // The strongest forgery: the attacker mints their OWN keypair, re-signs the
+    // manifest, and sets publicKeyPem to their own key. Bare verifyBundle proves
+    // only integrity-under-the-embedded-key, so it (honestly) returns ok. Pinning
+    // the real instance key out of band is what catches it.
+    const keys = await ensureInstanceKeys(bundleDb.pool, keyDir);
+    const real = await exportBundle(bundleDb.pool, keys, { schemaVersion: SCHEMA_VERSION });
+    const attacker = generateKeyPairSync("ed25519");
+    const attackerPem = attacker.publicKey.export({ type: "spki", format: "pem" }).toString();
+
+    const forged = JSON.parse(JSON.stringify(real)) as AuditBundle;
+    const { signature: _drop, ...unsigned } = forged.manifest;
+    unsigned.publicKeyPem = attackerPem;
+    forged.manifest = {
+      ...unsigned,
+      signature: signPayload(attacker.privateKey, manifestSigningString(unsigned)),
+    };
+
+    await expect(verifyBundle(forged)).resolves.toMatchObject({ ok: true });
+    const pinned = await verifyBundle(forged, { expectedPublicKeyPem: keys.publicKeyPem });
+    expect(pinned.ok).toBe(false);
+    if (!pinned.ok) expect(pinned.reason).toContain("pinned key");
+  });
+
+  it("ADVERSARIAL: a run bundle with a spliced foreign-run event is rejected", async () => {
+    const runA = "44444444-4444-4444-4444-444444444444";
+    const runB = "55555555-5555-5555-5555-555555555555";
+    await recordIn("run.step.completed", { a: 1 }, runA);
+    await recordIn("run.step.completed", { b: 1 }, runB);
+    const keys = await ensureInstanceKeys(bundleDb.pool, keyDir);
+    const bundleA = await exportBundle(bundleDb.pool, keys, { schemaVersion: SCHEMA_VERSION, runId: runA });
+    const bundleB = await exportBundle(bundleDb.pool, keys, { schemaVersion: SCHEMA_VERSION, runId: runB });
+
+    // Splice a GENUINE run-B event into run-A's bundle and re-sign as the key
+    // holder. Every per-event hash still verifies (the event is real), but it
+    // does not belong to the signed runId.
+    const forged = JSON.parse(JSON.stringify(bundleA)) as AuditBundle;
+    forged.events.push(bundleB.events[0]!);
+    const { signature: _drop, ...unsigned } = forged.manifest;
+    unsigned.count = forged.events.length;
+    unsigned.lastSeq = forged.events[forged.events.length - 1]!.seq;
+    unsigned.headHash = forged.events[forged.events.length - 1]!.hash;
+    unsigned.eventHashesDigest = sha256Hex(forged.events.map((e) => e.hash).join("\n"));
+    forged.manifest = {
+      ...unsigned,
+      signature: signPayload(keys.privateKey, manifestSigningString(unsigned)),
+    };
+
+    const result = await verifyBundle(forged);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toContain("does not belong to run");
+  });
+
+  it("rejects a run bundle whose manifest runId is null", async () => {
+    const runId = "66666666-6666-6666-6666-666666666666";
+    await recordIn("run.step.completed", { x: 1 }, runId);
+    const keys = await ensureInstanceKeys(bundleDb.pool, keyDir);
+    const bundle = await exportBundle(bundleDb.pool, keys, {
+      schemaVersion: SCHEMA_VERSION,
+      runId,
+    });
+    const forged = JSON.parse(JSON.stringify(bundle)) as AuditBundle;
+    const { signature: _drop, ...unsigned } = forged.manifest;
+    unsigned.runId = null;
+    forged.manifest = {
+      ...unsigned,
+      signature: signPayload(keys.privateKey, manifestSigningString(unsigned)),
+    };
+    const result = await verifyBundle(forged);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toContain("missing runId");
+  });
+
+  it("the CLI verify-bundle command passes a real bundle file and fails a tampered one", async () => {
+    const keys = await ensureInstanceKeys(bundleDb.pool, keyDir);
+    const bundle = await exportBundle(bundleDb.pool, keys, { schemaVersion: SCHEMA_VERSION });
+    const file = join(keyDir, "cli-bundle.json");
+    writeFileSync(file, JSON.stringify(bundle));
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const errLog = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      expect(await main(["audit", "verify-bundle", "--in", file])).toBe(0);
+      const tampered = JSON.parse(JSON.stringify(bundle)) as AuditBundle;
+      tampered.events[1]!.payload = { evil: true };
+      writeFileSync(file, JSON.stringify(tampered));
+      expect(await main(["audit", "verify-bundle", "--in", file])).toBe(1);
+      // Missing --in is a usage error (exit 2); a non-existent file is a read error (exit 1).
+      expect(await main(["audit", "verify-bundle"])).toBe(2);
+      expect(await main(["audit", "verify-bundle", "--in", join(keyDir, "nope.json")])).toBe(1);
+    } finally {
+      log.mockRestore();
+      errLog.mockRestore();
     }
   });
 });

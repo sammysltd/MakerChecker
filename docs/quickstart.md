@@ -99,9 +99,14 @@ node dist/cli.js audit verify
 node dist/cli.js audit export --out bundle.json            # full chain
 node dist/cli.js audit export --run <runId> --out run.json # one run
 # wrote 42 events to bundle.json
+
+node dist/cli.js audit verify-bundle --in bundle.json      # offline, no database
+# { "ok": true, "count": 42, "signingKeyFingerprint": "9f2c..." }
+node dist/cli.js audit verify-bundle --in bundle.json --key instance.pub  # pin the expected key
+# exit code 0 if ok, 1 if verification fails
 ```
 
-`audit export` signs the bundle with the instance's Ed25519 key (created on first use under `MAKERCHECKER_DATA_DIR`, default `./data`). Bundles verify offline with no database access; see [the audit spec](audit-spec.md).
+`audit export` signs the bundle with the instance's Ed25519 key (created on first use under `MAKERCHECKER_DATA_DIR`, default `./data`). `audit verify-bundle` checks a bundle file with **no database connection**, so an auditor or regulator can verify a `bundle.json` you hand them on an air-gapped machine. `--key <pubkey.pem>` pins the expected instance public key (obtained out of band) so a bundle re-signed with a different key is rejected. See [the audit spec](audit-spec.md).
 
 Under compose: `docker compose exec server node dist/cli.js audit verify`.
 
