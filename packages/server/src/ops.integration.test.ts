@@ -368,6 +368,16 @@ describe("GET /metrics — Prometheus exposition", () => {
     );
     expect(res.body).toContain("# TYPE makerchecker_runs_total gauge");
     expect(res.body).toContain("# HELP makerchecker_approvals_pending");
+
+    // Proxy decision counters: both series always present (even at zero) so a
+    // denial spike is detectable from a flat baseline.
+    const decisions = await db.pool.query<{ decision: string; n: string }>(
+      "SELECT decision, count(*) AS n FROM proxy_actions GROUP BY decision",
+    );
+    const counts: Record<string, string> = { allowed: "0", denied: "0" };
+    for (const r of decisions.rows) counts[r.decision] = r.n;
+    expect(res.body).toContain(`makerchecker_proxy_decisions_total{decision="allowed"} ${counts.allowed}`);
+    expect(res.body).toContain(`makerchecker_proxy_decisions_total{decision="denied"} ${counts.denied}`);
   });
 
   it("is absent unless MAKERCHECKER_METRICS=1 — exposure is an operator decision", async () => {

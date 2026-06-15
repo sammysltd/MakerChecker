@@ -16,6 +16,19 @@ export async function renderMetrics(pool: Pool): Promise<string> {
     "SELECT count(*) AS n FROM approvals WHERE status = 'pending'",
   );
   const audit = await pool.query<{ n: string }>("SELECT count(*) AS n FROM audit_events");
+  // Proxy-session decisions: the most operationally important signal for a
+  // deny-by-default control plane (a denial spike means misconfigured grants or
+  // an agent attempting ungranted/SoD-violating actions). Emit BOTH series even
+  // at zero so a scrape can alert on the jump from 0.
+  const decisions = await pool.query<{ decision: string; n: string }>(
+    "SELECT decision, count(*) AS n FROM proxy_actions GROUP BY decision",
+  );
+  const decisionCounts: Record<"allowed" | "denied", number> = { allowed: 0, denied: 0 };
+  for (const r of decisions.rows) {
+    if (r.decision === "allowed" || r.decision === "denied") {
+      decisionCounts[r.decision] = Number(r.n);
+    }
+  }
 
   const lines = [
     "# HELP makerchecker_runs_total Flow runs by current status.",
@@ -30,6 +43,10 @@ export async function renderMetrics(pool: Pool): Promise<string> {
     "# HELP makerchecker_webhook_failures_total Webhook deliveries that exhausted every retry attempt since process start.",
     "# TYPE makerchecker_webhook_failures_total counter",
     `makerchecker_webhook_failures_total ${webhookFailureCount()}`,
+    "# HELP makerchecker_proxy_decisions_total Proxy-session skill-call decisions by outcome.",
+    "# TYPE makerchecker_proxy_decisions_total counter",
+    `makerchecker_proxy_decisions_total{decision="allowed"} ${decisionCounts.allowed}`,
+    `makerchecker_proxy_decisions_total{decision="denied"} ${decisionCounts.denied}`,
   ];
   return `${lines.join("\n")}\n`;
 }
