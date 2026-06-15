@@ -162,4 +162,4 @@ On April 17, 2026 the Federal Reserve replaced SR 11-7 with SR 26-2, which expli
 
 Licensing rationale and the commercial/CLA model: [LICENSING.md](LICENSING.md). The audit chain is specified for independent offline verification ([audit spec](docs/audit-spec.md)); security reports are welcome ([SECURITY.md](SECURITY.md)).
 
-Contributing: [CONTRIBUTING.md](CONTRIBUTING.md) · Security: [SECURITY.md](SECURITY.md) · Code of Conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) · Starter issues: [docs/good-first-issues.md](docs/good-first-issues.md)
+Contributing: [CONTRIBUTING.md](CONTRIBUTING.md) · Security: [SECURITY.md](SECURITY.md) · Code of Conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) · Changelog: [CHANGELOG.md](CHANGELOG.md) · Starter issues: [docs/good-first-issues.md](docs/good-first-issues.md)
