@@ -144,7 +144,7 @@ On April 17, 2026 the Federal Reserve replaced SR 11-7 with SR 26-2, which expli
 - flows with approval gates, retries, timeouts, and a crash-recovery watchdog
 - n-of-m named approvals: quorums, named approver lists, requester self-approval forbidden by default (fail closed)
 - enforced role limits & budgets: per-skill invocation caps, fail-closed amount ceilings, run-level invocation and token budgets
-- proxy sessions wrapping LangGraph/CrewAI/Claude Agent SDK agents with grant checks, SoD, and the audit trail, no migration into the flow engine; a typed [LangChain connector](packages/connector-langchain) ([demo](examples/connectors/langchain/README.md)) plus generic [middleware recipes](examples/middleware/README.md)
+- proxy sessions wrapping LangGraph/CrewAI/Claude Agent SDK agents with grant checks, SoD, and the audit trail, no migration into the flow engine; typed connectors for [LangChain](packages/connector-langchain) ([demo](examples/connectors/langchain/README.md)) and the [Claude Agent SDK](packages/connector-claude-agent), plus generic [middleware recipes](examples/middleware/README.md)
 - hash-chained audit log with Ed25519-signed export bundles and a CLI verifier
 - evidence packs: `makerchecker audit report --run <id>` renders a self-contained HTML run report with chain verification; `makerchecker audit access-review` renders the role/grant/SoD review (also JSON at `/api/reports/access-review`)
 - cron triggers scheduled at boot (runs start as `system/cron` from the latest published version)
@@ -157,7 +157,7 @@ On April 17, 2026 the Federal Reserve replaced SR 11-7 with SR 26-2, which expli
 ## License
 
 - `packages/server`, `packages/web`, `packages/shared`: **AGPL-3.0** ([LICENSE](LICENSE))
-- `packages/sdk`, `packages/connector-langchain`, and `examples/`: **Apache-2.0** ([packages/sdk/LICENSE](packages/sdk/LICENSE), [packages/connector-langchain/LICENSE](packages/connector-langchain/LICENSE), [examples/LICENSE](examples/LICENSE)), code you embed in your own systems never carries AGPL obligations
+- `packages/sdk`, `packages/connector-langchain`, `packages/connector-claude-agent`, and `examples/`: **Apache-2.0** ([packages/sdk/LICENSE](packages/sdk/LICENSE), [packages/connector-langchain/LICENSE](packages/connector-langchain/LICENSE), [packages/connector-claude-agent/LICENSE](packages/connector-claude-agent/LICENSE), [examples/LICENSE](examples/LICENSE)), code you embed in your own systems never carries AGPL obligations
 - A **commercial license** (no copyleft obligation) is available for organizations whose policies preclude AGPL-3.0: hello@makerchecker.ai
 
 Licensing rationale and the commercial/CLA model: [LICENSING.md](LICENSING.md). The audit chain is specified for independent offline verification ([audit spec](docs/audit-spec.md)); security reports are welcome ([SECURITY.md](SECURITY.md)).

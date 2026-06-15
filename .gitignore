@@ -15,3 +15,6 @@ docs/positioning/
 
 # Local-only docker override (recording/dev aid)
 docker-compose.override.yml
+
+# Local agent tooling / transient worktrees
+.claude/

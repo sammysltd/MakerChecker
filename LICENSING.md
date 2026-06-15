@@ -8,7 +8,7 @@ license** available for organizations whose policies preclude AGPL-3.0.
 | Component | Package(s) | License |
 | --- | --- | --- |
 | Control plane | `packages/server`, `packages/web`, `packages/shared` | **AGPL-3.0-only** ([LICENSE](LICENSE)) |
-| Integration layer | `packages/sdk`, `packages/connector-langchain`, `examples/` | **Apache-2.0** ([sdk](packages/sdk/LICENSE), [connector](packages/connector-langchain/LICENSE), [examples](examples/LICENSE)) |
+| Integration layer | `packages/sdk`, `packages/connector-langchain`, `packages/connector-claude-agent`, `examples/` | **Apache-2.0** ([sdk](packages/sdk/LICENSE), [langchain](packages/connector-langchain/LICENSE), [claude-agent](packages/connector-claude-agent/LICENSE), [examples](examples/LICENSE)) |
 
 **Why AGPL for the core.** The control plane is the part an auditor relies on:
 the enforcement engine and the tamper-evident audit chain. AGPL-3.0 keeps it
