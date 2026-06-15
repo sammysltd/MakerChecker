@@ -22,7 +22,11 @@ export interface GraphileStartOptions {
  */
 export class GraphileWorkerBackend implements ExecutionBackend {
   private runner: Runner | null = null;
-  private utils: WorkerUtils | null = null;
+  // Memoized as a PROMISE, not the resolved value: concurrent first enqueue()
+  // calls must share one makeWorkerUtils() — a check-then-await-then-assign on a
+  // nullable instance races (each sees null, each creates, only the last is
+  // released in stop() and the rest leak their pg listeners).
+  private utilsPromise: Promise<WorkerUtils> | null = null;
 
   constructor(
     private readonly pool: Pool,
@@ -53,15 +57,24 @@ export class GraphileWorkerBackend implements ExecutionBackend {
   async stop(): Promise<void> {
     await this.runner?.stop();
     this.runner = null;
-    await this.utils?.release();
-    this.utils = null;
+    const utilsPromise = this.utilsPromise;
+    this.utilsPromise = null;
+    if (utilsPromise) {
+      const utils = await utilsPromise;
+      await utils.release();
+    }
   }
 
   async enqueue(task: string, payload: unknown, opts?: EnqueueOptions): Promise<void> {
-    if (!this.utils) {
-      this.utils = await makeWorkerUtils({ pgPool: this.pool });
-    }
-    await this.utils.addJob(task, payload, {
+    // Memoize the creation promise so concurrent first calls share one
+    // WorkerUtils. Drop the memo if it rejects so a later call can retry,
+    // rather than caching a permanently-failed promise.
+    this.utilsPromise ??= makeWorkerUtils({ pgPool: this.pool }).catch((err: unknown) => {
+      this.utilsPromise = null;
+      throw err;
+    });
+    const utils = await this.utilsPromise;
+    await utils.addJob(task, payload, {
       maxAttempts: 1,
       ...(opts?.runAt ? { runAt: opts.runAt } : {}),
       ...(opts?.jobKey ? { jobKey: opts.jobKey, jobKeyMode: "replace" as const } : {}),
