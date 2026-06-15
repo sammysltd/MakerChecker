@@ -1,0 +1,24 @@
+name: Dependabot auto-merge
+
+# Dependabot PRs are gated by the same required CI checks as everything else
+# (branch protection on main). This workflow just turns on auto-merge so a
+# Dependabot PR merges itself once those checks pass, with no human in the loop.
+# Routine major npm updates never reach here (ignored in dependabot.yml); the
+# minor/patch group, github-actions bumps, and security updates auto-merge on
+# green. CI is the safety gate: anything that fails the suite never merges.
+on: pull_request
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable auto-merge
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
