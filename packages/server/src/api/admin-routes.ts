@@ -1,4 +1,4 @@
-import { SKILL_REF_PATTERN } from "@makerchecker/shared";
+import { isApprovalGate, SKILL_REF_PATTERN, type FlowDefinition } from "@makerchecker/shared";
 import { Type, type Static } from "@sinclair/typebox";
 import { Ajv } from "ajv";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
@@ -242,6 +242,36 @@ export async function requireAdmin(req: FastifyRequest, reply: FastifyReply): Pr
   if (authDisabled()) return;
   if (req.authUser?.is_admin === true) return;
   await reply.status(403).send({ error: "admin privileges required" });
+}
+
+/**
+ * Read-path masking of a stored flow definition for non-privileged callers.
+ *
+ * A gate's `approvals.approver_emails` is the list of NAMED human approver
+ * identities — PII that no non-admin needs to read a flow's structure. This
+ * shapes the RESPONSE only: it deep-clones the definition and drops the
+ * `approver_emails` key from every approval gate that carries one, leaving the
+ * gate's title and the rest of its identity config (min_approvals,
+ * forbid_requester) intact. The stored row and every enforcement path keep the
+ * full list — only the bytes returned to a non-admin change.
+ *
+ * We DROP the key rather than emit a placeholder so the response shape exactly
+ * matches an open-pool gate (one that never named approvers): a non-admin
+ * cannot distinguish "no list" from "list withheld", which is the point — the
+ * identities, and even the count of them, stay private.
+ */
+function maskApproverEmails(definition: unknown): unknown {
+  if (typeof definition !== "object" || definition === null) return definition;
+  const def = definition as FlowDefinition;
+  if (!Array.isArray(def.steps)) return definition;
+  return {
+    ...def,
+    steps: def.steps.map((step) => {
+      if (!isApprovalGate(step) || !step.approvals?.approver_emails) return step;
+      const { approver_emails: _omitted, ...approvals } = step.approvals;
+      return { ...step, approvals };
+    }),
+  };
 }
 
 function pgErrorCode(err: unknown): string | undefined {
@@ -954,7 +984,18 @@ export function registerAdminRoutes(app: FastifyInstance, ctx: EngineContext): v
            FROM flow_versions WHERE flow_id = $1 ORDER BY version DESC`,
         [flow.rows[0].id],
       );
-      return { flow: flow.rows[0], versions: versions.rows };
+      // A gate's approver_emails are named human identities (PII). Admins (and
+      // auth-disabled mode) get the full definition; every other caller gets it
+      // with that list stripped from each gate. Read-path shaping only — the
+      // stored definition and all enforcement paths keep the full list.
+      const privileged = authDisabled() || req.authUser?.is_admin === true;
+      const rows = privileged
+        ? versions.rows
+        : versions.rows.map((v: Record<string, unknown>) => ({
+            ...v,
+            definition: maskApproverEmails(v.definition),
+          }));
+      return { flow: flow.rows[0], versions: rows };
     },
   );
 

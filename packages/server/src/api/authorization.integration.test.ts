@@ -583,6 +583,69 @@ describe("object-level read scoping", () => {
     expect(asMallory.recentRuns).toEqual([]); // run instances are not
   });
 
+  it("masks gate approver_emails (named human PII) from a non-admin on GET /flows/:name", async () => {
+    // named-gate's definition carries approver_emails = [alice, bob] (set up in
+    // the top-level beforeAll). Those are named human identities (PII) that no
+    // non-admin needs to read a flow's structure.
+    const emails = ["alice@bank.example", "bob@bank.example"];
+
+    // Non-admin: the gate's structure/title survives but the email list is gone.
+    const asMallory = (
+      await app.inject({ method: "GET", url: "/api/flows/named-gate", headers: users.mallory!.auth })
+    ).json();
+    const maskedGate = (asMallory.versions[0].definition.steps as Array<Record<string, unknown>>).find(
+      (s) => s.key === "gate",
+    )!;
+    expect(maskedGate.title).toBe("Gate of named-gate"); // structure intact
+    expect((maskedGate.approvals as Record<string, unknown>).min_approvals).toBe(1); // config intact
+    expect((maskedGate.approvals as Record<string, unknown>).approver_emails).toBeUndefined();
+    // No approver email leaks anywhere in the response (not even the count).
+    for (const email of emails) expect(JSON.stringify(asMallory)).not.toContain(email);
+
+    // The run's own requester is still a non-admin: same masking applies.
+    const asRequester = (
+      await app.inject({ method: "GET", url: "/api/flows/named-gate", headers: users.requester!.auth })
+    ).json();
+    for (const email of emails) expect(JSON.stringify(asRequester)).not.toContain(email);
+
+    // Admin: full definition, approver_emails present and exact.
+    const asAdmin = (
+      await app.inject({ method: "GET", url: "/api/flows/named-gate", headers: users.admin!.auth })
+    ).json();
+    const adminGate = (asAdmin.versions[0].definition.steps as Array<Record<string, unknown>>).find(
+      (s) => s.key === "gate",
+    )!;
+    expect((adminGate.approvals as Record<string, unknown>).approver_emails).toEqual(emails);
+
+    // Auth-disabled mode is an operator opt-out: the full list is returned.
+    process.env.MAKERCHECKER_AUTH_DISABLED = "1";
+    try {
+      const asOpen = (
+        await app.inject({ method: "GET", url: "/api/flows/named-gate" })
+      ).json();
+      const openGate = (asOpen.versions[0].definition.steps as Array<Record<string, unknown>>).find(
+        (s) => s.key === "gate",
+      )!;
+      expect((openGate.approvals as Record<string, unknown>).approver_emails).toEqual(emails);
+    } finally {
+      delete process.env.MAKERCHECKER_AUTH_DISABLED;
+    }
+  });
+
+  it("does not change the STORED definition: masking is read-path only", async () => {
+    // The at-rest row keeps the full approver list; only the response was shaped.
+    const { rows } = await db.pool.query<{ definition: { steps: Array<Record<string, unknown>> } }>(
+      `SELECT fv.definition FROM flow_versions fv
+         JOIN flows f ON f.id = fv.flow_id
+        WHERE f.name = 'named-gate' ORDER BY fv.version DESC LIMIT 1`,
+    );
+    const gate = rows[0]!.definition.steps.find((s) => s.key === "gate")!;
+    expect((gate.approvals as Record<string, unknown>).approver_emails).toEqual([
+      "alice@bank.example",
+      "bob@bank.example",
+    ]);
+  });
+
   it("the audit chain still verifies after every adversarial path", async () => {
     expect((await verifyChain(db.pool)).ok).toBe(true);
   });
