@@ -24,10 +24,12 @@ export const SkillRef = Type.String({
 
 export const AgentStep = Type.Object(
   {
-    key: Type.String({ pattern: "^[a-z0-9][a-z0-9_-]*$" }),
+    key: Type.String({ pattern: "^[a-z0-9][a-z0-9_-]*$", maxLength: 200 }),
     agent: Type.String({ minLength: 1 }),
-    skills: Type.Array(SkillRef, { minItems: 1 }),
-    instructions: Type.Optional(Type.String()),
+    // Bound skills per step: each ref is one ungranted-skill check at run time,
+    // so an oversized list amplifies into serial DB work (see steps maxItems).
+    skills: Type.Array(SkillRef, { minItems: 1, maxItems: 50 }),
+    instructions: Type.Optional(Type.String({ maxLength: 4000 })),
     retries: Type.Optional(
       Type.Object(
         {
@@ -51,7 +53,7 @@ export const ApprovalGateApprovals = Type.Object(
   {
     min_approvals: Type.Optional(Type.Integer({ minimum: 1 })),
     approver_emails: Type.Optional(
-      Type.Array(Type.String({ pattern: EMAIL_PATTERN }), { minItems: 1 }),
+      Type.Array(Type.String({ pattern: EMAIL_PATTERN }), { minItems: 1, maxItems: 100 }),
     ),
     forbid_requester: Type.Optional(Type.Boolean()),
   },
@@ -60,9 +62,9 @@ export const ApprovalGateApprovals = Type.Object(
 
 export const ApprovalGateStep = Type.Object(
   {
-    key: Type.String({ pattern: "^[a-z0-9][a-z0-9_-]*$" }),
+    key: Type.String({ pattern: "^[a-z0-9][a-z0-9_-]*$", maxLength: 200 }),
     type: Type.Literal("approval_gate"),
-    title: Type.String({ minLength: 1 }),
+    title: Type.String({ minLength: 1, maxLength: 200 }),
     // Optional n-of-m named approvals. Defining this object switches the gate
     // into identity mode: forbid_requester defaults to TRUE, and decisions
     // must come from authenticated users (fail closed).
@@ -73,8 +75,15 @@ export const ApprovalGateStep = Type.Object(
 
 export const FlowDefinitionSchema = Type.Object(
   {
-    name: Type.String({ pattern: "^[a-z0-9][a-z0-9-]*$" }),
-    steps: Type.Array(Type.Union([ApprovalGateStep, AgentStep]), { minItems: 1 }),
+    name: Type.String({ pattern: "^[a-z0-9][a-z0-9-]*$", maxLength: 200 }),
+    // Bound the step count: each step is published, scheduled, and audited
+    // serially, so an oversized definition would amplify into tens of thousands
+    // of serial DB queries from a single POST /flows. 200 is well above any real
+    // sequential flow while still capping the blast radius.
+    steps: Type.Array(Type.Union([ApprovalGateStep, AgentStep]), {
+      minItems: 1,
+      maxItems: 200,
+    }),
   },
   { additionalProperties: false },
 );

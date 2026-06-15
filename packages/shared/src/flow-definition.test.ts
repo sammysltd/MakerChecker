@@ -153,6 +153,131 @@ describe("approval gate approvals object (n-of-m)", () => {
   });
 });
 
+describe("size bounds (POST /flows amplification guard)", () => {
+  // A single oversized definition must not be allowed to amplify into tens of
+  // thousands of serial DB queries; the grammar caps the blast radius.
+  const agentStep = (i: number) => ({
+    key: `step_${i}`,
+    agent: "a",
+    skills: ["s@1"],
+  });
+
+  it("accepts a definition at the step ceiling (200)", () => {
+    const result = validateFlowDefinition({
+      name: "f",
+      steps: Array.from({ length: 200 }, (_, i) => agentStep(i)),
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.definition.steps).toHaveLength(200);
+  });
+
+  it("rejects a definition over the step ceiling (201)", () => {
+    const result = validateFlowDefinition({
+      name: "f",
+      steps: Array.from({ length: 201 }, (_, i) => agentStep(i)),
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it("accepts an agent step at the skills ceiling (50)", () => {
+    const result = validateFlowDefinition({
+      name: "f",
+      steps: [
+        { key: "s", agent: "a", skills: Array.from({ length: 50 }, (_, i) => `skill-${i}@1`) },
+      ],
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it("rejects an agent step over the skills ceiling (51)", () => {
+    const result = validateFlowDefinition({
+      name: "f",
+      steps: [
+        { key: "s", agent: "a", skills: Array.from({ length: 51 }, (_, i) => `skill-${i}@1`) },
+      ],
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejects an approval gate over the approver_emails ceiling (101)", () => {
+    const result = validateFlowDefinition({
+      name: "f",
+      steps: [
+        { key: "work", agent: "a", skills: ["s@1"] },
+        {
+          key: "gate",
+          type: "approval_gate",
+          title: "T",
+          approvals: {
+            approver_emails: Array.from({ length: 101 }, (_, i) => `u${i}@bank.example`),
+          },
+        },
+      ],
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it("accepts an approval gate at the approver_emails ceiling (100)", () => {
+    const result = validateFlowDefinition({
+      name: "f",
+      steps: [
+        { key: "work", agent: "a", skills: ["s@1"] },
+        {
+          key: "gate",
+          type: "approval_gate",
+          title: "T",
+          approvals: {
+            approver_emails: Array.from({ length: 100 }, (_, i) => `u${i}@bank.example`),
+          },
+        },
+      ],
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it("rejects over-long free-text fields", () => {
+    // instructions: maxLength 4000
+    expect(
+      validateFlowDefinition({
+        name: "f",
+        steps: [{ key: "s", agent: "a", skills: ["s@1"], instructions: "x".repeat(4001) }],
+      }).ok,
+    ).toBe(false);
+    // name: maxLength 200
+    expect(
+      validateFlowDefinition({
+        name: "a".repeat(201),
+        steps: [{ key: "s", agent: "a", skills: ["s@1"] }],
+      }).ok,
+    ).toBe(false);
+    // step key: maxLength 200
+    expect(
+      validateFlowDefinition({
+        name: "f",
+        steps: [{ key: `s${"a".repeat(200)}`, agent: "a", skills: ["s@1"] }],
+      }).ok,
+    ).toBe(false);
+    // approval gate title: maxLength 200
+    expect(
+      validateFlowDefinition({
+        name: "f",
+        steps: [
+          { key: "work", agent: "a", skills: ["s@1"] },
+          { key: "gate", type: "approval_gate", title: "T".repeat(201) },
+        ],
+      }).ok,
+    ).toBe(false);
+  });
+
+  it("accepts free-text fields at their maximum length", () => {
+    const result = validateFlowDefinition({
+      name: "f",
+      steps: [{ key: "s", agent: "a", skills: ["s@1"], instructions: "x".repeat(4000) }],
+    });
+    expect(result.ok).toBe(true);
+  });
+});
+
 describe("isApprovalGate", () => {
   it("discriminates gates from agent steps", () => {
     const ok = validateFlowDefinition(VALID);
