@@ -896,3 +896,89 @@ describe("backoff", () => {
     expect(backoffDelayMs(1)).toBe(2000); // default = exponential
   });
 });
+
+describe("engine robustness: race + crash safety", () => {
+  async function waitForStepSettled(runId: string, timeoutMs = 15_000): Promise<string> {
+    const deadline = Date.now() + timeoutMs;
+    for (;;) {
+      const { rows } = await db.pool.query<{ status: string }>(
+        "SELECT status FROM step_runs WHERE run_id = $1 ORDER BY step_index DESC LIMIT 1",
+        [runId],
+      );
+      const status = rows[0]?.status;
+      if (status && status !== "running" && status !== "pending") return status;
+      if (Date.now() > deadline) throw new Error(`step for ${runId} never settled (at "${status}")`);
+      await new Promise((r) => setTimeout(r, 50));
+    }
+  }
+
+  // ADVERSARIAL: the watchdog (or a retried delivery) fails an attempt while it
+  // is still executing. The completed-write must NOT resurrect the failed step.
+  it("does not resurrect a step the watchdog failed mid-execution", async () => {
+    await seedAgent("race-agent");
+    // The skill simulates the watchdog timing out THIS attempt while it runs:
+    // it flips the (only) running step_run to timed_out before returning. When
+    // executeStep then reaches its guarded completed-write, the row is no longer
+    // 'running', so it must be left as timed_out rather than flipped to completed.
+    await seedSkill("race-skill@1", async () => {
+      await db.pool.query(
+        `UPDATE step_runs SET status = 'timed_out', error = '{"message":"watchdog"}', finished_at = now()
+           WHERE status = 'running'`,
+      );
+      return { ok: true };
+    });
+    await grant("race-agent", "race-skill@1");
+    const { flowVersionId } = await publishFlowVersion(db.pool, {
+      definition: {
+        name: "race-flow",
+        steps: [{ key: "s", agent: "race-agent", skills: ["race-skill@1"] }],
+      },
+      actor: USER,
+    });
+
+    const runId = await startRun(ctx, { flowVersionId, triggeredBy: USER });
+    expect(await waitForStepSettled(runId)).toBe("timed_out"); // NOT resurrected to completed
+
+    const { rows } = await db.pool.query<{ status: string }>(
+      "SELECT status FROM step_runs WHERE run_id = $1",
+      [runId],
+    );
+    expect(rows.every((r) => r.status === "timed_out")).toBe(true);
+    // No completed event was emitted for the resurrected attempt.
+    expect(await eventTypes(runId)).not.toContain("run.step.completed");
+    // The chain stays internally consistent regardless of the race.
+    expect((await verifyChain(db.pool)).ok).toBe(true);
+  });
+
+  // ADVERSARIAL: a crash (or outage) of the queue's enqueue path between the run
+  // INSERT and the first advance must not orphan the run. The fix enqueues the
+  // first advance in the SAME transaction as the run row, so a broken
+  // backend.enqueue cannot prevent the run from advancing.
+  it("starts a run even when backend.enqueue is broken (in-tx first advance)", async () => {
+    await seedAgent("crash-agent");
+    await seedSkill("crash-skill@1", async (input) => ({ ...input, ran: true }));
+    await grant("crash-agent", "crash-skill@1");
+    const { flowVersionId } = await publishFlowVersion(db.pool, {
+      definition: {
+        name: "crash-flow",
+        steps: [{ key: "s", agent: "crash-agent", skills: ["crash-skill@1"] }],
+      },
+      actor: USER,
+    });
+
+    // A backend whose enqueue() throws. Pre-fix, startRun called this and would
+    // reject, orphaning the run. Post-fix, startRun never calls it (the advance
+    // job is written in-tx) and the real worker still picks the job up.
+    const brokenBackend = Object.create(ctx.backend) as typeof ctx.backend;
+    brokenBackend.enqueue = async () => {
+      throw new Error("backend.enqueue is down");
+    };
+
+    const runId = await startRun(
+      { ...ctx, backend: brokenBackend },
+      { flowVersionId, triggeredBy: USER },
+    );
+    expect(await waitForRunStatus(runId, ["completed", "failed"])).toBe("completed");
+    expect((await verifyChain(db.pool)).ok).toBe(true);
+  });
+});

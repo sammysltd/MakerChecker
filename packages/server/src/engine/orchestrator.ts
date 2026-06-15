@@ -98,6 +98,11 @@ export async function startRun(
         input: redactValue(resolveRedactionHook(), input.runInput ?? {}),
       },
     });
+    // Enqueue the first advance INSIDE the transaction (graphile_worker writes to
+    // the same Postgres), so the run row and its advance job commit atomically. A
+    // crash between COMMIT and a separate enqueue would otherwise orphan the run
+    // with no recovery sweep. advanceRun is idempotent, so a replay is safe.
+    await enqueueInTx(client, TASK_ADVANCE, { runId }, { jobKey: `advance:${runId}` });
     await client.query("COMMIT");
   } catch (err) {
     await client.query("ROLLBACK");
@@ -105,7 +110,6 @@ export async function startRun(
   } finally {
     client.release();
   }
-  await ctx.backend.enqueue(TASK_ADVANCE, { runId }, { jobKey: `advance:${runId}` });
   return runId;
 }
 
@@ -335,10 +339,17 @@ export async function executeStep(ctx: EngineContext, stepRunId: string): Promis
     await client.query("SELECT pg_advisory_xact_lock(hashtext('run:' || $1::text))", [runId]);
 
     if (failure === null) {
-      await client.query(
-        `UPDATE step_runs SET status = 'completed', output = $2, finished_at = now() WHERE id = $1`,
+      const updated = await client.query(
+        `UPDATE step_runs SET status = 'completed', output = $2, finished_at = now()
+           WHERE id = $1 AND status = 'running' RETURNING id`,
         [stepRunId, JSON.stringify(output)],
       );
+      if (updated.rowCount === 0) {
+        // The watchdog (or another delivery) already settled this attempt under
+        // the same lock. Do not resurrect it: skip the completed event + advance.
+        await client.query("COMMIT");
+        return;
+      }
       await recordEvent(client, {
         eventType: "run.step.completed",
         actor: { type: "agent", id: stepRun.agent_id, name: step.agent },
@@ -683,10 +694,18 @@ export async function handleStepFailure(
   pending?: PendingWebhook[],
 ): Promise<void> {
   const status = args.timedOut ? "timed_out" : "failed";
-  await client.query(
-    `UPDATE step_runs SET status = $2, error = $3, finished_at = now() WHERE id = $1`,
+  const updated = await client.query(
+    `UPDATE step_runs SET status = $2, error = $3, finished_at = now()
+       WHERE id = $1 AND status = 'running' RETURNING id`,
     [args.stepRunId, status, JSON.stringify({ message: args.reason })],
   );
+  if (updated.rowCount === 0) {
+    // Another actor (the watchdog, or a retried delivery) already settled this
+    // attempt under the same lock. Skip the retry/failed audit events and
+    // failRun so the terminal state is never double-emitted. The watchdog caller
+    // re-checks status='running' before calling here, so it is unaffected.
+    return;
+  }
 
   // Error/reason text is attacker-influenced (e.g. a forwarded MCP/HTTP skill
   // error) and can carry secrets, so redact it before it enters the audit chain.
