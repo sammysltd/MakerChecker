@@ -1,0 +1,11 @@
+case_id,drug,event,seriousness,expectedness,country,received_date
+P-4001,Cardevol 10mg,Mild headache,non-serious,expected,US,2026-06-01
+P-4002,Neurastat 25mg,Dizziness,non-serious,expected,US,2026-06-01
+P-4003,Cardevol 10mg,Acute liver failure,serious,unexpected,US,2026-06-02
+P-4004,Pulmofen inhaler,Throat irritation,non-serious,expected,GB,2026-06-02
+P-4005,Neurastat 25mg,Seizure,serious,expected,US,2026-06-03
+P-4006,Gastrelin 40mg,Nausea,non-serious,expected,FR,2026-06-03
+P-4007,Cardevol 10mg,Rash,non-serious,unexpected,US,2026-06-04
+P-4008,Pulmofen inhaler,Mild cough,non-serious,expected,US,2026-06-04
+P-4009,Gastrelin 40mg,Anaphylactic reaction,serious,unexpected,DE,2026-06-05
+P-4010,Neurastat 25mg,Fatigue,non-serious,expected,CA,2026-06-05

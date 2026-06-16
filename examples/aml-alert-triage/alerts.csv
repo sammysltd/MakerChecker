@@ -1,0 +1,11 @@
+alert_id,customer,type,amount,risk_score
+A-2001,Orion Imports Ltd,velocity,14200.00,35
+A-2002,Helena Vargas,threshold,10100.00,42
+A-2003,Cobalt Freight LLC,structuring,9400.00,55
+A-2004,Marcus Tan,velocity,7800.00,28
+A-2005,Sable Trading FZE,sanctions_near_match,61000.00,74
+A-2006,Priya Raman,threshold,12650.00,31
+A-2007,Northgate Vending Inc,structuring,9750.00,86
+A-2008,Lena Okafor,geo_risk,5300.00,47
+A-2009,Quayside Marine SA,threshold,18900.00,39
+A-2010,Tomas Keller,velocity,4100.00,22

@@ -1,0 +1,17 @@
+-- Frozen role limits per step attempt.
+--
+-- roles.limits is mutable working config: an admin can raise or lower a role's
+-- ceilings at any time. Reading it LIVE at invocation means an admin who edits
+-- limits mid-run silently rewrites the enforcement of a run that was already
+-- scheduled — a control that should be deterministic for the life of the run
+-- becomes a moving target (and the audit record no longer reflects what was
+-- actually enforced).
+--
+-- step_runs.limits_snapshot freezes the role's limits at scheduling time,
+-- alongside role_id_snapshot, exactly once per step attempt. The limit checks
+-- (checkSkillLimit / checkTokenBudget) read this frozen copy, so a later edit
+-- to roles.limits cannot change what an in-flight run enforces. Nullable for
+-- backward compatibility with step_runs scheduled before this migration; the
+-- limit checks fall back to live limits only when no snapshot exists (i.e. no
+-- step_run for the (run, role) pair at all), never silently widening a run.
+ALTER TABLE step_runs ADD COLUMN limits_snapshot jsonb;

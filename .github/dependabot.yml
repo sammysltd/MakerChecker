@@ -1,0 +1,32 @@
+version: 2
+updates:
+  # JavaScript/TypeScript dependencies. pnpm keeps one lockfile at the repo root,
+  # so a single root entry covers every workspace package.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      # Batch minor and patch bumps into one PR to keep the noise down.
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    # Routine major upgrades are handled manually; they usually need code
+    # changes (config rewrites, API breaks) and should not auto-open. Security
+    # updates still come through regardless of this ignore.
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+  # Python SDK dependencies, locked with uv (packages/sdk-python/uv.lock).
+  - package-ecosystem: uv
+    directory: "/packages/sdk-python"
+    schedule:
+      interval: weekly
+  # GitHub Actions used by the CI workflow.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly

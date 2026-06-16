@@ -1,0 +1,11 @@
+complaint_id,device,event_type,patient_harm,recurrence_risk,description,received_date
+C-3001,GlucoTrack G5 meter,user_error,none,low,Reading discrepancy traced to expired test strips supplied by the patient,2026-06-01
+C-3002,FlexiPort infusion set,cosmetic,none,low,Discoloration on tubing exterior with no functional impact found on inspection,2026-06-01
+C-3003,AeroMist nebulizer,user_error,none,low,Device not charged before use and stopped mid-session,2026-06-02
+C-3004,InsuFlow MX insulin pump,serious_injury,hospitalized,low,Pump over-delivered insulin overnight and patient was hospitalized with severe hypoglycemia,2026-06-02
+C-3005,DermaSeal wound dressing,packaging,none,low,Outer pouch seal wrinkled but sterile barrier intact on inspection,2026-06-03
+C-3006,OrthoBrace knee support,user_error,none,low,Strap fitted upside down per submitted photos with no injury reported,2026-06-03
+C-3007,CardioSense ECG patch,cosmetic,none,low,Adhesive left residue on skin and resolved with a cleaning wipe,2026-06-04
+C-3008,VentAssist 300 ventilator,malfunction,none,high,Low-pressure alarm failed to sound during a circuit disconnect with no patient harm this time,2026-06-04
+C-3009,ClearView IV catheter,user_error,none,low,Catheter kinked during insertion by an untrained user and was replaced without incident,2026-06-05
+C-3010,ThermoScan ear thermometer,malfunction,none,low,Single inaccurate reading that could not be reproduced and device within spec on retest,2026-06-05

@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+#
+# MakerChecker pre-commit hook (Layer 5: secret scanning).
+#
+# Scans staged changes for secrets with gitleaks before they are committed.
+# Enable once with:  git config core.hooksPath .githooks
+#
+# Optional locally: if gitleaks is not installed we print a hint and let the
+# commit through (the same scan is FATAL in CI, so nothing slips past review).
+# Set MAKERCHECKER_REQUIRE_GITLEAKS=1 to make a missing binary fail instead.
+
+set -euo pipefail
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-commit: gitleaks not found, skipping local secret scan."
+  echo "            Install it for pre-commit protection:"
+  echo "              brew install gitleaks   # macOS"
+  echo "              https://github.com/gitleaks/gitleaks#installing"
+  echo "            (CI runs the same scan and will fail on a leak.)"
+  if [ "${MAKERCHECKER_REQUIRE_GITLEAKS:-0}" = "1" ]; then
+    echo "pre-commit: MAKERCHECKER_REQUIRE_GITLEAKS=1 set, refusing commit." >&2
+    exit 1
+  fi
+  exit 0
+fi
+
+repo_root="$(git rev-parse --show-toplevel)"
+
+if ! gitleaks protect --staged --no-banner --redact \
+  --config "${repo_root}/.gitleaks.toml"; then
+  echo "" >&2
+  echo "pre-commit: gitleaks found a potential secret in your staged changes." >&2
+  echo "            Remove it, or if it is a fixture, allowlist it in .gitleaks.toml." >&2
+  echo "            To bypass intentionally (discouraged): git commit --no-verify" >&2
+  exit 1
+fi

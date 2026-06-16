@@ -1,0 +1,45 @@
+{
+  "name": "@makerchecker/connector-claude-agent",
+  "version": "1.0.0",
+  "description": "MakerChecker connector for the Claude Agent SDK that wraps a custom tool so every invocation runs a deny-by-default governance check and records to the hash-chained audit log.",
+  "license": "Apache-2.0",
+  "author": "Mashini Investments Ltd. <hello@makerchecker.ai>",
+  "homepage": "https://makerchecker.ai",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sammysltd/makerchecker.git",
+    "directory": "packages/connector-claude-agent"
+  },
+  "bugs": "https://github.com/sammysltd/makerchecker/issues",
+  "type": "module",
+  "files": ["dist"],
+  "engines": {
+    "node": ">=22"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@makerchecker/sdk": "workspace:*"
+  },
+  "peerDependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.0"
+  },
+  "devDependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.0",
+    "@types/node": "^22.10.7",
+    "@vitest/coverage-v8": "^3.0.4",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.4",
+    "zod": "^4.4.3"
+  }
+}

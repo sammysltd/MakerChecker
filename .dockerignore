@@ -1,0 +1,16 @@
+# Keep the build context small and reproducible. The Dockerfile copies
+# packages/shared, packages/server, packages/web and examples/ from the repo
+# root, so those (and the SQL migrations under packages/server) are NOT ignored.
+# Only build artifacts, VCS metadata, and test files are excluded.
+.git
+.DS_Store
+**/.DS_Store
+node_modules
+**/node_modules
+dist
+**/dist
+coverage
+**/coverage
+.turbo
+**/.turbo
+**/*.test.ts

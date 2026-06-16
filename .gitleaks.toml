@@ -1,0 +1,41 @@
+# gitleaks configuration for MakerChecker (Layer 5: secret scanning).
+#
+# We keep every built-in gitleaks rule active by extending the default
+# config, then add a narrow allowlist for known test fixtures and
+# placeholders so real secrets fail CI while fixtures do not.
+#
+# Run locally:    gitleaks detect --no-banner
+# Staged-only:    gitleaks protect --staged --no-banner   (see .githooks/pre-commit)
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known test fixtures, placeholders, and runtime-generated keys"
+
+# Files that are never committed but exist locally at runtime. The server
+# generates an Ed25519 signing key at packages/server/data/instance_key.pem;
+# the whole packages/server/data/ directory is gitignored, but we allowlist
+# the path so a local filesystem scan (gitleaks detect --no-git) does not
+# false-positive on a key that never reaches the repo.
+paths = [
+  '''packages/server/data/.*''',
+]
+
+# Placeholder / fixture secrets that look real enough to trip a rule but are
+# deliberately fake. These appear in tests, the demo seed, and docs.
+regexes = [
+  # Demo password seeded for admin@/officer@makerchecker.local. Documented in
+  # the quickstart; not a credential to any real system.
+  '''makerchecker-demo''',
+
+  # Example API keys in web/sdk tests and docs. Real keys are mk_<32 hex>
+  # (see packages/server/src/auth/api-keys.ts); these short word forms
+  # (mk_test, mk_secret, mk_live_key, mk_padded, ...) are obvious fixtures.
+  '''mk_(test|secret|live_key|padded|[a-z_]*key)\b''',
+
+  # Filler password_hash values in integration tests, e.g. VALUES (..., 'x', ...).
+  # The column is NOT NULL so tests insert a single-character placeholder
+  # rather than a real bcrypt/argon2 hash.
+  '''password_hash[^,]*,\s*['"]x['"]''',
+]

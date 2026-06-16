@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run ci
+      # OpenAPI drift guard: regenerate the spec from the live server routes and
+      # fail if the committed packages/sdk/openapi.json no longer matches. Keeps
+      # the generated SDK in sync with the server. Requires the build from `ci`.
+      - name: Check OpenAPI spec is up to date
+        run: |
+          node packages/server/scripts/emit-openapi.mjs
+          git diff --exit-code packages/sdk/openapi.json
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # gitleaks scans the full git history; without depth 0 only the
+          # latest commit is fetched and a secret in an earlier commit slips by.
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      # SCA (Layer 2): fail the build on any high/critical advisory in the
+      # production dependency tree. Dev-only advisories do not gate releases.
+      # Unavoidable advisories (none today) would be documented and allowlisted
+      # via pnpm.auditConfig.ignoreCves in package.json so the gate stays real.
+      - name: Dependency audit (pnpm audit)
+        run: corepack pnpm audit --prod --audit-level high
+      # Secret scan (Layer 5): scan the repo for committed secrets and fail on a
+      # finding. Allowlist for known fixtures/placeholders lives in .gitleaks.toml.
+      - name: Secret scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITLEAKS_CONFIG: .gitleaks.toml
+          # gitleaks-action@v3 requires a token to scan pull_request events
+          # (without it, every PR fails the secret scan). The auto-provided
+          # token is read-only on Dependabot PRs, which is all the scan needs.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build and boot the stack
+        # `up --build` also validates the Dockerfile builds. Booting it is what
+        # catches runtime-only failures the image build cannot — e.g. a runtime
+        # dependency pruned by `pnpm deploy --prod`, which surfaces as
+        # ERR_MODULE_NOT_FOUND only when node actually starts.
+        run: docker compose up -d --build
+      - name: Wait for the server to become healthy
+        run: |
+          for i in $(seq 1 45); do
+            if curl -fsS http://localhost:3000/healthz >/dev/null 2>&1; then
+              echo "server is healthy"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::server did not pass /healthz within 90s"
+          exit 1
+      - name: Server logs on failure
+        if: failure()
+        run: docker compose logs server
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
+
+  # The Python SDK is outside the pnpm/turbo workspace, so it gets its own lane:
+  # lint (ruff), strict types (mypy), and tests (pytest, no server needed).
+  python-sdk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/sdk-python
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      # Install from the committed uv.lock; --frozen fails if the lock is stale.
+      - run: uv sync --extra dev --frozen
+      - run: uv run ruff check .
+      - run: uv run mypy
+      - run: uv run pytest -q

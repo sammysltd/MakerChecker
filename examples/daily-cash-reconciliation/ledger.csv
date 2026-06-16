@@ -1,0 +1,12 @@
+entry_id,txn_ref,date,description,amount
+L-2001,T-1001,2026-06-10,ACME Corp supplier invoice 4471,-12500.00
+L-2002,T-1002,2026-06-10,Northwind receivable,8400.00
+L-2003,T-1003,2026-06-10,Payroll June batch 1,-45200.00
+L-2004,T-1004,2026-06-10,Contoso receivable,15750.50
+L-2005,T-1005,2026-06-10,EUR/USD settlement,-3210.75
+L-2006,T-1006,2026-06-10,Bank interest,112.40
+L-2007,T-1007,2026-06-10,Bank charges,-25.00
+L-2008,T-1008,2026-06-10,Fabrikam receivable,6900.00
+L-2009,T-1009,2026-06-10,Globex supplier invoice 9921,-7080.00
+L-2010,T-1010,2026-06-10,Card settlement,23410.15
+L-2011,T-1011,2026-06-10,Regulatory levy Q2,-980.00

@@ -1,0 +1,1719 @@
+{
+  "meta": {
+    "flow": "mdr-reportability-triage",
+    "note": "Captured from a real seeded run (auth enabled). Do not hand-edit; regenerate with CAPTURE_WRITE=1."
+  },
+  "actors": {
+    "analyst": {
+      "name": "Demo Admin",
+      "email": "admin@makerchecker.local"
+    },
+    "officer": {
+      "name": "Demo Approving Officer",
+      "email": "officer@makerchecker.local"
+    }
+  },
+  "scenes": {
+    "running": {
+      "run": {
+        "id": "6d271d9b-2ccc-450e-b095-9c5c91fb1c8a",
+        "flow": "mdr-reportability-triage",
+        "version": 1,
+        "definition": {
+          "name": "mdr-reportability-triage",
+          "steps": [
+            {
+              "key": "triage",
+              "agent": "mdr-complaint-analyst",
+              "skills": [
+                "complaint-ingest@1",
+                "reportability-triage@1"
+              ],
+              "retries": {
+                "backoff": "exponential",
+                "max_attempts": 3
+              },
+              "timeout_ms": 120000,
+              "instructions": "Ingest the day's device complaints and propose reportability per complaint: escalate deaths, serious injuries, and malfunctions likely to recur, with the applicable MDR clock and a rationale."
+            },
+            {
+              "key": "reportability_decision",
+              "type": "approval_gate",
+              "title": "Reportability decision — regulatory officer sign-off",
+              "approvals": {
+                "min_approvals": 1,
+                "forbid_requester": true
+              }
+            },
+            {
+              "key": "file",
+              "agent": "mdr-complaint-analyst",
+              "skills": [
+                "mdr-draft@1",
+                "notify@1"
+              ],
+              "timeout_ms": 120000,
+              "instructions": "Draft the MDR report skeletons for the officer-decided reportable complaints and notify the regulatory channel."
+            }
+          ]
+        },
+        "status": "running",
+        "failure_reason": null,
+        "input": {
+          "complaintsPath": "examples/mdr-reportability-triage/complaints.csv"
+        },
+        "triggered_by": {
+          "id": "9b2676f8-0195-49c2-9fa6-9d58279c5e8e",
+          "name": "admin@makerchecker.local",
+          "type": "user"
+        },
+        "created_at": "2026-06-13T14:07:20.228Z",
+        "started_at": "2026-06-13T14:07:20.251Z",
+        "finished_at": null
+      },
+      "steps": [
+        {
+          "id": "9b1a0ff6-2135-437e-9307-6097e28c5157",
+          "step_index": 0,
+          "step_key": "triage",
+          "status": "running",
+          "attempt": 1,
+          "input": {
+            "complaintsPath": "examples/mdr-reportability-triage/complaints.csv"
+          },
+          "output": null,
+          "error": null,
+          "agent": "mdr-complaint-analyst",
+          "started_at": "2026-06-13T14:07:20.251Z",
+          "finished_at": null
+        }
+      ],
+      "approvals": [],
+      "auditEvents": [
+        {
+          "seq": "14",
+          "occurred_at": "2026-06-13T14:07:20.237Z",
+          "actor": {
+            "id": "9b2676f8-0195-49c2-9fa6-9d58279c5e8e",
+            "name": "admin@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "run.created",
+          "payload": {
+            "input": {
+              "complaintsPath": "examples/mdr-reportability-triage/complaints.csv"
+            },
+            "flowVersionId": "6bc7ed6b-eb6e-4c53-880f-012838907a6c"
+          },
+          "hash": "68946010c2b2006252f97fb5b5781bfaa9cd9fba67ef89250a7408f5ef5597cf"
+        },
+        {
+          "seq": "15",
+          "occurred_at": "2026-06-13T14:07:20.263Z",
+          "actor": {
+            "id": "3779456b-50ee-4c28-8220-341d0f6fbbe5",
+            "name": "mdr-complaint-analyst",
+            "type": "agent"
+          },
+          "event_type": "run.step.started",
+          "payload": {
+            "skills": [
+              "complaint-ingest@1",
+              "reportability-triage@1"
+            ],
+            "attempt": 1,
+            "stepKey": "triage",
+            "stepIndex": 0
+          },
+          "hash": "777e1d1202ffca487a020b532a2a0cea7e5201e1d28c2b6b3ad87131127afe0e"
+        },
+        {
+          "seq": "16",
+          "occurred_at": "2026-06-13T14:07:20.284Z",
+          "actor": {
+            "id": "3779456b-50ee-4c28-8220-341d0f6fbbe5",
+            "name": "mdr-complaint-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "complaintsPath": "examples/mdr-reportability-triage/complaints.csv"
+            },
+            "output": {
+              "complaints": [
+                {
+                  "device": "GlucoTrack G5 meter",
+                  "event_type": "user_error",
+                  "description": "Reading discrepancy traced to expired test strips supplied by the patient",
+                  "complaint_id": "C-3001",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-01",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "FlexiPort infusion set",
+                  "event_type": "cosmetic",
+                  "description": "Discoloration on tubing exterior with no functional impact found on inspection",
+                  "complaint_id": "C-3002",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-01",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "AeroMist nebulizer",
+                  "event_type": "user_error",
+                  "description": "Device not charged before use and stopped mid-session",
+                  "complaint_id": "C-3003",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-02",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "InsuFlow MX insulin pump",
+                  "event_type": "serious_injury",
+                  "description": "Pump over-delivered insulin overnight and patient was hospitalized with severe hypoglycemia",
+                  "complaint_id": "C-3004",
+                  "patient_harm": "hospitalized",
+                  "received_date": "2026-06-02",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "DermaSeal wound dressing",
+                  "event_type": "packaging",
+                  "description": "Outer pouch seal wrinkled but sterile barrier intact on inspection",
+                  "complaint_id": "C-3005",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-03",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "OrthoBrace knee support",
+                  "event_type": "user_error",
+                  "description": "Strap fitted upside down per submitted photos with no injury reported",
+                  "complaint_id": "C-3006",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-03",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "CardioSense ECG patch",
+                  "event_type": "cosmetic",
+                  "description": "Adhesive left residue on skin and resolved with a cleaning wipe",
+                  "complaint_id": "C-3007",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-04",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "VentAssist 300 ventilator",
+                  "event_type": "malfunction",
+                  "description": "Low-pressure alarm failed to sound during a circuit disconnect with no patient harm this time",
+                  "complaint_id": "C-3008",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-04",
+                  "recurrence_risk": "high"
+                },
+                {
+                  "device": "ClearView IV catheter",
+                  "event_type": "user_error",
+                  "description": "Catheter kinked during insertion by an untrained user and was replaced without incident",
+                  "complaint_id": "C-3009",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-05",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "ThermoScan ear thermometer",
+                  "event_type": "malfunction",
+                  "description": "Single inaccurate reading that could not be reproduced and device within spec on retest",
+                  "complaint_id": "C-3010",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-05",
+                  "recurrence_risk": "low"
+                }
+              ]
+            },
+            "stepKey": "triage",
+            "skillRef": "complaint-ingest@1"
+          },
+          "hash": "c73822404852cf751f3e8f3a6313adcf6a533e08ecc605657b9eca855780c017"
+        }
+      ]
+    },
+    "waiting": {
+      "run": {
+        "id": "6d271d9b-2ccc-450e-b095-9c5c91fb1c8a",
+        "flow": "mdr-reportability-triage",
+        "version": 1,
+        "definition": {
+          "name": "mdr-reportability-triage",
+          "steps": [
+            {
+              "key": "triage",
+              "agent": "mdr-complaint-analyst",
+              "skills": [
+                "complaint-ingest@1",
+                "reportability-triage@1"
+              ],
+              "retries": {
+                "backoff": "exponential",
+                "max_attempts": 3
+              },
+              "timeout_ms": 120000,
+              "instructions": "Ingest the day's device complaints and propose reportability per complaint: escalate deaths, serious injuries, and malfunctions likely to recur, with the applicable MDR clock and a rationale."
+            },
+            {
+              "key": "reportability_decision",
+              "type": "approval_gate",
+              "title": "Reportability decision — regulatory officer sign-off",
+              "approvals": {
+                "min_approvals": 1,
+                "forbid_requester": true
+              }
+            },
+            {
+              "key": "file",
+              "agent": "mdr-complaint-analyst",
+              "skills": [
+                "mdr-draft@1",
+                "notify@1"
+              ],
+              "timeout_ms": 120000,
+              "instructions": "Draft the MDR report skeletons for the officer-decided reportable complaints and notify the regulatory channel."
+            }
+          ]
+        },
+        "status": "waiting_approval",
+        "failure_reason": null,
+        "input": {
+          "complaintsPath": "examples/mdr-reportability-triage/complaints.csv"
+        },
+        "triggered_by": {
+          "id": "9b2676f8-0195-49c2-9fa6-9d58279c5e8e",
+          "name": "admin@makerchecker.local",
+          "type": "user"
+        },
+        "created_at": "2026-06-13T14:07:20.228Z",
+        "started_at": "2026-06-13T14:07:20.251Z",
+        "finished_at": null
+      },
+      "steps": [
+        {
+          "id": "9b1a0ff6-2135-437e-9307-6097e28c5157",
+          "step_index": 0,
+          "step_key": "triage",
+          "status": "completed",
+          "attempt": 1,
+          "input": {
+            "complaintsPath": "examples/mdr-reportability-triage/complaints.csv"
+          },
+          "output": {
+            "cleared": [
+              {
+                "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3001"
+              },
+              {
+                "rationale": "event type \"cosmetic\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3002"
+              },
+              {
+                "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3003"
+              },
+              {
+                "rationale": "event type \"packaging\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3005"
+              },
+              {
+                "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3006"
+              },
+              {
+                "rationale": "event type \"cosmetic\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3007"
+              },
+              {
+                "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3009"
+              },
+              {
+                "rationale": "event type \"malfunction\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3010"
+              }
+            ],
+            "escalations": [
+              {
+                "clock": "30-day MDR (21 CFR 803.50)",
+                "device": "InsuFlow MX insulin pump",
+                "eventType": "serious_injury",
+                "rationale": "serious injury (patient harm: hospitalized) — reportable event; the 30-calendar-day MDR clock under 21 CFR 803.50 runs from awareness (2026-06-02)",
+                "complaintId": "C-3004",
+                "patientHarm": "hospitalized",
+                "receivedDate": "2026-06-02",
+                "recurrenceRisk": "low"
+              },
+              {
+                "clock": "30-day malfunction MDR (21 CFR 803.50)",
+                "device": "VentAssist 300 ventilator",
+                "eventType": "malfunction",
+                "rationale": "malfunction with high recurrence risk — would be likely to cause or contribute to a death or serious injury if it recurred; malfunction reportable under 21 CFR 803.50 from awareness (2026-06-04)",
+                "complaintId": "C-3008",
+                "patientHarm": "none",
+                "receivedDate": "2026-06-04",
+                "recurrenceRisk": "high"
+              }
+            ],
+            "complaintCount": 10,
+            "escalatedCount": 2
+          },
+          "error": null,
+          "agent": "mdr-complaint-analyst",
+          "started_at": "2026-06-13T14:07:20.251Z",
+          "finished_at": "2026-06-13T14:07:20.289Z"
+        }
+      ],
+      "approvals": [
+        {
+          "id": "61f2f90d-e5a4-494a-acaa-b600313668c3",
+          "step_key": "reportability_decision",
+          "status": "pending",
+          "requested_at": "2026-06-13T14:07:20.294Z",
+          "decided_at": null,
+          "reason": null,
+          "required_approvals": 1,
+          "decided_by": null,
+          "decisions": []
+        }
+      ],
+      "auditEvents": [
+        {
+          "seq": "14",
+          "occurred_at": "2026-06-13T14:07:20.237Z",
+          "actor": {
+            "id": "9b2676f8-0195-49c2-9fa6-9d58279c5e8e",
+            "name": "admin@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "run.created",
+          "payload": {
+            "input": {
+              "complaintsPath": "examples/mdr-reportability-triage/complaints.csv"
+            },
+            "flowVersionId": "6bc7ed6b-eb6e-4c53-880f-012838907a6c"
+          },
+          "hash": "68946010c2b2006252f97fb5b5781bfaa9cd9fba67ef89250a7408f5ef5597cf"
+        },
+        {
+          "seq": "15",
+          "occurred_at": "2026-06-13T14:07:20.263Z",
+          "actor": {
+            "id": "3779456b-50ee-4c28-8220-341d0f6fbbe5",
+            "name": "mdr-complaint-analyst",
+            "type": "agent"
+          },
+          "event_type": "run.step.started",
+          "payload": {
+            "skills": [
+              "complaint-ingest@1",
+              "reportability-triage@1"
+            ],
+            "attempt": 1,
+            "stepKey": "triage",
+            "stepIndex": 0
+          },
+          "hash": "777e1d1202ffca487a020b532a2a0cea7e5201e1d28c2b6b3ad87131127afe0e"
+        },
+        {
+          "seq": "16",
+          "occurred_at": "2026-06-13T14:07:20.284Z",
+          "actor": {
+            "id": "3779456b-50ee-4c28-8220-341d0f6fbbe5",
+            "name": "mdr-complaint-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "complaintsPath": "examples/mdr-reportability-triage/complaints.csv"
+            },
+            "output": {
+              "complaints": [
+                {
+                  "device": "GlucoTrack G5 meter",
+                  "event_type": "user_error",
+                  "description": "Reading discrepancy traced to expired test strips supplied by the patient",
+                  "complaint_id": "C-3001",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-01",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "FlexiPort infusion set",
+                  "event_type": "cosmetic",
+                  "description": "Discoloration on tubing exterior with no functional impact found on inspection",
+                  "complaint_id": "C-3002",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-01",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "AeroMist nebulizer",
+                  "event_type": "user_error",
+                  "description": "Device not charged before use and stopped mid-session",
+                  "complaint_id": "C-3003",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-02",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "InsuFlow MX insulin pump",
+                  "event_type": "serious_injury",
+                  "description": "Pump over-delivered insulin overnight and patient was hospitalized with severe hypoglycemia",
+                  "complaint_id": "C-3004",
+                  "patient_harm": "hospitalized",
+                  "received_date": "2026-06-02",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "DermaSeal wound dressing",
+                  "event_type": "packaging",
+                  "description": "Outer pouch seal wrinkled but sterile barrier intact on inspection",
+                  "complaint_id": "C-3005",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-03",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "OrthoBrace knee support",
+                  "event_type": "user_error",
+                  "description": "Strap fitted upside down per submitted photos with no injury reported",
+                  "complaint_id": "C-3006",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-03",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "CardioSense ECG patch",
+                  "event_type": "cosmetic",
+                  "description": "Adhesive left residue on skin and resolved with a cleaning wipe",
+                  "complaint_id": "C-3007",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-04",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "VentAssist 300 ventilator",
+                  "event_type": "malfunction",
+                  "description": "Low-pressure alarm failed to sound during a circuit disconnect with no patient harm this time",
+                  "complaint_id": "C-3008",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-04",
+                  "recurrence_risk": "high"
+                },
+                {
+                  "device": "ClearView IV catheter",
+                  "event_type": "user_error",
+                  "description": "Catheter kinked during insertion by an untrained user and was replaced without incident",
+                  "complaint_id": "C-3009",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-05",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "ThermoScan ear thermometer",
+                  "event_type": "malfunction",
+                  "description": "Single inaccurate reading that could not be reproduced and device within spec on retest",
+                  "complaint_id": "C-3010",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-05",
+                  "recurrence_risk": "low"
+                }
+              ]
+            },
+            "stepKey": "triage",
+            "skillRef": "complaint-ingest@1"
+          },
+          "hash": "c73822404852cf751f3e8f3a6313adcf6a533e08ecc605657b9eca855780c017"
+        },
+        {
+          "seq": "17",
+          "occurred_at": "2026-06-13T14:07:20.288Z",
+          "actor": {
+            "id": "3779456b-50ee-4c28-8220-341d0f6fbbe5",
+            "name": "mdr-complaint-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "complaints": [
+                {
+                  "device": "GlucoTrack G5 meter",
+                  "event_type": "user_error",
+                  "description": "Reading discrepancy traced to expired test strips supplied by the patient",
+                  "complaint_id": "C-3001",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-01",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "FlexiPort infusion set",
+                  "event_type": "cosmetic",
+                  "description": "Discoloration on tubing exterior with no functional impact found on inspection",
+                  "complaint_id": "C-3002",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-01",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "AeroMist nebulizer",
+                  "event_type": "user_error",
+                  "description": "Device not charged before use and stopped mid-session",
+                  "complaint_id": "C-3003",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-02",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "InsuFlow MX insulin pump",
+                  "event_type": "serious_injury",
+                  "description": "Pump over-delivered insulin overnight and patient was hospitalized with severe hypoglycemia",
+                  "complaint_id": "C-3004",
+                  "patient_harm": "hospitalized",
+                  "received_date": "2026-06-02",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "DermaSeal wound dressing",
+                  "event_type": "packaging",
+                  "description": "Outer pouch seal wrinkled but sterile barrier intact on inspection",
+                  "complaint_id": "C-3005",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-03",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "OrthoBrace knee support",
+                  "event_type": "user_error",
+                  "description": "Strap fitted upside down per submitted photos with no injury reported",
+                  "complaint_id": "C-3006",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-03",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "CardioSense ECG patch",
+                  "event_type": "cosmetic",
+                  "description": "Adhesive left residue on skin and resolved with a cleaning wipe",
+                  "complaint_id": "C-3007",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-04",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "VentAssist 300 ventilator",
+                  "event_type": "malfunction",
+                  "description": "Low-pressure alarm failed to sound during a circuit disconnect with no patient harm this time",
+                  "complaint_id": "C-3008",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-04",
+                  "recurrence_risk": "high"
+                },
+                {
+                  "device": "ClearView IV catheter",
+                  "event_type": "user_error",
+                  "description": "Catheter kinked during insertion by an untrained user and was replaced without incident",
+                  "complaint_id": "C-3009",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-05",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "ThermoScan ear thermometer",
+                  "event_type": "malfunction",
+                  "description": "Single inaccurate reading that could not be reproduced and device within spec on retest",
+                  "complaint_id": "C-3010",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-05",
+                  "recurrence_risk": "low"
+                }
+              ]
+            },
+            "output": {
+              "cleared": [
+                {
+                  "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3001"
+                },
+                {
+                  "rationale": "event type \"cosmetic\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3002"
+                },
+                {
+                  "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3003"
+                },
+                {
+                  "rationale": "event type \"packaging\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3005"
+                },
+                {
+                  "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3006"
+                },
+                {
+                  "rationale": "event type \"cosmetic\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3007"
+                },
+                {
+                  "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3009"
+                },
+                {
+                  "rationale": "event type \"malfunction\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3010"
+                }
+              ],
+              "escalations": [
+                {
+                  "clock": "30-day MDR (21 CFR 803.50)",
+                  "device": "InsuFlow MX insulin pump",
+                  "eventType": "serious_injury",
+                  "rationale": "serious injury (patient harm: hospitalized) — reportable event; the 30-calendar-day MDR clock under 21 CFR 803.50 runs from awareness (2026-06-02)",
+                  "complaintId": "C-3004",
+                  "patientHarm": "hospitalized",
+                  "receivedDate": "2026-06-02",
+                  "recurrenceRisk": "low"
+                },
+                {
+                  "clock": "30-day malfunction MDR (21 CFR 803.50)",
+                  "device": "VentAssist 300 ventilator",
+                  "eventType": "malfunction",
+                  "rationale": "malfunction with high recurrence risk — would be likely to cause or contribute to a death or serious injury if it recurred; malfunction reportable under 21 CFR 803.50 from awareness (2026-06-04)",
+                  "complaintId": "C-3008",
+                  "patientHarm": "none",
+                  "receivedDate": "2026-06-04",
+                  "recurrenceRisk": "high"
+                }
+              ],
+              "complaintCount": 10,
+              "escalatedCount": 2
+            },
+            "stepKey": "triage",
+            "skillRef": "reportability-triage@1"
+          },
+          "hash": "a677bc66bc0def73d4dd48648dcf8a9b69c857f246a20722983b7743db32c8a3"
+        },
+        {
+          "seq": "18",
+          "occurred_at": "2026-06-13T14:07:20.292Z",
+          "actor": {
+            "id": "3779456b-50ee-4c28-8220-341d0f6fbbe5",
+            "name": "mdr-complaint-analyst",
+            "type": "agent"
+          },
+          "event_type": "run.step.completed",
+          "payload": {
+            "output": {
+              "cleared": [
+                {
+                  "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3001"
+                },
+                {
+                  "rationale": "event type \"cosmetic\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3002"
+                },
+                {
+                  "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3003"
+                },
+                {
+                  "rationale": "event type \"packaging\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3005"
+                },
+                {
+                  "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3006"
+                },
+                {
+                  "rationale": "event type \"cosmetic\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3007"
+                },
+                {
+                  "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3009"
+                },
+                {
+                  "rationale": "event type \"malfunction\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3010"
+                }
+              ],
+              "escalations": [
+                {
+                  "clock": "30-day MDR (21 CFR 803.50)",
+                  "device": "InsuFlow MX insulin pump",
+                  "eventType": "serious_injury",
+                  "rationale": "serious injury (patient harm: hospitalized) — reportable event; the 30-calendar-day MDR clock under 21 CFR 803.50 runs from awareness (2026-06-02)",
+                  "complaintId": "C-3004",
+                  "patientHarm": "hospitalized",
+                  "receivedDate": "2026-06-02",
+                  "recurrenceRisk": "low"
+                },
+                {
+                  "clock": "30-day malfunction MDR (21 CFR 803.50)",
+                  "device": "VentAssist 300 ventilator",
+                  "eventType": "malfunction",
+                  "rationale": "malfunction with high recurrence risk — would be likely to cause or contribute to a death or serious injury if it recurred; malfunction reportable under 21 CFR 803.50 from awareness (2026-06-04)",
+                  "complaintId": "C-3008",
+                  "patientHarm": "none",
+                  "receivedDate": "2026-06-04",
+                  "recurrenceRisk": "high"
+                }
+              ],
+              "complaintCount": 10,
+              "escalatedCount": 2
+            },
+            "attempt": 1,
+            "stepKey": "triage"
+          },
+          "hash": "ba7f4cb954b0107552406a0c443b473aed5f5e9d83889d4cf2a1ac834845ae28"
+        },
+        {
+          "seq": "19",
+          "occurred_at": "2026-06-13T14:07:20.298Z",
+          "actor": {
+            "id": "engine",
+            "type": "system"
+          },
+          "event_type": "approval.requested",
+          "payload": {
+            "title": "Reportability decision — regulatory officer sign-off",
+            "stepKey": "reportability_decision",
+            "stepIndex": 1,
+            "requiredApprovals": 1
+          },
+          "hash": "a57d080fcc3da5d7d7f46981ce4af7c3b1b89f9ae4b79f428067cd6f738235cb"
+        }
+      ]
+    },
+    "completed": {
+      "run": {
+        "id": "6d271d9b-2ccc-450e-b095-9c5c91fb1c8a",
+        "flow": "mdr-reportability-triage",
+        "version": 1,
+        "definition": {
+          "name": "mdr-reportability-triage",
+          "steps": [
+            {
+              "key": "triage",
+              "agent": "mdr-complaint-analyst",
+              "skills": [
+                "complaint-ingest@1",
+                "reportability-triage@1"
+              ],
+              "retries": {
+                "backoff": "exponential",
+                "max_attempts": 3
+              },
+              "timeout_ms": 120000,
+              "instructions": "Ingest the day's device complaints and propose reportability per complaint: escalate deaths, serious injuries, and malfunctions likely to recur, with the applicable MDR clock and a rationale."
+            },
+            {
+              "key": "reportability_decision",
+              "type": "approval_gate",
+              "title": "Reportability decision — regulatory officer sign-off",
+              "approvals": {
+                "min_approvals": 1,
+                "forbid_requester": true
+              }
+            },
+            {
+              "key": "file",
+              "agent": "mdr-complaint-analyst",
+              "skills": [
+                "mdr-draft@1",
+                "notify@1"
+              ],
+              "timeout_ms": 120000,
+              "instructions": "Draft the MDR report skeletons for the officer-decided reportable complaints and notify the regulatory channel."
+            }
+          ]
+        },
+        "status": "completed",
+        "failure_reason": null,
+        "input": {
+          "complaintsPath": "examples/mdr-reportability-triage/complaints.csv"
+        },
+        "triggered_by": {
+          "id": "9b2676f8-0195-49c2-9fa6-9d58279c5e8e",
+          "name": "admin@makerchecker.local",
+          "type": "user"
+        },
+        "created_at": "2026-06-13T14:07:20.228Z",
+        "started_at": "2026-06-13T14:07:20.251Z",
+        "finished_at": "2026-06-13T14:07:20.446Z"
+      },
+      "steps": [
+        {
+          "id": "9b1a0ff6-2135-437e-9307-6097e28c5157",
+          "step_index": 0,
+          "step_key": "triage",
+          "status": "completed",
+          "attempt": 1,
+          "input": {
+            "complaintsPath": "examples/mdr-reportability-triage/complaints.csv"
+          },
+          "output": {
+            "cleared": [
+              {
+                "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3001"
+              },
+              {
+                "rationale": "event type \"cosmetic\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3002"
+              },
+              {
+                "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3003"
+              },
+              {
+                "rationale": "event type \"packaging\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3005"
+              },
+              {
+                "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3006"
+              },
+              {
+                "rationale": "event type \"cosmetic\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3007"
+              },
+              {
+                "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3009"
+              },
+              {
+                "rationale": "event type \"malfunction\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3010"
+              }
+            ],
+            "escalations": [
+              {
+                "clock": "30-day MDR (21 CFR 803.50)",
+                "device": "InsuFlow MX insulin pump",
+                "eventType": "serious_injury",
+                "rationale": "serious injury (patient harm: hospitalized) — reportable event; the 30-calendar-day MDR clock under 21 CFR 803.50 runs from awareness (2026-06-02)",
+                "complaintId": "C-3004",
+                "patientHarm": "hospitalized",
+                "receivedDate": "2026-06-02",
+                "recurrenceRisk": "low"
+              },
+              {
+                "clock": "30-day malfunction MDR (21 CFR 803.50)",
+                "device": "VentAssist 300 ventilator",
+                "eventType": "malfunction",
+                "rationale": "malfunction with high recurrence risk — would be likely to cause or contribute to a death or serious injury if it recurred; malfunction reportable under 21 CFR 803.50 from awareness (2026-06-04)",
+                "complaintId": "C-3008",
+                "patientHarm": "none",
+                "receivedDate": "2026-06-04",
+                "recurrenceRisk": "high"
+              }
+            ],
+            "complaintCount": 10,
+            "escalatedCount": 2
+          },
+          "error": null,
+          "agent": "mdr-complaint-analyst",
+          "started_at": "2026-06-13T14:07:20.251Z",
+          "finished_at": "2026-06-13T14:07:20.289Z"
+        },
+        {
+          "id": "faa32ebc-a781-47bc-a03d-b2dc58a67f14",
+          "step_index": 2,
+          "step_key": "file",
+          "status": "completed",
+          "attempt": 1,
+          "input": {
+            "cleared": [
+              {
+                "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3001"
+              },
+              {
+                "rationale": "event type \"cosmetic\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3002"
+              },
+              {
+                "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3003"
+              },
+              {
+                "rationale": "event type \"packaging\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3005"
+              },
+              {
+                "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3006"
+              },
+              {
+                "rationale": "event type \"cosmetic\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3007"
+              },
+              {
+                "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3009"
+              },
+              {
+                "rationale": "event type \"malfunction\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                "complaintId": "C-3010"
+              }
+            ],
+            "escalations": [
+              {
+                "clock": "30-day MDR (21 CFR 803.50)",
+                "device": "InsuFlow MX insulin pump",
+                "eventType": "serious_injury",
+                "rationale": "serious injury (patient harm: hospitalized) — reportable event; the 30-calendar-day MDR clock under 21 CFR 803.50 runs from awareness (2026-06-02)",
+                "complaintId": "C-3004",
+                "patientHarm": "hospitalized",
+                "receivedDate": "2026-06-02",
+                "recurrenceRisk": "low"
+              },
+              {
+                "clock": "30-day malfunction MDR (21 CFR 803.50)",
+                "device": "VentAssist 300 ventilator",
+                "eventType": "malfunction",
+                "rationale": "malfunction with high recurrence risk — would be likely to cause or contribute to a death or serious injury if it recurred; malfunction reportable under 21 CFR 803.50 from awareness (2026-06-04)",
+                "complaintId": "C-3008",
+                "patientHarm": "none",
+                "receivedDate": "2026-06-04",
+                "recurrenceRisk": "high"
+              }
+            ],
+            "complaintCount": 10,
+            "escalatedCount": 2
+          },
+          "output": {
+            "channel": "#mdr",
+            "message": "MDR reportability triage complete: 2 MDR draft(s) prepared for officer-decided reportable complaints.",
+            "delivered": true,
+            "deliveredAt": "2026-06-13T14:07:20.437Z"
+          },
+          "error": null,
+          "agent": "mdr-complaint-analyst",
+          "started_at": "2026-06-13T14:07:20.317Z",
+          "finished_at": "2026-06-13T14:07:20.441Z"
+        }
+      ],
+      "approvals": [
+        {
+          "id": "61f2f90d-e5a4-494a-acaa-b600313668c3",
+          "step_key": "reportability_decision",
+          "status": "approved",
+          "requested_at": "2026-06-13T14:07:20.294Z",
+          "decided_at": "2026-06-13T14:07:20.310Z",
+          "reason": "C-3004 (InsuFlow MX insulin pump) is a reportable serious injury; C-3008 (VentAssist 300) is a malfunction likely to recur. File both within the 30-day MDR clock.",
+          "required_approvals": 1,
+          "decided_by": "officer@makerchecker.local",
+          "decisions": [
+            {
+              "id": "1765505f-c028-4be4-8415-6290017991ec",
+              "decision": "approved",
+              "reason": "C-3004 (InsuFlow MX insulin pump) is a reportable serious injury; C-3008 (VentAssist 300) is a malfunction likely to recur. File both within the 30-day MDR clock.",
+              "created_at": "2026-06-13T14:07:20.310Z",
+              "decided_by": "officer@makerchecker.local"
+            }
+          ]
+        }
+      ],
+      "auditEvents": [
+        {
+          "seq": "14",
+          "occurred_at": "2026-06-13T14:07:20.237Z",
+          "actor": {
+            "id": "9b2676f8-0195-49c2-9fa6-9d58279c5e8e",
+            "name": "admin@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "run.created",
+          "payload": {
+            "input": {
+              "complaintsPath": "examples/mdr-reportability-triage/complaints.csv"
+            },
+            "flowVersionId": "6bc7ed6b-eb6e-4c53-880f-012838907a6c"
+          },
+          "hash": "68946010c2b2006252f97fb5b5781bfaa9cd9fba67ef89250a7408f5ef5597cf"
+        },
+        {
+          "seq": "15",
+          "occurred_at": "2026-06-13T14:07:20.263Z",
+          "actor": {
+            "id": "3779456b-50ee-4c28-8220-341d0f6fbbe5",
+            "name": "mdr-complaint-analyst",
+            "type": "agent"
+          },
+          "event_type": "run.step.started",
+          "payload": {
+            "skills": [
+              "complaint-ingest@1",
+              "reportability-triage@1"
+            ],
+            "attempt": 1,
+            "stepKey": "triage",
+            "stepIndex": 0
+          },
+          "hash": "777e1d1202ffca487a020b532a2a0cea7e5201e1d28c2b6b3ad87131127afe0e"
+        },
+        {
+          "seq": "16",
+          "occurred_at": "2026-06-13T14:07:20.284Z",
+          "actor": {
+            "id": "3779456b-50ee-4c28-8220-341d0f6fbbe5",
+            "name": "mdr-complaint-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "complaintsPath": "examples/mdr-reportability-triage/complaints.csv"
+            },
+            "output": {
+              "complaints": [
+                {
+                  "device": "GlucoTrack G5 meter",
+                  "event_type": "user_error",
+                  "description": "Reading discrepancy traced to expired test strips supplied by the patient",
+                  "complaint_id": "C-3001",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-01",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "FlexiPort infusion set",
+                  "event_type": "cosmetic",
+                  "description": "Discoloration on tubing exterior with no functional impact found on inspection",
+                  "complaint_id": "C-3002",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-01",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "AeroMist nebulizer",
+                  "event_type": "user_error",
+                  "description": "Device not charged before use and stopped mid-session",
+                  "complaint_id": "C-3003",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-02",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "InsuFlow MX insulin pump",
+                  "event_type": "serious_injury",
+                  "description": "Pump over-delivered insulin overnight and patient was hospitalized with severe hypoglycemia",
+                  "complaint_id": "C-3004",
+                  "patient_harm": "hospitalized",
+                  "received_date": "2026-06-02",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "DermaSeal wound dressing",
+                  "event_type": "packaging",
+                  "description": "Outer pouch seal wrinkled but sterile barrier intact on inspection",
+                  "complaint_id": "C-3005",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-03",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "OrthoBrace knee support",
+                  "event_type": "user_error",
+                  "description": "Strap fitted upside down per submitted photos with no injury reported",
+                  "complaint_id": "C-3006",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-03",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "CardioSense ECG patch",
+                  "event_type": "cosmetic",
+                  "description": "Adhesive left residue on skin and resolved with a cleaning wipe",
+                  "complaint_id": "C-3007",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-04",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "VentAssist 300 ventilator",
+                  "event_type": "malfunction",
+                  "description": "Low-pressure alarm failed to sound during a circuit disconnect with no patient harm this time",
+                  "complaint_id": "C-3008",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-04",
+                  "recurrence_risk": "high"
+                },
+                {
+                  "device": "ClearView IV catheter",
+                  "event_type": "user_error",
+                  "description": "Catheter kinked during insertion by an untrained user and was replaced without incident",
+                  "complaint_id": "C-3009",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-05",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "ThermoScan ear thermometer",
+                  "event_type": "malfunction",
+                  "description": "Single inaccurate reading that could not be reproduced and device within spec on retest",
+                  "complaint_id": "C-3010",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-05",
+                  "recurrence_risk": "low"
+                }
+              ]
+            },
+            "stepKey": "triage",
+            "skillRef": "complaint-ingest@1"
+          },
+          "hash": "c73822404852cf751f3e8f3a6313adcf6a533e08ecc605657b9eca855780c017"
+        },
+        {
+          "seq": "17",
+          "occurred_at": "2026-06-13T14:07:20.288Z",
+          "actor": {
+            "id": "3779456b-50ee-4c28-8220-341d0f6fbbe5",
+            "name": "mdr-complaint-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "complaints": [
+                {
+                  "device": "GlucoTrack G5 meter",
+                  "event_type": "user_error",
+                  "description": "Reading discrepancy traced to expired test strips supplied by the patient",
+                  "complaint_id": "C-3001",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-01",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "FlexiPort infusion set",
+                  "event_type": "cosmetic",
+                  "description": "Discoloration on tubing exterior with no functional impact found on inspection",
+                  "complaint_id": "C-3002",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-01",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "AeroMist nebulizer",
+                  "event_type": "user_error",
+                  "description": "Device not charged before use and stopped mid-session",
+                  "complaint_id": "C-3003",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-02",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "InsuFlow MX insulin pump",
+                  "event_type": "serious_injury",
+                  "description": "Pump over-delivered insulin overnight and patient was hospitalized with severe hypoglycemia",
+                  "complaint_id": "C-3004",
+                  "patient_harm": "hospitalized",
+                  "received_date": "2026-06-02",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "DermaSeal wound dressing",
+                  "event_type": "packaging",
+                  "description": "Outer pouch seal wrinkled but sterile barrier intact on inspection",
+                  "complaint_id": "C-3005",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-03",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "OrthoBrace knee support",
+                  "event_type": "user_error",
+                  "description": "Strap fitted upside down per submitted photos with no injury reported",
+                  "complaint_id": "C-3006",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-03",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "CardioSense ECG patch",
+                  "event_type": "cosmetic",
+                  "description": "Adhesive left residue on skin and resolved with a cleaning wipe",
+                  "complaint_id": "C-3007",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-04",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "VentAssist 300 ventilator",
+                  "event_type": "malfunction",
+                  "description": "Low-pressure alarm failed to sound during a circuit disconnect with no patient harm this time",
+                  "complaint_id": "C-3008",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-04",
+                  "recurrence_risk": "high"
+                },
+                {
+                  "device": "ClearView IV catheter",
+                  "event_type": "user_error",
+                  "description": "Catheter kinked during insertion by an untrained user and was replaced without incident",
+                  "complaint_id": "C-3009",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-05",
+                  "recurrence_risk": "low"
+                },
+                {
+                  "device": "ThermoScan ear thermometer",
+                  "event_type": "malfunction",
+                  "description": "Single inaccurate reading that could not be reproduced and device within spec on retest",
+                  "complaint_id": "C-3010",
+                  "patient_harm": "none",
+                  "received_date": "2026-06-05",
+                  "recurrence_risk": "low"
+                }
+              ]
+            },
+            "output": {
+              "cleared": [
+                {
+                  "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3001"
+                },
+                {
+                  "rationale": "event type \"cosmetic\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3002"
+                },
+                {
+                  "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3003"
+                },
+                {
+                  "rationale": "event type \"packaging\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3005"
+                },
+                {
+                  "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3006"
+                },
+                {
+                  "rationale": "event type \"cosmetic\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3007"
+                },
+                {
+                  "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3009"
+                },
+                {
+                  "rationale": "event type \"malfunction\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3010"
+                }
+              ],
+              "escalations": [
+                {
+                  "clock": "30-day MDR (21 CFR 803.50)",
+                  "device": "InsuFlow MX insulin pump",
+                  "eventType": "serious_injury",
+                  "rationale": "serious injury (patient harm: hospitalized) — reportable event; the 30-calendar-day MDR clock under 21 CFR 803.50 runs from awareness (2026-06-02)",
+                  "complaintId": "C-3004",
+                  "patientHarm": "hospitalized",
+                  "receivedDate": "2026-06-02",
+                  "recurrenceRisk": "low"
+                },
+                {
+                  "clock": "30-day malfunction MDR (21 CFR 803.50)",
+                  "device": "VentAssist 300 ventilator",
+                  "eventType": "malfunction",
+                  "rationale": "malfunction with high recurrence risk — would be likely to cause or contribute to a death or serious injury if it recurred; malfunction reportable under 21 CFR 803.50 from awareness (2026-06-04)",
+                  "complaintId": "C-3008",
+                  "patientHarm": "none",
+                  "receivedDate": "2026-06-04",
+                  "recurrenceRisk": "high"
+                }
+              ],
+              "complaintCount": 10,
+              "escalatedCount": 2
+            },
+            "stepKey": "triage",
+            "skillRef": "reportability-triage@1"
+          },
+          "hash": "a677bc66bc0def73d4dd48648dcf8a9b69c857f246a20722983b7743db32c8a3"
+        },
+        {
+          "seq": "18",
+          "occurred_at": "2026-06-13T14:07:20.292Z",
+          "actor": {
+            "id": "3779456b-50ee-4c28-8220-341d0f6fbbe5",
+            "name": "mdr-complaint-analyst",
+            "type": "agent"
+          },
+          "event_type": "run.step.completed",
+          "payload": {
+            "output": {
+              "cleared": [
+                {
+                  "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3001"
+                },
+                {
+                  "rationale": "event type \"cosmetic\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3002"
+                },
+                {
+                  "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3003"
+                },
+                {
+                  "rationale": "event type \"packaging\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3005"
+                },
+                {
+                  "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3006"
+                },
+                {
+                  "rationale": "event type \"cosmetic\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3007"
+                },
+                {
+                  "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3009"
+                },
+                {
+                  "rationale": "event type \"malfunction\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3010"
+                }
+              ],
+              "escalations": [
+                {
+                  "clock": "30-day MDR (21 CFR 803.50)",
+                  "device": "InsuFlow MX insulin pump",
+                  "eventType": "serious_injury",
+                  "rationale": "serious injury (patient harm: hospitalized) — reportable event; the 30-calendar-day MDR clock under 21 CFR 803.50 runs from awareness (2026-06-02)",
+                  "complaintId": "C-3004",
+                  "patientHarm": "hospitalized",
+                  "receivedDate": "2026-06-02",
+                  "recurrenceRisk": "low"
+                },
+                {
+                  "clock": "30-day malfunction MDR (21 CFR 803.50)",
+                  "device": "VentAssist 300 ventilator",
+                  "eventType": "malfunction",
+                  "rationale": "malfunction with high recurrence risk — would be likely to cause or contribute to a death or serious injury if it recurred; malfunction reportable under 21 CFR 803.50 from awareness (2026-06-04)",
+                  "complaintId": "C-3008",
+                  "patientHarm": "none",
+                  "receivedDate": "2026-06-04",
+                  "recurrenceRisk": "high"
+                }
+              ],
+              "complaintCount": 10,
+              "escalatedCount": 2
+            },
+            "attempt": 1,
+            "stepKey": "triage"
+          },
+          "hash": "ba7f4cb954b0107552406a0c443b473aed5f5e9d83889d4cf2a1ac834845ae28"
+        },
+        {
+          "seq": "19",
+          "occurred_at": "2026-06-13T14:07:20.298Z",
+          "actor": {
+            "id": "engine",
+            "type": "system"
+          },
+          "event_type": "approval.requested",
+          "payload": {
+            "title": "Reportability decision — regulatory officer sign-off",
+            "stepKey": "reportability_decision",
+            "stepIndex": 1,
+            "requiredApprovals": 1
+          },
+          "hash": "a57d080fcc3da5d7d7f46981ce4af7c3b1b89f9ae4b79f428067cd6f738235cb"
+        },
+        {
+          "seq": "20",
+          "occurred_at": "2026-06-13T14:07:20.309Z",
+          "actor": {
+            "id": "9b2676f8-0195-49c2-9fa6-9d58279c5e8e",
+            "name": "admin@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "approval.decision_denied",
+          "payload": {
+            "code": "requester_forbidden",
+            "reason": "the user who triggered this run cannot decide gate \"reportability_decision\" (forbid_requester)",
+            "stepKey": "reportability_decision",
+            "attemptedDecision": "approved"
+          },
+          "hash": "c3a0f42e590ca19e567738e4ac45267d3b25bca4a40686922f003a5eae2ade14"
+        },
+        {
+          "seq": "21",
+          "occurred_at": "2026-06-13T14:07:20.313Z",
+          "actor": {
+            "id": "fba033c5-5a55-442e-8e6d-356c0fd65ed6",
+            "name": "officer@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "approval.decided",
+          "payload": {
+            "reason": "C-3004 (InsuFlow MX insulin pump) is a reportable serious injury; C-3008 (VentAssist 300) is a malfunction likely to recur. File both within the 30-day MDR clock.",
+            "stepKey": "reportability_decision",
+            "decision": "approved",
+            "approvedCount": 1,
+            "rejectedCount": 0,
+            "requiredApprovals": 1
+          },
+          "hash": "3b8d4a2954864b932cf5f3ad7e7d07f96236533b9f424b846e8463c1ee41277a"
+        },
+        {
+          "seq": "22",
+          "occurred_at": "2026-06-13T14:07:20.314Z",
+          "actor": {
+            "id": "fba033c5-5a55-442e-8e6d-356c0fd65ed6",
+            "name": "officer@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "approval.resolved",
+          "payload": {
+            "outcome": "approved",
+            "stepKey": "reportability_decision",
+            "approvedCount": 1,
+            "rejectedCount": 0,
+            "requiredApprovals": 1
+          },
+          "hash": "ea1ebe85f7ec178b7740e7cde0d829335dbe8a64745bfc7a45f8d463e892c425"
+        },
+        {
+          "seq": "23",
+          "occurred_at": "2026-06-13T14:07:20.323Z",
+          "actor": {
+            "id": "3779456b-50ee-4c28-8220-341d0f6fbbe5",
+            "name": "mdr-complaint-analyst",
+            "type": "agent"
+          },
+          "event_type": "run.step.started",
+          "payload": {
+            "skills": [
+              "mdr-draft@1",
+              "notify@1"
+            ],
+            "attempt": 1,
+            "stepKey": "file",
+            "stepIndex": 2
+          },
+          "hash": "df459518593b52159071294fca32c7c184e24682c17690ff826093f853007b0d"
+        },
+        {
+          "seq": "24",
+          "occurred_at": "2026-06-13T14:07:20.329Z",
+          "actor": {
+            "id": "3779456b-50ee-4c28-8220-341d0f6fbbe5",
+            "name": "mdr-complaint-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "cleared": [
+                {
+                  "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3001"
+                },
+                {
+                  "rationale": "event type \"cosmetic\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3002"
+                },
+                {
+                  "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3003"
+                },
+                {
+                  "rationale": "event type \"packaging\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3005"
+                },
+                {
+                  "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3006"
+                },
+                {
+                  "rationale": "event type \"cosmetic\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3007"
+                },
+                {
+                  "rationale": "event type \"user_error\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3009"
+                },
+                {
+                  "rationale": "event type \"malfunction\" with patient harm \"none\" — not MDR-reportable; designated-unit review recorded",
+                  "complaintId": "C-3010"
+                }
+              ],
+              "escalations": [
+                {
+                  "clock": "30-day MDR (21 CFR 803.50)",
+                  "device": "InsuFlow MX insulin pump",
+                  "eventType": "serious_injury",
+                  "rationale": "serious injury (patient harm: hospitalized) — reportable event; the 30-calendar-day MDR clock under 21 CFR 803.50 runs from awareness (2026-06-02)",
+                  "complaintId": "C-3004",
+                  "patientHarm": "hospitalized",
+                  "receivedDate": "2026-06-02",
+                  "recurrenceRisk": "low"
+                },
+                {
+                  "clock": "30-day malfunction MDR (21 CFR 803.50)",
+                  "device": "VentAssist 300 ventilator",
+                  "eventType": "malfunction",
+                  "rationale": "malfunction with high recurrence risk — would be likely to cause or contribute to a death or serious injury if it recurred; malfunction reportable under 21 CFR 803.50 from awareness (2026-06-04)",
+                  "complaintId": "C-3008",
+                  "patientHarm": "none",
+                  "receivedDate": "2026-06-04",
+                  "recurrenceRisk": "high"
+                }
+              ],
+              "complaintCount": 10,
+              "escalatedCount": 2
+            },
+            "output": {
+              "drafts": [
+                {
+                  "draft": "MDR draft for C-3004 (InsuFlow MX insulin pump): serious_injury. Escalation rationale: serious injury (patient harm: hospitalized) — reportable event; the 30-calendar-day MDR clock under 21 CFR 803.50 runs from awareness (2026-06-02). Clock: 30-day MDR (21 CFR 803.50). Reportability decided by the regulatory officer at the reportability_decision gate.",
+                  "device": "InsuFlow MX insulin pump",
+                  "complaintId": "C-3004"
+                },
+                {
+                  "draft": "MDR draft for C-3008 (VentAssist 300 ventilator): malfunction. Escalation rationale: malfunction with high recurrence risk — would be likely to cause or contribute to a death or serious injury if it recurred; malfunction reportable under 21 CFR 803.50 from awareness (2026-06-04). Clock: 30-day malfunction MDR (21 CFR 803.50). Reportability decided by the regulatory officer at the reportability_decision gate.",
+                  "device": "VentAssist 300 ventilator",
+                  "complaintId": "C-3008"
+                }
+              ],
+              "channel": "#mdr",
+              "message": "MDR reportability triage complete: 2 MDR draft(s) prepared for officer-decided reportable complaints.",
+              "mdrCount": 2
+            },
+            "stepKey": "file",
+            "skillRef": "mdr-draft@1"
+          },
+          "hash": "eceeee3619de4cfb4f3c2195e2bc3a79684f79f727405df0cc1218dd997a5b6e"
+        },
+        {
+          "seq": "25",
+          "occurred_at": "2026-06-13T14:07:20.440Z",
+          "actor": {
+            "id": "3779456b-50ee-4c28-8220-341d0f6fbbe5",
+            "name": "mdr-complaint-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "drafts": [
+                {
+                  "draft": "MDR draft for C-3004 (InsuFlow MX insulin pump): serious_injury. Escalation rationale: serious injury (patient harm: hospitalized) — reportable event; the 30-calendar-day MDR clock under 21 CFR 803.50 runs from awareness (2026-06-02). Clock: 30-day MDR (21 CFR 803.50). Reportability decided by the regulatory officer at the reportability_decision gate.",
+                  "device": "InsuFlow MX insulin pump",
+                  "complaintId": "C-3004"
+                },
+                {
+                  "draft": "MDR draft for C-3008 (VentAssist 300 ventilator): malfunction. Escalation rationale: malfunction with high recurrence risk — would be likely to cause or contribute to a death or serious injury if it recurred; malfunction reportable under 21 CFR 803.50 from awareness (2026-06-04). Clock: 30-day malfunction MDR (21 CFR 803.50). Reportability decided by the regulatory officer at the reportability_decision gate.",
+                  "device": "VentAssist 300 ventilator",
+                  "complaintId": "C-3008"
+                }
+              ],
+              "channel": "#mdr",
+              "message": "MDR reportability triage complete: 2 MDR draft(s) prepared for officer-decided reportable complaints.",
+              "mdrCount": 2
+            },
+            "output": {
+              "channel": "#mdr",
+              "message": "MDR reportability triage complete: 2 MDR draft(s) prepared for officer-decided reportable complaints.",
+              "delivered": true,
+              "deliveredAt": "2026-06-13T14:07:20.437Z"
+            },
+            "stepKey": "file",
+            "skillRef": "notify@1"
+          },
+          "hash": "22929ccb50f26995b4189f561db6399608584bd091a396e3ca5d1399974f5cab"
+        },
+        {
+          "seq": "26",
+          "occurred_at": "2026-06-13T14:07:20.444Z",
+          "actor": {
+            "id": "3779456b-50ee-4c28-8220-341d0f6fbbe5",
+            "name": "mdr-complaint-analyst",
+            "type": "agent"
+          },
+          "event_type": "run.step.completed",
+          "payload": {
+            "output": {
+              "channel": "#mdr",
+              "message": "MDR reportability triage complete: 2 MDR draft(s) prepared for officer-decided reportable complaints.",
+              "delivered": true,
+              "deliveredAt": "2026-06-13T14:07:20.437Z"
+            },
+            "attempt": 1,
+            "stepKey": "file"
+          },
+          "hash": "20cc40414a1dc0938653a1b7d37de55e146484872dcec0d5649f071635ab2bb8"
+        },
+        {
+          "seq": "27",
+          "occurred_at": "2026-06-13T14:07:20.450Z",
+          "actor": {
+            "id": "engine",
+            "type": "system"
+          },
+          "event_type": "run.completed",
+          "payload": {},
+          "hash": "52b7d6194e2cb7808750e31c2095e7828d9bb1a738d87bfbc43dbc712a3550f8"
+        }
+      ]
+    }
+  },
+  "approval": {
+    "id": "61f2f90d-e5a4-494a-acaa-b600313668c3",
+    "run_id": "6d271d9b-2ccc-450e-b095-9c5c91fb1c8a",
+    "step_key": "reportability_decision",
+    "requested_at": "2026-06-13T14:07:20.294Z",
+    "required_approvals": 1,
+    "approved_count": 0,
+    "age_seconds": 0,
+    "overdue": false,
+    "flow": "mdr-reportability-triage"
+  },
+  "blockedDecision": {
+    "status": 403,
+    "message": "the user who triggered this run cannot decide gate \"reportability_decision\" (forbid_requester)"
+  },
+  "approvedDecision": {
+    "status": 200
+  },
+  "verify": {
+    "ok": true,
+    "count": 27,
+    "headHash": "52b7d6194e2cb7808750e31c2095e7828d9bb1a738d87bfbc43dbc712a3550f8"
+  },
+  "runsList": {
+    "runs": [
+      {
+        "id": "6d271d9b-2ccc-450e-b095-9c5c91fb1c8a",
+        "flow": "mdr-reportability-triage",
+        "version": 1,
+        "status": "completed",
+        "failure_reason": null,
+        "created_at": "2026-06-13T14:07:20.228Z",
+        "started_at": "2026-06-13T14:07:20.251Z",
+        "finished_at": "2026-06-13T14:07:20.446Z"
+      }
+    ]
+  }
+}

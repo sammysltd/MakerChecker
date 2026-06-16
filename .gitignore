@@ -1,0 +1,34 @@
+node_modules/
+dist/
+coverage/
+.turbo/
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+packages/server/data/
+
+# Private keys must never be committed (the instance signing key is generated
+# at runtime into packages/server/data/, which is already ignored above).
+*.pem
+*.key
+
+# Internal / not part of the public repo (kept locally)
+CLAUDE.md
+docs/positioning/
+
+# Local-only docker override (recording/dev aid)
+docker-compose.override.yml
+
+# Local agent tooling / transient worktrees
+.claude/
+
+# Python (sdk-python)
+__pycache__/
+*.egg-info/
+build/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

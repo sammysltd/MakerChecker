@@ -1,0 +1,3513 @@
+{
+  "meta": {
+    "flow": "gross-to-net-margin",
+    "note": "Captured from a real seeded run (auth enabled). Do not hand-edit; regenerate with CAPTURE_WRITE=1."
+  },
+  "actors": {
+    "analyst": {
+      "name": "Demo Admin",
+      "email": "admin@makerchecker.local"
+    },
+    "officer": {
+      "name": "Demo Approving Officer",
+      "email": "officer@makerchecker.local"
+    }
+  },
+  "scenes": {
+    "running": {
+      "run": {
+        "id": "9c9b3abb-38d8-45f9-a778-fb0dacf71088",
+        "flow": "gross-to-net-margin",
+        "version": 1,
+        "definition": {
+          "name": "gross-to-net-margin",
+          "steps": [
+            {
+              "key": "build",
+              "agent": "gtn-market-analyst",
+              "skills": [
+                "erp-extract@1",
+                "gtn-waterfall@1"
+              ],
+              "retries": {
+                "backoff": "exponential",
+                "max_attempts": 3
+              },
+              "timeout_ms": 120000,
+              "instructions": "Extract the ERP pricing export, assemble the gross-to-net waterfall per market and SKU, normalize to a comparable cross-market margin view, and flag any row whose deductions exceed 100% of list as a data-integrity exception."
+            },
+            {
+              "key": "margin_certification",
+              "type": "approval_gate",
+              "title": "Cross-market margin sign-off and accrual certification",
+              "approvals": {
+                "min_approvals": 1,
+                "forbid_requester": true
+              }
+            },
+            {
+              "key": "certify",
+              "agent": "gtn-market-analyst",
+              "skills": [
+                "accrual-draft@1",
+                "notify@1"
+              ],
+              "timeout_ms": 120000,
+              "instructions": "Draft the rebate-accrual summary for the controller-certified comparable margin view and notify the finance channel."
+            }
+          ]
+        },
+        "status": "running",
+        "failure_reason": null,
+        "input": {
+          "pricingPath": "examples/gross-to-net-margin/erp_pricing.csv"
+        },
+        "triggered_by": {
+          "id": "8985f57e-0d80-4968-a75d-ae5d5961d8ed",
+          "name": "admin@makerchecker.local",
+          "type": "user"
+        },
+        "created_at": "2026-06-13T14:07:20.238Z",
+        "started_at": "2026-06-13T14:07:20.255Z",
+        "finished_at": null
+      },
+      "steps": [
+        {
+          "id": "d3619934-7fe2-466b-980b-0af96006cce8",
+          "step_index": 0,
+          "step_key": "build",
+          "status": "running",
+          "attempt": 1,
+          "input": {
+            "pricingPath": "examples/gross-to-net-margin/erp_pricing.csv"
+          },
+          "output": null,
+          "error": null,
+          "agent": "gtn-market-analyst",
+          "started_at": "2026-06-13T14:07:20.255Z",
+          "finished_at": null
+        }
+      ],
+      "approvals": [],
+      "auditEvents": [
+        {
+          "seq": "14",
+          "occurred_at": "2026-06-13T14:07:20.244Z",
+          "actor": {
+            "id": "8985f57e-0d80-4968-a75d-ae5d5961d8ed",
+            "name": "admin@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "run.created",
+          "payload": {
+            "input": {
+              "pricingPath": "examples/gross-to-net-margin/erp_pricing.csv"
+            },
+            "flowVersionId": "c1cf2d74-1e51-414f-8281-eaa0529c6efb"
+          },
+          "hash": "63a20e6c05667e75eec2cf43ab57e5da1b384aa8ef66cfc208ef8632fa727a10"
+        },
+        {
+          "seq": "15",
+          "occurred_at": "2026-06-13T14:07:20.264Z",
+          "actor": {
+            "id": "34cc10e7-4c18-4a85-a0d9-7f8be58fc04e",
+            "name": "gtn-market-analyst",
+            "type": "agent"
+          },
+          "event_type": "run.step.started",
+          "payload": {
+            "skills": [
+              "erp-extract@1",
+              "gtn-waterfall@1"
+            ],
+            "attempt": 1,
+            "stepKey": "build",
+            "stepIndex": 0
+          },
+          "hash": "6469ba14be3308069c3cf30697e192b353474f7f063c52bc3316afc294df91fc"
+        },
+        {
+          "seq": "16",
+          "occurred_at": "2026-06-13T14:07:20.284Z",
+          "actor": {
+            "id": "34cc10e7-4c18-4a85-a0d9-7f8be58fc04e",
+            "name": "gtn-market-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "pricingPath": "examples/gross-to-net-margin/erp_pricing.csv"
+            },
+            "output": {
+              "rows": [
+                {
+                  "sku": "ONC-200",
+                  "units": 1850,
+                  "market": "US",
+                  "product": "Oncozar 200mg vial",
+                  "list_price": 4200,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.231,
+                  "austerity_discount_pct": 0.04
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 420000,
+                  "market": "US",
+                  "product": "Cardevol 10mg tab",
+                  "list_price": 1.85,
+                  "clawback_pct": 0.012,
+                  "statutory_rebate_pct": 0.131,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 3100,
+                  "market": "US",
+                  "product": "DX coronary stent",
+                  "list_price": 2450,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.05,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 640,
+                  "market": "US",
+                  "product": "InsuFlow MX pump",
+                  "list_price": 3900,
+                  "clawback_pct": 0.02,
+                  "statutory_rebate_pct": 0.1,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 2200,
+                  "market": "DE",
+                  "product": "Oncozar 200mg vial",
+                  "list_price": 3650,
+                  "clawback_pct": 0.07,
+                  "statutory_rebate_pct": 0.07,
+                  "austerity_discount_pct": 0.16
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 510000,
+                  "market": "DE",
+                  "product": "Cardevol 10mg tab",
+                  "list_price": 1.42,
+                  "clawback_pct": 0.31,
+                  "statutory_rebate_pct": 0.16,
+                  "austerity_discount_pct": 0.07
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 4050,
+                  "market": "DE",
+                  "product": "DX coronary stent",
+                  "list_price": 2100,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.07,
+                  "austerity_discount_pct": 0.1
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 720,
+                  "market": "DE",
+                  "product": "InsuFlow MX pump",
+                  "list_price": 3400,
+                  "clawback_pct": 0.3,
+                  "statutory_rebate_pct": 0.07,
+                  "austerity_discount_pct": 0.85
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 1340,
+                  "market": "JP",
+                  "product": "Oncozar 200mg vial",
+                  "list_price": 4980,
+                  "clawback_pct": 0.044,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0.06
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 295000,
+                  "market": "JP",
+                  "product": "Cardevol 10mg tab",
+                  "list_price": 2.1,
+                  "clawback_pct": 0.092,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 2600,
+                  "market": "JP",
+                  "product": "DX coronary stent",
+                  "list_price": 2780,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0.05
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 480,
+                  "market": "JP",
+                  "product": "InsuFlow MX pump",
+                  "list_price": 4250,
+                  "clawback_pct": 0.1,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0.12
+                }
+              ]
+            },
+            "stepKey": "build",
+            "skillRef": "erp-extract@1"
+          },
+          "hash": "54fdb327964ba5dbb8e9eef7c5dc98731e80797d25656584b3bae21a276fc89d"
+        },
+        {
+          "seq": "17",
+          "occurred_at": "2026-06-13T14:07:20.294Z",
+          "actor": {
+            "id": "34cc10e7-4c18-4a85-a0d9-7f8be58fc04e",
+            "name": "gtn-market-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "rows": [
+                {
+                  "sku": "ONC-200",
+                  "units": 1850,
+                  "market": "US",
+                  "product": "Oncozar 200mg vial",
+                  "list_price": 4200,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.231,
+                  "austerity_discount_pct": 0.04
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 420000,
+                  "market": "US",
+                  "product": "Cardevol 10mg tab",
+                  "list_price": 1.85,
+                  "clawback_pct": 0.012,
+                  "statutory_rebate_pct": 0.131,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 3100,
+                  "market": "US",
+                  "product": "DX coronary stent",
+                  "list_price": 2450,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.05,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 640,
+                  "market": "US",
+                  "product": "InsuFlow MX pump",
+                  "list_price": 3900,
+                  "clawback_pct": 0.02,
+                  "statutory_rebate_pct": 0.1,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 2200,
+                  "market": "DE",
+                  "product": "Oncozar 200mg vial",
+                  "list_price": 3650,
+                  "clawback_pct": 0.07,
+                  "statutory_rebate_pct": 0.07,
+                  "austerity_discount_pct": 0.16
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 510000,
+                  "market": "DE",
+                  "product": "Cardevol 10mg tab",
+                  "list_price": 1.42,
+                  "clawback_pct": 0.31,
+                  "statutory_rebate_pct": 0.16,
+                  "austerity_discount_pct": 0.07
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 4050,
+                  "market": "DE",
+                  "product": "DX coronary stent",
+                  "list_price": 2100,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.07,
+                  "austerity_discount_pct": 0.1
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 720,
+                  "market": "DE",
+                  "product": "InsuFlow MX pump",
+                  "list_price": 3400,
+                  "clawback_pct": 0.3,
+                  "statutory_rebate_pct": 0.07,
+                  "austerity_discount_pct": 0.85
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 1340,
+                  "market": "JP",
+                  "product": "Oncozar 200mg vial",
+                  "list_price": 4980,
+                  "clawback_pct": 0.044,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0.06
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 295000,
+                  "market": "JP",
+                  "product": "Cardevol 10mg tab",
+                  "list_price": 2.1,
+                  "clawback_pct": 0.092,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 2600,
+                  "market": "JP",
+                  "product": "DX coronary stent",
+                  "list_price": 2780,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0.05
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 480,
+                  "market": "JP",
+                  "product": "InsuFlow MX pump",
+                  "list_price": 4250,
+                  "clawback_pct": 0.1,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0.12
+                }
+              ]
+            },
+            "output": {
+              "rows": [
+                {
+                  "sku": "ONC-200",
+                  "units": 1850,
+                  "market": "US",
+                  "product": "Oncozar 200mg vial",
+                  "netPrice": 3061.8,
+                  "listPrice": 4200,
+                  "netRevenue": 5664330,
+                  "clawbackPct": 0,
+                  "grossRevenue": 7770000,
+                  "netMarginPct": 0.729,
+                  "totalDeductionPct": 0.271,
+                  "statutoryRebatePct": 0.231,
+                  "austerityDiscountPct": 0.04
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 420000,
+                  "market": "US",
+                  "product": "Cardevol 10mg tab",
+                  "netPrice": 1.59,
+                  "listPrice": 1.85,
+                  "netRevenue": 667800,
+                  "clawbackPct": 0.012,
+                  "grossRevenue": 777000,
+                  "netMarginPct": 0.8595,
+                  "totalDeductionPct": 0.143,
+                  "statutoryRebatePct": 0.131,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 3100,
+                  "market": "US",
+                  "product": "DX coronary stent",
+                  "netPrice": 2327.5,
+                  "listPrice": 2450,
+                  "netRevenue": 7215250,
+                  "clawbackPct": 0,
+                  "grossRevenue": 7595000,
+                  "netMarginPct": 0.95,
+                  "totalDeductionPct": 0.05,
+                  "statutoryRebatePct": 0.05,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 640,
+                  "market": "US",
+                  "product": "InsuFlow MX pump",
+                  "netPrice": 3432,
+                  "listPrice": 3900,
+                  "netRevenue": 2196480,
+                  "clawbackPct": 0.02,
+                  "grossRevenue": 2496000,
+                  "netMarginPct": 0.88,
+                  "totalDeductionPct": 0.12,
+                  "statutoryRebatePct": 0.1,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 2200,
+                  "market": "DE",
+                  "product": "Oncozar 200mg vial",
+                  "netPrice": 2555,
+                  "listPrice": 3650,
+                  "netRevenue": 5621000,
+                  "clawbackPct": 0.07,
+                  "grossRevenue": 8030000,
+                  "netMarginPct": 0.7,
+                  "totalDeductionPct": 0.3,
+                  "statutoryRebatePct": 0.07,
+                  "austerityDiscountPct": 0.16
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 510000,
+                  "market": "DE",
+                  "product": "Cardevol 10mg tab",
+                  "netPrice": 0.65,
+                  "listPrice": 1.42,
+                  "netRevenue": 331500,
+                  "clawbackPct": 0.31,
+                  "grossRevenue": 724200,
+                  "netMarginPct": 0.4577,
+                  "totalDeductionPct": 0.54,
+                  "statutoryRebatePct": 0.16,
+                  "austerityDiscountPct": 0.07
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 4050,
+                  "market": "DE",
+                  "product": "DX coronary stent",
+                  "netPrice": 1743,
+                  "listPrice": 2100,
+                  "netRevenue": 7059150,
+                  "clawbackPct": 0,
+                  "grossRevenue": 8505000,
+                  "netMarginPct": 0.83,
+                  "totalDeductionPct": 0.17,
+                  "statutoryRebatePct": 0.07,
+                  "austerityDiscountPct": 0.1
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 1340,
+                  "market": "JP",
+                  "product": "Oncozar 200mg vial",
+                  "netPrice": 4038.78,
+                  "listPrice": 4980,
+                  "netRevenue": 5411965.2,
+                  "clawbackPct": 0.044,
+                  "grossRevenue": 6673200,
+                  "netMarginPct": 0.811,
+                  "totalDeductionPct": 0.189,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0.06
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 295000,
+                  "market": "JP",
+                  "product": "Cardevol 10mg tab",
+                  "netPrice": 1.73,
+                  "listPrice": 2.1,
+                  "netRevenue": 510350,
+                  "clawbackPct": 0.092,
+                  "grossRevenue": 619500,
+                  "netMarginPct": 0.8238,
+                  "totalDeductionPct": 0.177,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 2600,
+                  "market": "JP",
+                  "product": "DX coronary stent",
+                  "netPrice": 2404.7,
+                  "listPrice": 2780,
+                  "netRevenue": 6252220,
+                  "clawbackPct": 0,
+                  "grossRevenue": 7228000,
+                  "netMarginPct": 0.865,
+                  "totalDeductionPct": 0.135,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0.05
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 480,
+                  "market": "JP",
+                  "product": "InsuFlow MX pump",
+                  "netPrice": 2953.75,
+                  "listPrice": 4250,
+                  "netRevenue": 1417800,
+                  "clawbackPct": 0.1,
+                  "grossRevenue": 2040000,
+                  "netMarginPct": 0.695,
+                  "totalDeductionPct": 0.305,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0.12
+                }
+              ],
+              "rowCount": 12,
+              "perMarket": [
+                {
+                  "market": "DE",
+                  "skuCount": 3,
+                  "netRevenue": 13011650,
+                  "grossRevenue": 17259200,
+                  "netMarginPct": 0.7539
+                },
+                {
+                  "market": "JP",
+                  "skuCount": 4,
+                  "netRevenue": 13592335.2,
+                  "grossRevenue": 16560700,
+                  "netMarginPct": 0.8208
+                },
+                {
+                  "market": "US",
+                  "skuCount": 4,
+                  "netRevenue": 15743860,
+                  "grossRevenue": 18638000,
+                  "netMarginPct": 0.8447
+                }
+              ],
+              "cleanCount": 11,
+              "exceptions": [
+                {
+                  "sku": "PUMP-MX",
+                  "type": "data_integrity_exception",
+                  "market": "DE",
+                  "product": "InsuFlow MX pump",
+                  "netPrice": -748,
+                  "listPrice": 3400,
+                  "rationale": "total deductions 122.0% of list (statutory 7.0% + austerity 85.0% + clawback 30.0%) yield an impossible net of -748.00 for DE/PUMP-MX — exceeds 100% of list, a likely double-counted austerity discount; excluded from the comparable view pending source correction",
+                  "clawbackPct": 0.3,
+                  "totalDeductionPct": 1.22,
+                  "statutoryRebatePct": 0.07,
+                  "austerityDiscountPct": 0.85
+                }
+              ],
+              "consolidated": {
+                "markets": 3,
+                "netRevenue": 42347845.2,
+                "grossRevenue": 52457900,
+                "netMarginPct": 0.8073,
+                "cleanSkuCount": 11
+              },
+              "exceptionCount": 1
+            },
+            "stepKey": "build",
+            "skillRef": "gtn-waterfall@1"
+          },
+          "hash": "a10aecde50be3fb8de1a2b1cb7e53fe1e814e09b49ba2c3ea2c033ec863b6c7d"
+        }
+      ]
+    },
+    "waiting": {
+      "run": {
+        "id": "9c9b3abb-38d8-45f9-a778-fb0dacf71088",
+        "flow": "gross-to-net-margin",
+        "version": 1,
+        "definition": {
+          "name": "gross-to-net-margin",
+          "steps": [
+            {
+              "key": "build",
+              "agent": "gtn-market-analyst",
+              "skills": [
+                "erp-extract@1",
+                "gtn-waterfall@1"
+              ],
+              "retries": {
+                "backoff": "exponential",
+                "max_attempts": 3
+              },
+              "timeout_ms": 120000,
+              "instructions": "Extract the ERP pricing export, assemble the gross-to-net waterfall per market and SKU, normalize to a comparable cross-market margin view, and flag any row whose deductions exceed 100% of list as a data-integrity exception."
+            },
+            {
+              "key": "margin_certification",
+              "type": "approval_gate",
+              "title": "Cross-market margin sign-off and accrual certification",
+              "approvals": {
+                "min_approvals": 1,
+                "forbid_requester": true
+              }
+            },
+            {
+              "key": "certify",
+              "agent": "gtn-market-analyst",
+              "skills": [
+                "accrual-draft@1",
+                "notify@1"
+              ],
+              "timeout_ms": 120000,
+              "instructions": "Draft the rebate-accrual summary for the controller-certified comparable margin view and notify the finance channel."
+            }
+          ]
+        },
+        "status": "waiting_approval",
+        "failure_reason": null,
+        "input": {
+          "pricingPath": "examples/gross-to-net-margin/erp_pricing.csv"
+        },
+        "triggered_by": {
+          "id": "8985f57e-0d80-4968-a75d-ae5d5961d8ed",
+          "name": "admin@makerchecker.local",
+          "type": "user"
+        },
+        "created_at": "2026-06-13T14:07:20.238Z",
+        "started_at": "2026-06-13T14:07:20.255Z",
+        "finished_at": null
+      },
+      "steps": [
+        {
+          "id": "d3619934-7fe2-466b-980b-0af96006cce8",
+          "step_index": 0,
+          "step_key": "build",
+          "status": "completed",
+          "attempt": 1,
+          "input": {
+            "pricingPath": "examples/gross-to-net-margin/erp_pricing.csv"
+          },
+          "output": {
+            "rows": [
+              {
+                "sku": "ONC-200",
+                "units": 1850,
+                "market": "US",
+                "product": "Oncozar 200mg vial",
+                "netPrice": 3061.8,
+                "listPrice": 4200,
+                "netRevenue": 5664330,
+                "clawbackPct": 0,
+                "grossRevenue": 7770000,
+                "netMarginPct": 0.729,
+                "totalDeductionPct": 0.271,
+                "statutoryRebatePct": 0.231,
+                "austerityDiscountPct": 0.04
+              },
+              {
+                "sku": "CAR-010",
+                "units": 420000,
+                "market": "US",
+                "product": "Cardevol 10mg tab",
+                "netPrice": 1.59,
+                "listPrice": 1.85,
+                "netRevenue": 667800,
+                "clawbackPct": 0.012,
+                "grossRevenue": 777000,
+                "netMarginPct": 0.8595,
+                "totalDeductionPct": 0.143,
+                "statutoryRebatePct": 0.131,
+                "austerityDiscountPct": 0
+              },
+              {
+                "sku": "STENT-DX",
+                "units": 3100,
+                "market": "US",
+                "product": "DX coronary stent",
+                "netPrice": 2327.5,
+                "listPrice": 2450,
+                "netRevenue": 7215250,
+                "clawbackPct": 0,
+                "grossRevenue": 7595000,
+                "netMarginPct": 0.95,
+                "totalDeductionPct": 0.05,
+                "statutoryRebatePct": 0.05,
+                "austerityDiscountPct": 0
+              },
+              {
+                "sku": "PUMP-MX",
+                "units": 640,
+                "market": "US",
+                "product": "InsuFlow MX pump",
+                "netPrice": 3432,
+                "listPrice": 3900,
+                "netRevenue": 2196480,
+                "clawbackPct": 0.02,
+                "grossRevenue": 2496000,
+                "netMarginPct": 0.88,
+                "totalDeductionPct": 0.12,
+                "statutoryRebatePct": 0.1,
+                "austerityDiscountPct": 0
+              },
+              {
+                "sku": "ONC-200",
+                "units": 2200,
+                "market": "DE",
+                "product": "Oncozar 200mg vial",
+                "netPrice": 2555,
+                "listPrice": 3650,
+                "netRevenue": 5621000,
+                "clawbackPct": 0.07,
+                "grossRevenue": 8030000,
+                "netMarginPct": 0.7,
+                "totalDeductionPct": 0.3,
+                "statutoryRebatePct": 0.07,
+                "austerityDiscountPct": 0.16
+              },
+              {
+                "sku": "CAR-010",
+                "units": 510000,
+                "market": "DE",
+                "product": "Cardevol 10mg tab",
+                "netPrice": 0.65,
+                "listPrice": 1.42,
+                "netRevenue": 331500,
+                "clawbackPct": 0.31,
+                "grossRevenue": 724200,
+                "netMarginPct": 0.4577,
+                "totalDeductionPct": 0.54,
+                "statutoryRebatePct": 0.16,
+                "austerityDiscountPct": 0.07
+              },
+              {
+                "sku": "STENT-DX",
+                "units": 4050,
+                "market": "DE",
+                "product": "DX coronary stent",
+                "netPrice": 1743,
+                "listPrice": 2100,
+                "netRevenue": 7059150,
+                "clawbackPct": 0,
+                "grossRevenue": 8505000,
+                "netMarginPct": 0.83,
+                "totalDeductionPct": 0.17,
+                "statutoryRebatePct": 0.07,
+                "austerityDiscountPct": 0.1
+              },
+              {
+                "sku": "ONC-200",
+                "units": 1340,
+                "market": "JP",
+                "product": "Oncozar 200mg vial",
+                "netPrice": 4038.78,
+                "listPrice": 4980,
+                "netRevenue": 5411965.2,
+                "clawbackPct": 0.044,
+                "grossRevenue": 6673200,
+                "netMarginPct": 0.811,
+                "totalDeductionPct": 0.189,
+                "statutoryRebatePct": 0.085,
+                "austerityDiscountPct": 0.06
+              },
+              {
+                "sku": "CAR-010",
+                "units": 295000,
+                "market": "JP",
+                "product": "Cardevol 10mg tab",
+                "netPrice": 1.73,
+                "listPrice": 2.1,
+                "netRevenue": 510350,
+                "clawbackPct": 0.092,
+                "grossRevenue": 619500,
+                "netMarginPct": 0.8238,
+                "totalDeductionPct": 0.177,
+                "statutoryRebatePct": 0.085,
+                "austerityDiscountPct": 0
+              },
+              {
+                "sku": "STENT-DX",
+                "units": 2600,
+                "market": "JP",
+                "product": "DX coronary stent",
+                "netPrice": 2404.7,
+                "listPrice": 2780,
+                "netRevenue": 6252220,
+                "clawbackPct": 0,
+                "grossRevenue": 7228000,
+                "netMarginPct": 0.865,
+                "totalDeductionPct": 0.135,
+                "statutoryRebatePct": 0.085,
+                "austerityDiscountPct": 0.05
+              },
+              {
+                "sku": "PUMP-MX",
+                "units": 480,
+                "market": "JP",
+                "product": "InsuFlow MX pump",
+                "netPrice": 2953.75,
+                "listPrice": 4250,
+                "netRevenue": 1417800,
+                "clawbackPct": 0.1,
+                "grossRevenue": 2040000,
+                "netMarginPct": 0.695,
+                "totalDeductionPct": 0.305,
+                "statutoryRebatePct": 0.085,
+                "austerityDiscountPct": 0.12
+              }
+            ],
+            "rowCount": 12,
+            "perMarket": [
+              {
+                "market": "DE",
+                "skuCount": 3,
+                "netRevenue": 13011650,
+                "grossRevenue": 17259200,
+                "netMarginPct": 0.7539
+              },
+              {
+                "market": "JP",
+                "skuCount": 4,
+                "netRevenue": 13592335.2,
+                "grossRevenue": 16560700,
+                "netMarginPct": 0.8208
+              },
+              {
+                "market": "US",
+                "skuCount": 4,
+                "netRevenue": 15743860,
+                "grossRevenue": 18638000,
+                "netMarginPct": 0.8447
+              }
+            ],
+            "cleanCount": 11,
+            "exceptions": [
+              {
+                "sku": "PUMP-MX",
+                "type": "data_integrity_exception",
+                "market": "DE",
+                "product": "InsuFlow MX pump",
+                "netPrice": -748,
+                "listPrice": 3400,
+                "rationale": "total deductions 122.0% of list (statutory 7.0% + austerity 85.0% + clawback 30.0%) yield an impossible net of -748.00 for DE/PUMP-MX — exceeds 100% of list, a likely double-counted austerity discount; excluded from the comparable view pending source correction",
+                "clawbackPct": 0.3,
+                "totalDeductionPct": 1.22,
+                "statutoryRebatePct": 0.07,
+                "austerityDiscountPct": 0.85
+              }
+            ],
+            "consolidated": {
+              "markets": 3,
+              "netRevenue": 42347845.2,
+              "grossRevenue": 52457900,
+              "netMarginPct": 0.8073,
+              "cleanSkuCount": 11
+            },
+            "exceptionCount": 1
+          },
+          "error": null,
+          "agent": "gtn-market-analyst",
+          "started_at": "2026-06-13T14:07:20.255Z",
+          "finished_at": "2026-06-13T14:07:20.295Z"
+        }
+      ],
+      "approvals": [
+        {
+          "id": "1349714b-5a64-4e2c-bd3d-cebc3183da7e",
+          "step_key": "margin_certification",
+          "status": "pending",
+          "requested_at": "2026-06-13T14:07:20.300Z",
+          "decided_at": null,
+          "reason": null,
+          "required_approvals": 1,
+          "decided_by": null,
+          "decisions": []
+        }
+      ],
+      "auditEvents": [
+        {
+          "seq": "14",
+          "occurred_at": "2026-06-13T14:07:20.244Z",
+          "actor": {
+            "id": "8985f57e-0d80-4968-a75d-ae5d5961d8ed",
+            "name": "admin@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "run.created",
+          "payload": {
+            "input": {
+              "pricingPath": "examples/gross-to-net-margin/erp_pricing.csv"
+            },
+            "flowVersionId": "c1cf2d74-1e51-414f-8281-eaa0529c6efb"
+          },
+          "hash": "63a20e6c05667e75eec2cf43ab57e5da1b384aa8ef66cfc208ef8632fa727a10"
+        },
+        {
+          "seq": "15",
+          "occurred_at": "2026-06-13T14:07:20.264Z",
+          "actor": {
+            "id": "34cc10e7-4c18-4a85-a0d9-7f8be58fc04e",
+            "name": "gtn-market-analyst",
+            "type": "agent"
+          },
+          "event_type": "run.step.started",
+          "payload": {
+            "skills": [
+              "erp-extract@1",
+              "gtn-waterfall@1"
+            ],
+            "attempt": 1,
+            "stepKey": "build",
+            "stepIndex": 0
+          },
+          "hash": "6469ba14be3308069c3cf30697e192b353474f7f063c52bc3316afc294df91fc"
+        },
+        {
+          "seq": "16",
+          "occurred_at": "2026-06-13T14:07:20.284Z",
+          "actor": {
+            "id": "34cc10e7-4c18-4a85-a0d9-7f8be58fc04e",
+            "name": "gtn-market-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "pricingPath": "examples/gross-to-net-margin/erp_pricing.csv"
+            },
+            "output": {
+              "rows": [
+                {
+                  "sku": "ONC-200",
+                  "units": 1850,
+                  "market": "US",
+                  "product": "Oncozar 200mg vial",
+                  "list_price": 4200,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.231,
+                  "austerity_discount_pct": 0.04
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 420000,
+                  "market": "US",
+                  "product": "Cardevol 10mg tab",
+                  "list_price": 1.85,
+                  "clawback_pct": 0.012,
+                  "statutory_rebate_pct": 0.131,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 3100,
+                  "market": "US",
+                  "product": "DX coronary stent",
+                  "list_price": 2450,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.05,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 640,
+                  "market": "US",
+                  "product": "InsuFlow MX pump",
+                  "list_price": 3900,
+                  "clawback_pct": 0.02,
+                  "statutory_rebate_pct": 0.1,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 2200,
+                  "market": "DE",
+                  "product": "Oncozar 200mg vial",
+                  "list_price": 3650,
+                  "clawback_pct": 0.07,
+                  "statutory_rebate_pct": 0.07,
+                  "austerity_discount_pct": 0.16
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 510000,
+                  "market": "DE",
+                  "product": "Cardevol 10mg tab",
+                  "list_price": 1.42,
+                  "clawback_pct": 0.31,
+                  "statutory_rebate_pct": 0.16,
+                  "austerity_discount_pct": 0.07
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 4050,
+                  "market": "DE",
+                  "product": "DX coronary stent",
+                  "list_price": 2100,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.07,
+                  "austerity_discount_pct": 0.1
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 720,
+                  "market": "DE",
+                  "product": "InsuFlow MX pump",
+                  "list_price": 3400,
+                  "clawback_pct": 0.3,
+                  "statutory_rebate_pct": 0.07,
+                  "austerity_discount_pct": 0.85
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 1340,
+                  "market": "JP",
+                  "product": "Oncozar 200mg vial",
+                  "list_price": 4980,
+                  "clawback_pct": 0.044,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0.06
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 295000,
+                  "market": "JP",
+                  "product": "Cardevol 10mg tab",
+                  "list_price": 2.1,
+                  "clawback_pct": 0.092,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 2600,
+                  "market": "JP",
+                  "product": "DX coronary stent",
+                  "list_price": 2780,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0.05
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 480,
+                  "market": "JP",
+                  "product": "InsuFlow MX pump",
+                  "list_price": 4250,
+                  "clawback_pct": 0.1,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0.12
+                }
+              ]
+            },
+            "stepKey": "build",
+            "skillRef": "erp-extract@1"
+          },
+          "hash": "54fdb327964ba5dbb8e9eef7c5dc98731e80797d25656584b3bae21a276fc89d"
+        },
+        {
+          "seq": "17",
+          "occurred_at": "2026-06-13T14:07:20.294Z",
+          "actor": {
+            "id": "34cc10e7-4c18-4a85-a0d9-7f8be58fc04e",
+            "name": "gtn-market-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "rows": [
+                {
+                  "sku": "ONC-200",
+                  "units": 1850,
+                  "market": "US",
+                  "product": "Oncozar 200mg vial",
+                  "list_price": 4200,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.231,
+                  "austerity_discount_pct": 0.04
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 420000,
+                  "market": "US",
+                  "product": "Cardevol 10mg tab",
+                  "list_price": 1.85,
+                  "clawback_pct": 0.012,
+                  "statutory_rebate_pct": 0.131,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 3100,
+                  "market": "US",
+                  "product": "DX coronary stent",
+                  "list_price": 2450,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.05,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 640,
+                  "market": "US",
+                  "product": "InsuFlow MX pump",
+                  "list_price": 3900,
+                  "clawback_pct": 0.02,
+                  "statutory_rebate_pct": 0.1,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 2200,
+                  "market": "DE",
+                  "product": "Oncozar 200mg vial",
+                  "list_price": 3650,
+                  "clawback_pct": 0.07,
+                  "statutory_rebate_pct": 0.07,
+                  "austerity_discount_pct": 0.16
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 510000,
+                  "market": "DE",
+                  "product": "Cardevol 10mg tab",
+                  "list_price": 1.42,
+                  "clawback_pct": 0.31,
+                  "statutory_rebate_pct": 0.16,
+                  "austerity_discount_pct": 0.07
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 4050,
+                  "market": "DE",
+                  "product": "DX coronary stent",
+                  "list_price": 2100,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.07,
+                  "austerity_discount_pct": 0.1
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 720,
+                  "market": "DE",
+                  "product": "InsuFlow MX pump",
+                  "list_price": 3400,
+                  "clawback_pct": 0.3,
+                  "statutory_rebate_pct": 0.07,
+                  "austerity_discount_pct": 0.85
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 1340,
+                  "market": "JP",
+                  "product": "Oncozar 200mg vial",
+                  "list_price": 4980,
+                  "clawback_pct": 0.044,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0.06
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 295000,
+                  "market": "JP",
+                  "product": "Cardevol 10mg tab",
+                  "list_price": 2.1,
+                  "clawback_pct": 0.092,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 2600,
+                  "market": "JP",
+                  "product": "DX coronary stent",
+                  "list_price": 2780,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0.05
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 480,
+                  "market": "JP",
+                  "product": "InsuFlow MX pump",
+                  "list_price": 4250,
+                  "clawback_pct": 0.1,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0.12
+                }
+              ]
+            },
+            "output": {
+              "rows": [
+                {
+                  "sku": "ONC-200",
+                  "units": 1850,
+                  "market": "US",
+                  "product": "Oncozar 200mg vial",
+                  "netPrice": 3061.8,
+                  "listPrice": 4200,
+                  "netRevenue": 5664330,
+                  "clawbackPct": 0,
+                  "grossRevenue": 7770000,
+                  "netMarginPct": 0.729,
+                  "totalDeductionPct": 0.271,
+                  "statutoryRebatePct": 0.231,
+                  "austerityDiscountPct": 0.04
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 420000,
+                  "market": "US",
+                  "product": "Cardevol 10mg tab",
+                  "netPrice": 1.59,
+                  "listPrice": 1.85,
+                  "netRevenue": 667800,
+                  "clawbackPct": 0.012,
+                  "grossRevenue": 777000,
+                  "netMarginPct": 0.8595,
+                  "totalDeductionPct": 0.143,
+                  "statutoryRebatePct": 0.131,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 3100,
+                  "market": "US",
+                  "product": "DX coronary stent",
+                  "netPrice": 2327.5,
+                  "listPrice": 2450,
+                  "netRevenue": 7215250,
+                  "clawbackPct": 0,
+                  "grossRevenue": 7595000,
+                  "netMarginPct": 0.95,
+                  "totalDeductionPct": 0.05,
+                  "statutoryRebatePct": 0.05,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 640,
+                  "market": "US",
+                  "product": "InsuFlow MX pump",
+                  "netPrice": 3432,
+                  "listPrice": 3900,
+                  "netRevenue": 2196480,
+                  "clawbackPct": 0.02,
+                  "grossRevenue": 2496000,
+                  "netMarginPct": 0.88,
+                  "totalDeductionPct": 0.12,
+                  "statutoryRebatePct": 0.1,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 2200,
+                  "market": "DE",
+                  "product": "Oncozar 200mg vial",
+                  "netPrice": 2555,
+                  "listPrice": 3650,
+                  "netRevenue": 5621000,
+                  "clawbackPct": 0.07,
+                  "grossRevenue": 8030000,
+                  "netMarginPct": 0.7,
+                  "totalDeductionPct": 0.3,
+                  "statutoryRebatePct": 0.07,
+                  "austerityDiscountPct": 0.16
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 510000,
+                  "market": "DE",
+                  "product": "Cardevol 10mg tab",
+                  "netPrice": 0.65,
+                  "listPrice": 1.42,
+                  "netRevenue": 331500,
+                  "clawbackPct": 0.31,
+                  "grossRevenue": 724200,
+                  "netMarginPct": 0.4577,
+                  "totalDeductionPct": 0.54,
+                  "statutoryRebatePct": 0.16,
+                  "austerityDiscountPct": 0.07
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 4050,
+                  "market": "DE",
+                  "product": "DX coronary stent",
+                  "netPrice": 1743,
+                  "listPrice": 2100,
+                  "netRevenue": 7059150,
+                  "clawbackPct": 0,
+                  "grossRevenue": 8505000,
+                  "netMarginPct": 0.83,
+                  "totalDeductionPct": 0.17,
+                  "statutoryRebatePct": 0.07,
+                  "austerityDiscountPct": 0.1
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 1340,
+                  "market": "JP",
+                  "product": "Oncozar 200mg vial",
+                  "netPrice": 4038.78,
+                  "listPrice": 4980,
+                  "netRevenue": 5411965.2,
+                  "clawbackPct": 0.044,
+                  "grossRevenue": 6673200,
+                  "netMarginPct": 0.811,
+                  "totalDeductionPct": 0.189,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0.06
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 295000,
+                  "market": "JP",
+                  "product": "Cardevol 10mg tab",
+                  "netPrice": 1.73,
+                  "listPrice": 2.1,
+                  "netRevenue": 510350,
+                  "clawbackPct": 0.092,
+                  "grossRevenue": 619500,
+                  "netMarginPct": 0.8238,
+                  "totalDeductionPct": 0.177,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 2600,
+                  "market": "JP",
+                  "product": "DX coronary stent",
+                  "netPrice": 2404.7,
+                  "listPrice": 2780,
+                  "netRevenue": 6252220,
+                  "clawbackPct": 0,
+                  "grossRevenue": 7228000,
+                  "netMarginPct": 0.865,
+                  "totalDeductionPct": 0.135,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0.05
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 480,
+                  "market": "JP",
+                  "product": "InsuFlow MX pump",
+                  "netPrice": 2953.75,
+                  "listPrice": 4250,
+                  "netRevenue": 1417800,
+                  "clawbackPct": 0.1,
+                  "grossRevenue": 2040000,
+                  "netMarginPct": 0.695,
+                  "totalDeductionPct": 0.305,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0.12
+                }
+              ],
+              "rowCount": 12,
+              "perMarket": [
+                {
+                  "market": "DE",
+                  "skuCount": 3,
+                  "netRevenue": 13011650,
+                  "grossRevenue": 17259200,
+                  "netMarginPct": 0.7539
+                },
+                {
+                  "market": "JP",
+                  "skuCount": 4,
+                  "netRevenue": 13592335.2,
+                  "grossRevenue": 16560700,
+                  "netMarginPct": 0.8208
+                },
+                {
+                  "market": "US",
+                  "skuCount": 4,
+                  "netRevenue": 15743860,
+                  "grossRevenue": 18638000,
+                  "netMarginPct": 0.8447
+                }
+              ],
+              "cleanCount": 11,
+              "exceptions": [
+                {
+                  "sku": "PUMP-MX",
+                  "type": "data_integrity_exception",
+                  "market": "DE",
+                  "product": "InsuFlow MX pump",
+                  "netPrice": -748,
+                  "listPrice": 3400,
+                  "rationale": "total deductions 122.0% of list (statutory 7.0% + austerity 85.0% + clawback 30.0%) yield an impossible net of -748.00 for DE/PUMP-MX — exceeds 100% of list, a likely double-counted austerity discount; excluded from the comparable view pending source correction",
+                  "clawbackPct": 0.3,
+                  "totalDeductionPct": 1.22,
+                  "statutoryRebatePct": 0.07,
+                  "austerityDiscountPct": 0.85
+                }
+              ],
+              "consolidated": {
+                "markets": 3,
+                "netRevenue": 42347845.2,
+                "grossRevenue": 52457900,
+                "netMarginPct": 0.8073,
+                "cleanSkuCount": 11
+              },
+              "exceptionCount": 1
+            },
+            "stepKey": "build",
+            "skillRef": "gtn-waterfall@1"
+          },
+          "hash": "a10aecde50be3fb8de1a2b1cb7e53fe1e814e09b49ba2c3ea2c033ec863b6c7d"
+        },
+        {
+          "seq": "18",
+          "occurred_at": "2026-06-13T14:07:20.298Z",
+          "actor": {
+            "id": "34cc10e7-4c18-4a85-a0d9-7f8be58fc04e",
+            "name": "gtn-market-analyst",
+            "type": "agent"
+          },
+          "event_type": "run.step.completed",
+          "payload": {
+            "output": {
+              "rows": [
+                {
+                  "sku": "ONC-200",
+                  "units": 1850,
+                  "market": "US",
+                  "product": "Oncozar 200mg vial",
+                  "netPrice": 3061.8,
+                  "listPrice": 4200,
+                  "netRevenue": 5664330,
+                  "clawbackPct": 0,
+                  "grossRevenue": 7770000,
+                  "netMarginPct": 0.729,
+                  "totalDeductionPct": 0.271,
+                  "statutoryRebatePct": 0.231,
+                  "austerityDiscountPct": 0.04
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 420000,
+                  "market": "US",
+                  "product": "Cardevol 10mg tab",
+                  "netPrice": 1.59,
+                  "listPrice": 1.85,
+                  "netRevenue": 667800,
+                  "clawbackPct": 0.012,
+                  "grossRevenue": 777000,
+                  "netMarginPct": 0.8595,
+                  "totalDeductionPct": 0.143,
+                  "statutoryRebatePct": 0.131,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 3100,
+                  "market": "US",
+                  "product": "DX coronary stent",
+                  "netPrice": 2327.5,
+                  "listPrice": 2450,
+                  "netRevenue": 7215250,
+                  "clawbackPct": 0,
+                  "grossRevenue": 7595000,
+                  "netMarginPct": 0.95,
+                  "totalDeductionPct": 0.05,
+                  "statutoryRebatePct": 0.05,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 640,
+                  "market": "US",
+                  "product": "InsuFlow MX pump",
+                  "netPrice": 3432,
+                  "listPrice": 3900,
+                  "netRevenue": 2196480,
+                  "clawbackPct": 0.02,
+                  "grossRevenue": 2496000,
+                  "netMarginPct": 0.88,
+                  "totalDeductionPct": 0.12,
+                  "statutoryRebatePct": 0.1,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 2200,
+                  "market": "DE",
+                  "product": "Oncozar 200mg vial",
+                  "netPrice": 2555,
+                  "listPrice": 3650,
+                  "netRevenue": 5621000,
+                  "clawbackPct": 0.07,
+                  "grossRevenue": 8030000,
+                  "netMarginPct": 0.7,
+                  "totalDeductionPct": 0.3,
+                  "statutoryRebatePct": 0.07,
+                  "austerityDiscountPct": 0.16
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 510000,
+                  "market": "DE",
+                  "product": "Cardevol 10mg tab",
+                  "netPrice": 0.65,
+                  "listPrice": 1.42,
+                  "netRevenue": 331500,
+                  "clawbackPct": 0.31,
+                  "grossRevenue": 724200,
+                  "netMarginPct": 0.4577,
+                  "totalDeductionPct": 0.54,
+                  "statutoryRebatePct": 0.16,
+                  "austerityDiscountPct": 0.07
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 4050,
+                  "market": "DE",
+                  "product": "DX coronary stent",
+                  "netPrice": 1743,
+                  "listPrice": 2100,
+                  "netRevenue": 7059150,
+                  "clawbackPct": 0,
+                  "grossRevenue": 8505000,
+                  "netMarginPct": 0.83,
+                  "totalDeductionPct": 0.17,
+                  "statutoryRebatePct": 0.07,
+                  "austerityDiscountPct": 0.1
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 1340,
+                  "market": "JP",
+                  "product": "Oncozar 200mg vial",
+                  "netPrice": 4038.78,
+                  "listPrice": 4980,
+                  "netRevenue": 5411965.2,
+                  "clawbackPct": 0.044,
+                  "grossRevenue": 6673200,
+                  "netMarginPct": 0.811,
+                  "totalDeductionPct": 0.189,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0.06
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 295000,
+                  "market": "JP",
+                  "product": "Cardevol 10mg tab",
+                  "netPrice": 1.73,
+                  "listPrice": 2.1,
+                  "netRevenue": 510350,
+                  "clawbackPct": 0.092,
+                  "grossRevenue": 619500,
+                  "netMarginPct": 0.8238,
+                  "totalDeductionPct": 0.177,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 2600,
+                  "market": "JP",
+                  "product": "DX coronary stent",
+                  "netPrice": 2404.7,
+                  "listPrice": 2780,
+                  "netRevenue": 6252220,
+                  "clawbackPct": 0,
+                  "grossRevenue": 7228000,
+                  "netMarginPct": 0.865,
+                  "totalDeductionPct": 0.135,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0.05
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 480,
+                  "market": "JP",
+                  "product": "InsuFlow MX pump",
+                  "netPrice": 2953.75,
+                  "listPrice": 4250,
+                  "netRevenue": 1417800,
+                  "clawbackPct": 0.1,
+                  "grossRevenue": 2040000,
+                  "netMarginPct": 0.695,
+                  "totalDeductionPct": 0.305,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0.12
+                }
+              ],
+              "rowCount": 12,
+              "perMarket": [
+                {
+                  "market": "DE",
+                  "skuCount": 3,
+                  "netRevenue": 13011650,
+                  "grossRevenue": 17259200,
+                  "netMarginPct": 0.7539
+                },
+                {
+                  "market": "JP",
+                  "skuCount": 4,
+                  "netRevenue": 13592335.2,
+                  "grossRevenue": 16560700,
+                  "netMarginPct": 0.8208
+                },
+                {
+                  "market": "US",
+                  "skuCount": 4,
+                  "netRevenue": 15743860,
+                  "grossRevenue": 18638000,
+                  "netMarginPct": 0.8447
+                }
+              ],
+              "cleanCount": 11,
+              "exceptions": [
+                {
+                  "sku": "PUMP-MX",
+                  "type": "data_integrity_exception",
+                  "market": "DE",
+                  "product": "InsuFlow MX pump",
+                  "netPrice": -748,
+                  "listPrice": 3400,
+                  "rationale": "total deductions 122.0% of list (statutory 7.0% + austerity 85.0% + clawback 30.0%) yield an impossible net of -748.00 for DE/PUMP-MX — exceeds 100% of list, a likely double-counted austerity discount; excluded from the comparable view pending source correction",
+                  "clawbackPct": 0.3,
+                  "totalDeductionPct": 1.22,
+                  "statutoryRebatePct": 0.07,
+                  "austerityDiscountPct": 0.85
+                }
+              ],
+              "consolidated": {
+                "markets": 3,
+                "netRevenue": 42347845.2,
+                "grossRevenue": 52457900,
+                "netMarginPct": 0.8073,
+                "cleanSkuCount": 11
+              },
+              "exceptionCount": 1
+            },
+            "attempt": 1,
+            "stepKey": "build"
+          },
+          "hash": "b581ec7e9dfbcd86c936a73a2b21554f1e09674b0420764ab56787d47bafb785"
+        },
+        {
+          "seq": "19",
+          "occurred_at": "2026-06-13T14:07:20.304Z",
+          "actor": {
+            "id": "engine",
+            "type": "system"
+          },
+          "event_type": "approval.requested",
+          "payload": {
+            "title": "Cross-market margin sign-off and accrual certification",
+            "stepKey": "margin_certification",
+            "stepIndex": 1,
+            "requiredApprovals": 1
+          },
+          "hash": "66d429656b23db76474f60035b502874bdf2a416278665a15a8e5603443797c8"
+        }
+      ]
+    },
+    "completed": {
+      "run": {
+        "id": "9c9b3abb-38d8-45f9-a778-fb0dacf71088",
+        "flow": "gross-to-net-margin",
+        "version": 1,
+        "definition": {
+          "name": "gross-to-net-margin",
+          "steps": [
+            {
+              "key": "build",
+              "agent": "gtn-market-analyst",
+              "skills": [
+                "erp-extract@1",
+                "gtn-waterfall@1"
+              ],
+              "retries": {
+                "backoff": "exponential",
+                "max_attempts": 3
+              },
+              "timeout_ms": 120000,
+              "instructions": "Extract the ERP pricing export, assemble the gross-to-net waterfall per market and SKU, normalize to a comparable cross-market margin view, and flag any row whose deductions exceed 100% of list as a data-integrity exception."
+            },
+            {
+              "key": "margin_certification",
+              "type": "approval_gate",
+              "title": "Cross-market margin sign-off and accrual certification",
+              "approvals": {
+                "min_approvals": 1,
+                "forbid_requester": true
+              }
+            },
+            {
+              "key": "certify",
+              "agent": "gtn-market-analyst",
+              "skills": [
+                "accrual-draft@1",
+                "notify@1"
+              ],
+              "timeout_ms": 120000,
+              "instructions": "Draft the rebate-accrual summary for the controller-certified comparable margin view and notify the finance channel."
+            }
+          ]
+        },
+        "status": "completed",
+        "failure_reason": null,
+        "input": {
+          "pricingPath": "examples/gross-to-net-margin/erp_pricing.csv"
+        },
+        "triggered_by": {
+          "id": "8985f57e-0d80-4968-a75d-ae5d5961d8ed",
+          "name": "admin@makerchecker.local",
+          "type": "user"
+        },
+        "created_at": "2026-06-13T14:07:20.238Z",
+        "started_at": "2026-06-13T14:07:20.255Z",
+        "finished_at": "2026-06-13T14:07:20.446Z"
+      },
+      "steps": [
+        {
+          "id": "d3619934-7fe2-466b-980b-0af96006cce8",
+          "step_index": 0,
+          "step_key": "build",
+          "status": "completed",
+          "attempt": 1,
+          "input": {
+            "pricingPath": "examples/gross-to-net-margin/erp_pricing.csv"
+          },
+          "output": {
+            "rows": [
+              {
+                "sku": "ONC-200",
+                "units": 1850,
+                "market": "US",
+                "product": "Oncozar 200mg vial",
+                "netPrice": 3061.8,
+                "listPrice": 4200,
+                "netRevenue": 5664330,
+                "clawbackPct": 0,
+                "grossRevenue": 7770000,
+                "netMarginPct": 0.729,
+                "totalDeductionPct": 0.271,
+                "statutoryRebatePct": 0.231,
+                "austerityDiscountPct": 0.04
+              },
+              {
+                "sku": "CAR-010",
+                "units": 420000,
+                "market": "US",
+                "product": "Cardevol 10mg tab",
+                "netPrice": 1.59,
+                "listPrice": 1.85,
+                "netRevenue": 667800,
+                "clawbackPct": 0.012,
+                "grossRevenue": 777000,
+                "netMarginPct": 0.8595,
+                "totalDeductionPct": 0.143,
+                "statutoryRebatePct": 0.131,
+                "austerityDiscountPct": 0
+              },
+              {
+                "sku": "STENT-DX",
+                "units": 3100,
+                "market": "US",
+                "product": "DX coronary stent",
+                "netPrice": 2327.5,
+                "listPrice": 2450,
+                "netRevenue": 7215250,
+                "clawbackPct": 0,
+                "grossRevenue": 7595000,
+                "netMarginPct": 0.95,
+                "totalDeductionPct": 0.05,
+                "statutoryRebatePct": 0.05,
+                "austerityDiscountPct": 0
+              },
+              {
+                "sku": "PUMP-MX",
+                "units": 640,
+                "market": "US",
+                "product": "InsuFlow MX pump",
+                "netPrice": 3432,
+                "listPrice": 3900,
+                "netRevenue": 2196480,
+                "clawbackPct": 0.02,
+                "grossRevenue": 2496000,
+                "netMarginPct": 0.88,
+                "totalDeductionPct": 0.12,
+                "statutoryRebatePct": 0.1,
+                "austerityDiscountPct": 0
+              },
+              {
+                "sku": "ONC-200",
+                "units": 2200,
+                "market": "DE",
+                "product": "Oncozar 200mg vial",
+                "netPrice": 2555,
+                "listPrice": 3650,
+                "netRevenue": 5621000,
+                "clawbackPct": 0.07,
+                "grossRevenue": 8030000,
+                "netMarginPct": 0.7,
+                "totalDeductionPct": 0.3,
+                "statutoryRebatePct": 0.07,
+                "austerityDiscountPct": 0.16
+              },
+              {
+                "sku": "CAR-010",
+                "units": 510000,
+                "market": "DE",
+                "product": "Cardevol 10mg tab",
+                "netPrice": 0.65,
+                "listPrice": 1.42,
+                "netRevenue": 331500,
+                "clawbackPct": 0.31,
+                "grossRevenue": 724200,
+                "netMarginPct": 0.4577,
+                "totalDeductionPct": 0.54,
+                "statutoryRebatePct": 0.16,
+                "austerityDiscountPct": 0.07
+              },
+              {
+                "sku": "STENT-DX",
+                "units": 4050,
+                "market": "DE",
+                "product": "DX coronary stent",
+                "netPrice": 1743,
+                "listPrice": 2100,
+                "netRevenue": 7059150,
+                "clawbackPct": 0,
+                "grossRevenue": 8505000,
+                "netMarginPct": 0.83,
+                "totalDeductionPct": 0.17,
+                "statutoryRebatePct": 0.07,
+                "austerityDiscountPct": 0.1
+              },
+              {
+                "sku": "ONC-200",
+                "units": 1340,
+                "market": "JP",
+                "product": "Oncozar 200mg vial",
+                "netPrice": 4038.78,
+                "listPrice": 4980,
+                "netRevenue": 5411965.2,
+                "clawbackPct": 0.044,
+                "grossRevenue": 6673200,
+                "netMarginPct": 0.811,
+                "totalDeductionPct": 0.189,
+                "statutoryRebatePct": 0.085,
+                "austerityDiscountPct": 0.06
+              },
+              {
+                "sku": "CAR-010",
+                "units": 295000,
+                "market": "JP",
+                "product": "Cardevol 10mg tab",
+                "netPrice": 1.73,
+                "listPrice": 2.1,
+                "netRevenue": 510350,
+                "clawbackPct": 0.092,
+                "grossRevenue": 619500,
+                "netMarginPct": 0.8238,
+                "totalDeductionPct": 0.177,
+                "statutoryRebatePct": 0.085,
+                "austerityDiscountPct": 0
+              },
+              {
+                "sku": "STENT-DX",
+                "units": 2600,
+                "market": "JP",
+                "product": "DX coronary stent",
+                "netPrice": 2404.7,
+                "listPrice": 2780,
+                "netRevenue": 6252220,
+                "clawbackPct": 0,
+                "grossRevenue": 7228000,
+                "netMarginPct": 0.865,
+                "totalDeductionPct": 0.135,
+                "statutoryRebatePct": 0.085,
+                "austerityDiscountPct": 0.05
+              },
+              {
+                "sku": "PUMP-MX",
+                "units": 480,
+                "market": "JP",
+                "product": "InsuFlow MX pump",
+                "netPrice": 2953.75,
+                "listPrice": 4250,
+                "netRevenue": 1417800,
+                "clawbackPct": 0.1,
+                "grossRevenue": 2040000,
+                "netMarginPct": 0.695,
+                "totalDeductionPct": 0.305,
+                "statutoryRebatePct": 0.085,
+                "austerityDiscountPct": 0.12
+              }
+            ],
+            "rowCount": 12,
+            "perMarket": [
+              {
+                "market": "DE",
+                "skuCount": 3,
+                "netRevenue": 13011650,
+                "grossRevenue": 17259200,
+                "netMarginPct": 0.7539
+              },
+              {
+                "market": "JP",
+                "skuCount": 4,
+                "netRevenue": 13592335.2,
+                "grossRevenue": 16560700,
+                "netMarginPct": 0.8208
+              },
+              {
+                "market": "US",
+                "skuCount": 4,
+                "netRevenue": 15743860,
+                "grossRevenue": 18638000,
+                "netMarginPct": 0.8447
+              }
+            ],
+            "cleanCount": 11,
+            "exceptions": [
+              {
+                "sku": "PUMP-MX",
+                "type": "data_integrity_exception",
+                "market": "DE",
+                "product": "InsuFlow MX pump",
+                "netPrice": -748,
+                "listPrice": 3400,
+                "rationale": "total deductions 122.0% of list (statutory 7.0% + austerity 85.0% + clawback 30.0%) yield an impossible net of -748.00 for DE/PUMP-MX — exceeds 100% of list, a likely double-counted austerity discount; excluded from the comparable view pending source correction",
+                "clawbackPct": 0.3,
+                "totalDeductionPct": 1.22,
+                "statutoryRebatePct": 0.07,
+                "austerityDiscountPct": 0.85
+              }
+            ],
+            "consolidated": {
+              "markets": 3,
+              "netRevenue": 42347845.2,
+              "grossRevenue": 52457900,
+              "netMarginPct": 0.8073,
+              "cleanSkuCount": 11
+            },
+            "exceptionCount": 1
+          },
+          "error": null,
+          "agent": "gtn-market-analyst",
+          "started_at": "2026-06-13T14:07:20.255Z",
+          "finished_at": "2026-06-13T14:07:20.295Z"
+        },
+        {
+          "id": "a973dbde-eb44-413e-97b2-f1ea5efe71e2",
+          "step_index": 2,
+          "step_key": "certify",
+          "status": "completed",
+          "attempt": 1,
+          "input": {
+            "rows": [
+              {
+                "sku": "ONC-200",
+                "units": 1850,
+                "market": "US",
+                "product": "Oncozar 200mg vial",
+                "netPrice": 3061.8,
+                "listPrice": 4200,
+                "netRevenue": 5664330,
+                "clawbackPct": 0,
+                "grossRevenue": 7770000,
+                "netMarginPct": 0.729,
+                "totalDeductionPct": 0.271,
+                "statutoryRebatePct": 0.231,
+                "austerityDiscountPct": 0.04
+              },
+              {
+                "sku": "CAR-010",
+                "units": 420000,
+                "market": "US",
+                "product": "Cardevol 10mg tab",
+                "netPrice": 1.59,
+                "listPrice": 1.85,
+                "netRevenue": 667800,
+                "clawbackPct": 0.012,
+                "grossRevenue": 777000,
+                "netMarginPct": 0.8595,
+                "totalDeductionPct": 0.143,
+                "statutoryRebatePct": 0.131,
+                "austerityDiscountPct": 0
+              },
+              {
+                "sku": "STENT-DX",
+                "units": 3100,
+                "market": "US",
+                "product": "DX coronary stent",
+                "netPrice": 2327.5,
+                "listPrice": 2450,
+                "netRevenue": 7215250,
+                "clawbackPct": 0,
+                "grossRevenue": 7595000,
+                "netMarginPct": 0.95,
+                "totalDeductionPct": 0.05,
+                "statutoryRebatePct": 0.05,
+                "austerityDiscountPct": 0
+              },
+              {
+                "sku": "PUMP-MX",
+                "units": 640,
+                "market": "US",
+                "product": "InsuFlow MX pump",
+                "netPrice": 3432,
+                "listPrice": 3900,
+                "netRevenue": 2196480,
+                "clawbackPct": 0.02,
+                "grossRevenue": 2496000,
+                "netMarginPct": 0.88,
+                "totalDeductionPct": 0.12,
+                "statutoryRebatePct": 0.1,
+                "austerityDiscountPct": 0
+              },
+              {
+                "sku": "ONC-200",
+                "units": 2200,
+                "market": "DE",
+                "product": "Oncozar 200mg vial",
+                "netPrice": 2555,
+                "listPrice": 3650,
+                "netRevenue": 5621000,
+                "clawbackPct": 0.07,
+                "grossRevenue": 8030000,
+                "netMarginPct": 0.7,
+                "totalDeductionPct": 0.3,
+                "statutoryRebatePct": 0.07,
+                "austerityDiscountPct": 0.16
+              },
+              {
+                "sku": "CAR-010",
+                "units": 510000,
+                "market": "DE",
+                "product": "Cardevol 10mg tab",
+                "netPrice": 0.65,
+                "listPrice": 1.42,
+                "netRevenue": 331500,
+                "clawbackPct": 0.31,
+                "grossRevenue": 724200,
+                "netMarginPct": 0.4577,
+                "totalDeductionPct": 0.54,
+                "statutoryRebatePct": 0.16,
+                "austerityDiscountPct": 0.07
+              },
+              {
+                "sku": "STENT-DX",
+                "units": 4050,
+                "market": "DE",
+                "product": "DX coronary stent",
+                "netPrice": 1743,
+                "listPrice": 2100,
+                "netRevenue": 7059150,
+                "clawbackPct": 0,
+                "grossRevenue": 8505000,
+                "netMarginPct": 0.83,
+                "totalDeductionPct": 0.17,
+                "statutoryRebatePct": 0.07,
+                "austerityDiscountPct": 0.1
+              },
+              {
+                "sku": "ONC-200",
+                "units": 1340,
+                "market": "JP",
+                "product": "Oncozar 200mg vial",
+                "netPrice": 4038.78,
+                "listPrice": 4980,
+                "netRevenue": 5411965.2,
+                "clawbackPct": 0.044,
+                "grossRevenue": 6673200,
+                "netMarginPct": 0.811,
+                "totalDeductionPct": 0.189,
+                "statutoryRebatePct": 0.085,
+                "austerityDiscountPct": 0.06
+              },
+              {
+                "sku": "CAR-010",
+                "units": 295000,
+                "market": "JP",
+                "product": "Cardevol 10mg tab",
+                "netPrice": 1.73,
+                "listPrice": 2.1,
+                "netRevenue": 510350,
+                "clawbackPct": 0.092,
+                "grossRevenue": 619500,
+                "netMarginPct": 0.8238,
+                "totalDeductionPct": 0.177,
+                "statutoryRebatePct": 0.085,
+                "austerityDiscountPct": 0
+              },
+              {
+                "sku": "STENT-DX",
+                "units": 2600,
+                "market": "JP",
+                "product": "DX coronary stent",
+                "netPrice": 2404.7,
+                "listPrice": 2780,
+                "netRevenue": 6252220,
+                "clawbackPct": 0,
+                "grossRevenue": 7228000,
+                "netMarginPct": 0.865,
+                "totalDeductionPct": 0.135,
+                "statutoryRebatePct": 0.085,
+                "austerityDiscountPct": 0.05
+              },
+              {
+                "sku": "PUMP-MX",
+                "units": 480,
+                "market": "JP",
+                "product": "InsuFlow MX pump",
+                "netPrice": 2953.75,
+                "listPrice": 4250,
+                "netRevenue": 1417800,
+                "clawbackPct": 0.1,
+                "grossRevenue": 2040000,
+                "netMarginPct": 0.695,
+                "totalDeductionPct": 0.305,
+                "statutoryRebatePct": 0.085,
+                "austerityDiscountPct": 0.12
+              }
+            ],
+            "rowCount": 12,
+            "perMarket": [
+              {
+                "market": "DE",
+                "skuCount": 3,
+                "netRevenue": 13011650,
+                "grossRevenue": 17259200,
+                "netMarginPct": 0.7539
+              },
+              {
+                "market": "JP",
+                "skuCount": 4,
+                "netRevenue": 13592335.2,
+                "grossRevenue": 16560700,
+                "netMarginPct": 0.8208
+              },
+              {
+                "market": "US",
+                "skuCount": 4,
+                "netRevenue": 15743860,
+                "grossRevenue": 18638000,
+                "netMarginPct": 0.8447
+              }
+            ],
+            "cleanCount": 11,
+            "exceptions": [
+              {
+                "sku": "PUMP-MX",
+                "type": "data_integrity_exception",
+                "market": "DE",
+                "product": "InsuFlow MX pump",
+                "netPrice": -748,
+                "listPrice": 3400,
+                "rationale": "total deductions 122.0% of list (statutory 7.0% + austerity 85.0% + clawback 30.0%) yield an impossible net of -748.00 for DE/PUMP-MX — exceeds 100% of list, a likely double-counted austerity discount; excluded from the comparable view pending source correction",
+                "clawbackPct": 0.3,
+                "totalDeductionPct": 1.22,
+                "statutoryRebatePct": 0.07,
+                "austerityDiscountPct": 0.85
+              }
+            ],
+            "consolidated": {
+              "markets": 3,
+              "netRevenue": 42347845.2,
+              "grossRevenue": 52457900,
+              "netMarginPct": 0.8073,
+              "cleanSkuCount": 11
+            },
+            "exceptionCount": 1
+          },
+          "output": {
+            "channel": "#finance",
+            "message": "Gross-to-net margin certified: consolidated net margin 80.7%, total rebate accrual 10110054.80 across 3 market(s).",
+            "delivered": true,
+            "deliveredAt": "2026-06-13T14:07:20.437Z"
+          },
+          "error": null,
+          "agent": "gtn-market-analyst",
+          "started_at": "2026-06-13T14:07:20.325Z",
+          "finished_at": "2026-06-13T14:07:20.441Z"
+        }
+      ],
+      "approvals": [
+        {
+          "id": "1349714b-5a64-4e2c-bd3d-cebc3183da7e",
+          "step_key": "margin_certification",
+          "status": "approved",
+          "requested_at": "2026-06-13T14:07:20.300Z",
+          "decided_at": "2026-06-13T14:07:20.318Z",
+          "reason": "Cross-market gross-to-net accrual reconciled; deduction exceptions reviewed against contract terms. Certified for the financials.",
+          "required_approvals": 1,
+          "decided_by": "officer@makerchecker.local",
+          "decisions": [
+            {
+              "id": "38aa83b1-a57f-409b-8d52-38662a506751",
+              "decision": "approved",
+              "reason": "Cross-market gross-to-net accrual reconciled; deduction exceptions reviewed against contract terms. Certified for the financials.",
+              "created_at": "2026-06-13T14:07:20.318Z",
+              "decided_by": "officer@makerchecker.local"
+            }
+          ]
+        }
+      ],
+      "auditEvents": [
+        {
+          "seq": "14",
+          "occurred_at": "2026-06-13T14:07:20.244Z",
+          "actor": {
+            "id": "8985f57e-0d80-4968-a75d-ae5d5961d8ed",
+            "name": "admin@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "run.created",
+          "payload": {
+            "input": {
+              "pricingPath": "examples/gross-to-net-margin/erp_pricing.csv"
+            },
+            "flowVersionId": "c1cf2d74-1e51-414f-8281-eaa0529c6efb"
+          },
+          "hash": "63a20e6c05667e75eec2cf43ab57e5da1b384aa8ef66cfc208ef8632fa727a10"
+        },
+        {
+          "seq": "15",
+          "occurred_at": "2026-06-13T14:07:20.264Z",
+          "actor": {
+            "id": "34cc10e7-4c18-4a85-a0d9-7f8be58fc04e",
+            "name": "gtn-market-analyst",
+            "type": "agent"
+          },
+          "event_type": "run.step.started",
+          "payload": {
+            "skills": [
+              "erp-extract@1",
+              "gtn-waterfall@1"
+            ],
+            "attempt": 1,
+            "stepKey": "build",
+            "stepIndex": 0
+          },
+          "hash": "6469ba14be3308069c3cf30697e192b353474f7f063c52bc3316afc294df91fc"
+        },
+        {
+          "seq": "16",
+          "occurred_at": "2026-06-13T14:07:20.284Z",
+          "actor": {
+            "id": "34cc10e7-4c18-4a85-a0d9-7f8be58fc04e",
+            "name": "gtn-market-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "pricingPath": "examples/gross-to-net-margin/erp_pricing.csv"
+            },
+            "output": {
+              "rows": [
+                {
+                  "sku": "ONC-200",
+                  "units": 1850,
+                  "market": "US",
+                  "product": "Oncozar 200mg vial",
+                  "list_price": 4200,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.231,
+                  "austerity_discount_pct": 0.04
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 420000,
+                  "market": "US",
+                  "product": "Cardevol 10mg tab",
+                  "list_price": 1.85,
+                  "clawback_pct": 0.012,
+                  "statutory_rebate_pct": 0.131,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 3100,
+                  "market": "US",
+                  "product": "DX coronary stent",
+                  "list_price": 2450,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.05,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 640,
+                  "market": "US",
+                  "product": "InsuFlow MX pump",
+                  "list_price": 3900,
+                  "clawback_pct": 0.02,
+                  "statutory_rebate_pct": 0.1,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 2200,
+                  "market": "DE",
+                  "product": "Oncozar 200mg vial",
+                  "list_price": 3650,
+                  "clawback_pct": 0.07,
+                  "statutory_rebate_pct": 0.07,
+                  "austerity_discount_pct": 0.16
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 510000,
+                  "market": "DE",
+                  "product": "Cardevol 10mg tab",
+                  "list_price": 1.42,
+                  "clawback_pct": 0.31,
+                  "statutory_rebate_pct": 0.16,
+                  "austerity_discount_pct": 0.07
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 4050,
+                  "market": "DE",
+                  "product": "DX coronary stent",
+                  "list_price": 2100,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.07,
+                  "austerity_discount_pct": 0.1
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 720,
+                  "market": "DE",
+                  "product": "InsuFlow MX pump",
+                  "list_price": 3400,
+                  "clawback_pct": 0.3,
+                  "statutory_rebate_pct": 0.07,
+                  "austerity_discount_pct": 0.85
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 1340,
+                  "market": "JP",
+                  "product": "Oncozar 200mg vial",
+                  "list_price": 4980,
+                  "clawback_pct": 0.044,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0.06
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 295000,
+                  "market": "JP",
+                  "product": "Cardevol 10mg tab",
+                  "list_price": 2.1,
+                  "clawback_pct": 0.092,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 2600,
+                  "market": "JP",
+                  "product": "DX coronary stent",
+                  "list_price": 2780,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0.05
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 480,
+                  "market": "JP",
+                  "product": "InsuFlow MX pump",
+                  "list_price": 4250,
+                  "clawback_pct": 0.1,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0.12
+                }
+              ]
+            },
+            "stepKey": "build",
+            "skillRef": "erp-extract@1"
+          },
+          "hash": "54fdb327964ba5dbb8e9eef7c5dc98731e80797d25656584b3bae21a276fc89d"
+        },
+        {
+          "seq": "17",
+          "occurred_at": "2026-06-13T14:07:20.294Z",
+          "actor": {
+            "id": "34cc10e7-4c18-4a85-a0d9-7f8be58fc04e",
+            "name": "gtn-market-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "rows": [
+                {
+                  "sku": "ONC-200",
+                  "units": 1850,
+                  "market": "US",
+                  "product": "Oncozar 200mg vial",
+                  "list_price": 4200,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.231,
+                  "austerity_discount_pct": 0.04
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 420000,
+                  "market": "US",
+                  "product": "Cardevol 10mg tab",
+                  "list_price": 1.85,
+                  "clawback_pct": 0.012,
+                  "statutory_rebate_pct": 0.131,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 3100,
+                  "market": "US",
+                  "product": "DX coronary stent",
+                  "list_price": 2450,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.05,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 640,
+                  "market": "US",
+                  "product": "InsuFlow MX pump",
+                  "list_price": 3900,
+                  "clawback_pct": 0.02,
+                  "statutory_rebate_pct": 0.1,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 2200,
+                  "market": "DE",
+                  "product": "Oncozar 200mg vial",
+                  "list_price": 3650,
+                  "clawback_pct": 0.07,
+                  "statutory_rebate_pct": 0.07,
+                  "austerity_discount_pct": 0.16
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 510000,
+                  "market": "DE",
+                  "product": "Cardevol 10mg tab",
+                  "list_price": 1.42,
+                  "clawback_pct": 0.31,
+                  "statutory_rebate_pct": 0.16,
+                  "austerity_discount_pct": 0.07
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 4050,
+                  "market": "DE",
+                  "product": "DX coronary stent",
+                  "list_price": 2100,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.07,
+                  "austerity_discount_pct": 0.1
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 720,
+                  "market": "DE",
+                  "product": "InsuFlow MX pump",
+                  "list_price": 3400,
+                  "clawback_pct": 0.3,
+                  "statutory_rebate_pct": 0.07,
+                  "austerity_discount_pct": 0.85
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 1340,
+                  "market": "JP",
+                  "product": "Oncozar 200mg vial",
+                  "list_price": 4980,
+                  "clawback_pct": 0.044,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0.06
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 295000,
+                  "market": "JP",
+                  "product": "Cardevol 10mg tab",
+                  "list_price": 2.1,
+                  "clawback_pct": 0.092,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 2600,
+                  "market": "JP",
+                  "product": "DX coronary stent",
+                  "list_price": 2780,
+                  "clawback_pct": 0,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0.05
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 480,
+                  "market": "JP",
+                  "product": "InsuFlow MX pump",
+                  "list_price": 4250,
+                  "clawback_pct": 0.1,
+                  "statutory_rebate_pct": 0.085,
+                  "austerity_discount_pct": 0.12
+                }
+              ]
+            },
+            "output": {
+              "rows": [
+                {
+                  "sku": "ONC-200",
+                  "units": 1850,
+                  "market": "US",
+                  "product": "Oncozar 200mg vial",
+                  "netPrice": 3061.8,
+                  "listPrice": 4200,
+                  "netRevenue": 5664330,
+                  "clawbackPct": 0,
+                  "grossRevenue": 7770000,
+                  "netMarginPct": 0.729,
+                  "totalDeductionPct": 0.271,
+                  "statutoryRebatePct": 0.231,
+                  "austerityDiscountPct": 0.04
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 420000,
+                  "market": "US",
+                  "product": "Cardevol 10mg tab",
+                  "netPrice": 1.59,
+                  "listPrice": 1.85,
+                  "netRevenue": 667800,
+                  "clawbackPct": 0.012,
+                  "grossRevenue": 777000,
+                  "netMarginPct": 0.8595,
+                  "totalDeductionPct": 0.143,
+                  "statutoryRebatePct": 0.131,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 3100,
+                  "market": "US",
+                  "product": "DX coronary stent",
+                  "netPrice": 2327.5,
+                  "listPrice": 2450,
+                  "netRevenue": 7215250,
+                  "clawbackPct": 0,
+                  "grossRevenue": 7595000,
+                  "netMarginPct": 0.95,
+                  "totalDeductionPct": 0.05,
+                  "statutoryRebatePct": 0.05,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 640,
+                  "market": "US",
+                  "product": "InsuFlow MX pump",
+                  "netPrice": 3432,
+                  "listPrice": 3900,
+                  "netRevenue": 2196480,
+                  "clawbackPct": 0.02,
+                  "grossRevenue": 2496000,
+                  "netMarginPct": 0.88,
+                  "totalDeductionPct": 0.12,
+                  "statutoryRebatePct": 0.1,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 2200,
+                  "market": "DE",
+                  "product": "Oncozar 200mg vial",
+                  "netPrice": 2555,
+                  "listPrice": 3650,
+                  "netRevenue": 5621000,
+                  "clawbackPct": 0.07,
+                  "grossRevenue": 8030000,
+                  "netMarginPct": 0.7,
+                  "totalDeductionPct": 0.3,
+                  "statutoryRebatePct": 0.07,
+                  "austerityDiscountPct": 0.16
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 510000,
+                  "market": "DE",
+                  "product": "Cardevol 10mg tab",
+                  "netPrice": 0.65,
+                  "listPrice": 1.42,
+                  "netRevenue": 331500,
+                  "clawbackPct": 0.31,
+                  "grossRevenue": 724200,
+                  "netMarginPct": 0.4577,
+                  "totalDeductionPct": 0.54,
+                  "statutoryRebatePct": 0.16,
+                  "austerityDiscountPct": 0.07
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 4050,
+                  "market": "DE",
+                  "product": "DX coronary stent",
+                  "netPrice": 1743,
+                  "listPrice": 2100,
+                  "netRevenue": 7059150,
+                  "clawbackPct": 0,
+                  "grossRevenue": 8505000,
+                  "netMarginPct": 0.83,
+                  "totalDeductionPct": 0.17,
+                  "statutoryRebatePct": 0.07,
+                  "austerityDiscountPct": 0.1
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 1340,
+                  "market": "JP",
+                  "product": "Oncozar 200mg vial",
+                  "netPrice": 4038.78,
+                  "listPrice": 4980,
+                  "netRevenue": 5411965.2,
+                  "clawbackPct": 0.044,
+                  "grossRevenue": 6673200,
+                  "netMarginPct": 0.811,
+                  "totalDeductionPct": 0.189,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0.06
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 295000,
+                  "market": "JP",
+                  "product": "Cardevol 10mg tab",
+                  "netPrice": 1.73,
+                  "listPrice": 2.1,
+                  "netRevenue": 510350,
+                  "clawbackPct": 0.092,
+                  "grossRevenue": 619500,
+                  "netMarginPct": 0.8238,
+                  "totalDeductionPct": 0.177,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 2600,
+                  "market": "JP",
+                  "product": "DX coronary stent",
+                  "netPrice": 2404.7,
+                  "listPrice": 2780,
+                  "netRevenue": 6252220,
+                  "clawbackPct": 0,
+                  "grossRevenue": 7228000,
+                  "netMarginPct": 0.865,
+                  "totalDeductionPct": 0.135,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0.05
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 480,
+                  "market": "JP",
+                  "product": "InsuFlow MX pump",
+                  "netPrice": 2953.75,
+                  "listPrice": 4250,
+                  "netRevenue": 1417800,
+                  "clawbackPct": 0.1,
+                  "grossRevenue": 2040000,
+                  "netMarginPct": 0.695,
+                  "totalDeductionPct": 0.305,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0.12
+                }
+              ],
+              "rowCount": 12,
+              "perMarket": [
+                {
+                  "market": "DE",
+                  "skuCount": 3,
+                  "netRevenue": 13011650,
+                  "grossRevenue": 17259200,
+                  "netMarginPct": 0.7539
+                },
+                {
+                  "market": "JP",
+                  "skuCount": 4,
+                  "netRevenue": 13592335.2,
+                  "grossRevenue": 16560700,
+                  "netMarginPct": 0.8208
+                },
+                {
+                  "market": "US",
+                  "skuCount": 4,
+                  "netRevenue": 15743860,
+                  "grossRevenue": 18638000,
+                  "netMarginPct": 0.8447
+                }
+              ],
+              "cleanCount": 11,
+              "exceptions": [
+                {
+                  "sku": "PUMP-MX",
+                  "type": "data_integrity_exception",
+                  "market": "DE",
+                  "product": "InsuFlow MX pump",
+                  "netPrice": -748,
+                  "listPrice": 3400,
+                  "rationale": "total deductions 122.0% of list (statutory 7.0% + austerity 85.0% + clawback 30.0%) yield an impossible net of -748.00 for DE/PUMP-MX — exceeds 100% of list, a likely double-counted austerity discount; excluded from the comparable view pending source correction",
+                  "clawbackPct": 0.3,
+                  "totalDeductionPct": 1.22,
+                  "statutoryRebatePct": 0.07,
+                  "austerityDiscountPct": 0.85
+                }
+              ],
+              "consolidated": {
+                "markets": 3,
+                "netRevenue": 42347845.2,
+                "grossRevenue": 52457900,
+                "netMarginPct": 0.8073,
+                "cleanSkuCount": 11
+              },
+              "exceptionCount": 1
+            },
+            "stepKey": "build",
+            "skillRef": "gtn-waterfall@1"
+          },
+          "hash": "a10aecde50be3fb8de1a2b1cb7e53fe1e814e09b49ba2c3ea2c033ec863b6c7d"
+        },
+        {
+          "seq": "18",
+          "occurred_at": "2026-06-13T14:07:20.298Z",
+          "actor": {
+            "id": "34cc10e7-4c18-4a85-a0d9-7f8be58fc04e",
+            "name": "gtn-market-analyst",
+            "type": "agent"
+          },
+          "event_type": "run.step.completed",
+          "payload": {
+            "output": {
+              "rows": [
+                {
+                  "sku": "ONC-200",
+                  "units": 1850,
+                  "market": "US",
+                  "product": "Oncozar 200mg vial",
+                  "netPrice": 3061.8,
+                  "listPrice": 4200,
+                  "netRevenue": 5664330,
+                  "clawbackPct": 0,
+                  "grossRevenue": 7770000,
+                  "netMarginPct": 0.729,
+                  "totalDeductionPct": 0.271,
+                  "statutoryRebatePct": 0.231,
+                  "austerityDiscountPct": 0.04
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 420000,
+                  "market": "US",
+                  "product": "Cardevol 10mg tab",
+                  "netPrice": 1.59,
+                  "listPrice": 1.85,
+                  "netRevenue": 667800,
+                  "clawbackPct": 0.012,
+                  "grossRevenue": 777000,
+                  "netMarginPct": 0.8595,
+                  "totalDeductionPct": 0.143,
+                  "statutoryRebatePct": 0.131,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 3100,
+                  "market": "US",
+                  "product": "DX coronary stent",
+                  "netPrice": 2327.5,
+                  "listPrice": 2450,
+                  "netRevenue": 7215250,
+                  "clawbackPct": 0,
+                  "grossRevenue": 7595000,
+                  "netMarginPct": 0.95,
+                  "totalDeductionPct": 0.05,
+                  "statutoryRebatePct": 0.05,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 640,
+                  "market": "US",
+                  "product": "InsuFlow MX pump",
+                  "netPrice": 3432,
+                  "listPrice": 3900,
+                  "netRevenue": 2196480,
+                  "clawbackPct": 0.02,
+                  "grossRevenue": 2496000,
+                  "netMarginPct": 0.88,
+                  "totalDeductionPct": 0.12,
+                  "statutoryRebatePct": 0.1,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 2200,
+                  "market": "DE",
+                  "product": "Oncozar 200mg vial",
+                  "netPrice": 2555,
+                  "listPrice": 3650,
+                  "netRevenue": 5621000,
+                  "clawbackPct": 0.07,
+                  "grossRevenue": 8030000,
+                  "netMarginPct": 0.7,
+                  "totalDeductionPct": 0.3,
+                  "statutoryRebatePct": 0.07,
+                  "austerityDiscountPct": 0.16
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 510000,
+                  "market": "DE",
+                  "product": "Cardevol 10mg tab",
+                  "netPrice": 0.65,
+                  "listPrice": 1.42,
+                  "netRevenue": 331500,
+                  "clawbackPct": 0.31,
+                  "grossRevenue": 724200,
+                  "netMarginPct": 0.4577,
+                  "totalDeductionPct": 0.54,
+                  "statutoryRebatePct": 0.16,
+                  "austerityDiscountPct": 0.07
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 4050,
+                  "market": "DE",
+                  "product": "DX coronary stent",
+                  "netPrice": 1743,
+                  "listPrice": 2100,
+                  "netRevenue": 7059150,
+                  "clawbackPct": 0,
+                  "grossRevenue": 8505000,
+                  "netMarginPct": 0.83,
+                  "totalDeductionPct": 0.17,
+                  "statutoryRebatePct": 0.07,
+                  "austerityDiscountPct": 0.1
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 1340,
+                  "market": "JP",
+                  "product": "Oncozar 200mg vial",
+                  "netPrice": 4038.78,
+                  "listPrice": 4980,
+                  "netRevenue": 5411965.2,
+                  "clawbackPct": 0.044,
+                  "grossRevenue": 6673200,
+                  "netMarginPct": 0.811,
+                  "totalDeductionPct": 0.189,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0.06
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 295000,
+                  "market": "JP",
+                  "product": "Cardevol 10mg tab",
+                  "netPrice": 1.73,
+                  "listPrice": 2.1,
+                  "netRevenue": 510350,
+                  "clawbackPct": 0.092,
+                  "grossRevenue": 619500,
+                  "netMarginPct": 0.8238,
+                  "totalDeductionPct": 0.177,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 2600,
+                  "market": "JP",
+                  "product": "DX coronary stent",
+                  "netPrice": 2404.7,
+                  "listPrice": 2780,
+                  "netRevenue": 6252220,
+                  "clawbackPct": 0,
+                  "grossRevenue": 7228000,
+                  "netMarginPct": 0.865,
+                  "totalDeductionPct": 0.135,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0.05
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 480,
+                  "market": "JP",
+                  "product": "InsuFlow MX pump",
+                  "netPrice": 2953.75,
+                  "listPrice": 4250,
+                  "netRevenue": 1417800,
+                  "clawbackPct": 0.1,
+                  "grossRevenue": 2040000,
+                  "netMarginPct": 0.695,
+                  "totalDeductionPct": 0.305,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0.12
+                }
+              ],
+              "rowCount": 12,
+              "perMarket": [
+                {
+                  "market": "DE",
+                  "skuCount": 3,
+                  "netRevenue": 13011650,
+                  "grossRevenue": 17259200,
+                  "netMarginPct": 0.7539
+                },
+                {
+                  "market": "JP",
+                  "skuCount": 4,
+                  "netRevenue": 13592335.2,
+                  "grossRevenue": 16560700,
+                  "netMarginPct": 0.8208
+                },
+                {
+                  "market": "US",
+                  "skuCount": 4,
+                  "netRevenue": 15743860,
+                  "grossRevenue": 18638000,
+                  "netMarginPct": 0.8447
+                }
+              ],
+              "cleanCount": 11,
+              "exceptions": [
+                {
+                  "sku": "PUMP-MX",
+                  "type": "data_integrity_exception",
+                  "market": "DE",
+                  "product": "InsuFlow MX pump",
+                  "netPrice": -748,
+                  "listPrice": 3400,
+                  "rationale": "total deductions 122.0% of list (statutory 7.0% + austerity 85.0% + clawback 30.0%) yield an impossible net of -748.00 for DE/PUMP-MX — exceeds 100% of list, a likely double-counted austerity discount; excluded from the comparable view pending source correction",
+                  "clawbackPct": 0.3,
+                  "totalDeductionPct": 1.22,
+                  "statutoryRebatePct": 0.07,
+                  "austerityDiscountPct": 0.85
+                }
+              ],
+              "consolidated": {
+                "markets": 3,
+                "netRevenue": 42347845.2,
+                "grossRevenue": 52457900,
+                "netMarginPct": 0.8073,
+                "cleanSkuCount": 11
+              },
+              "exceptionCount": 1
+            },
+            "attempt": 1,
+            "stepKey": "build"
+          },
+          "hash": "b581ec7e9dfbcd86c936a73a2b21554f1e09674b0420764ab56787d47bafb785"
+        },
+        {
+          "seq": "19",
+          "occurred_at": "2026-06-13T14:07:20.304Z",
+          "actor": {
+            "id": "engine",
+            "type": "system"
+          },
+          "event_type": "approval.requested",
+          "payload": {
+            "title": "Cross-market margin sign-off and accrual certification",
+            "stepKey": "margin_certification",
+            "stepIndex": 1,
+            "requiredApprovals": 1
+          },
+          "hash": "66d429656b23db76474f60035b502874bdf2a416278665a15a8e5603443797c8"
+        },
+        {
+          "seq": "20",
+          "occurred_at": "2026-06-13T14:07:20.317Z",
+          "actor": {
+            "id": "8985f57e-0d80-4968-a75d-ae5d5961d8ed",
+            "name": "admin@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "approval.decision_denied",
+          "payload": {
+            "code": "requester_forbidden",
+            "reason": "the user who triggered this run cannot decide gate \"margin_certification\" (forbid_requester)",
+            "stepKey": "margin_certification",
+            "attemptedDecision": "approved"
+          },
+          "hash": "c24e5c80ab714299a7427c25c2317cf9659c9d34e65bcfa3fef95553ccfd44c4"
+        },
+        {
+          "seq": "21",
+          "occurred_at": "2026-06-13T14:07:20.321Z",
+          "actor": {
+            "id": "e69f1408-c3ed-4ffe-8127-6452aca78b4d",
+            "name": "officer@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "approval.decided",
+          "payload": {
+            "reason": "Cross-market gross-to-net accrual reconciled; deduction exceptions reviewed against contract terms. Certified for the financials.",
+            "stepKey": "margin_certification",
+            "decision": "approved",
+            "approvedCount": 1,
+            "rejectedCount": 0,
+            "requiredApprovals": 1
+          },
+          "hash": "f5f8cbc34c75dbb02fa8ef6acd4223ba19528cd0788d9232ec650731caf90144"
+        },
+        {
+          "seq": "22",
+          "occurred_at": "2026-06-13T14:07:20.322Z",
+          "actor": {
+            "id": "e69f1408-c3ed-4ffe-8127-6452aca78b4d",
+            "name": "officer@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "approval.resolved",
+          "payload": {
+            "outcome": "approved",
+            "stepKey": "margin_certification",
+            "approvedCount": 1,
+            "rejectedCount": 0,
+            "requiredApprovals": 1
+          },
+          "hash": "1dcc10e57f8d0914c9ed2d9acf8094c9299c5fb3aa71456503487ae0f2c507bb"
+        },
+        {
+          "seq": "23",
+          "occurred_at": "2026-06-13T14:07:20.330Z",
+          "actor": {
+            "id": "34cc10e7-4c18-4a85-a0d9-7f8be58fc04e",
+            "name": "gtn-market-analyst",
+            "type": "agent"
+          },
+          "event_type": "run.step.started",
+          "payload": {
+            "skills": [
+              "accrual-draft@1",
+              "notify@1"
+            ],
+            "attempt": 1,
+            "stepKey": "certify",
+            "stepIndex": 2
+          },
+          "hash": "fce979c5830918bc281bc6db437fff0394b7a2509ce7173e4393e454483aa100"
+        },
+        {
+          "seq": "24",
+          "occurred_at": "2026-06-13T14:07:20.337Z",
+          "actor": {
+            "id": "34cc10e7-4c18-4a85-a0d9-7f8be58fc04e",
+            "name": "gtn-market-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "rows": [
+                {
+                  "sku": "ONC-200",
+                  "units": 1850,
+                  "market": "US",
+                  "product": "Oncozar 200mg vial",
+                  "netPrice": 3061.8,
+                  "listPrice": 4200,
+                  "netRevenue": 5664330,
+                  "clawbackPct": 0,
+                  "grossRevenue": 7770000,
+                  "netMarginPct": 0.729,
+                  "totalDeductionPct": 0.271,
+                  "statutoryRebatePct": 0.231,
+                  "austerityDiscountPct": 0.04
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 420000,
+                  "market": "US",
+                  "product": "Cardevol 10mg tab",
+                  "netPrice": 1.59,
+                  "listPrice": 1.85,
+                  "netRevenue": 667800,
+                  "clawbackPct": 0.012,
+                  "grossRevenue": 777000,
+                  "netMarginPct": 0.8595,
+                  "totalDeductionPct": 0.143,
+                  "statutoryRebatePct": 0.131,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 3100,
+                  "market": "US",
+                  "product": "DX coronary stent",
+                  "netPrice": 2327.5,
+                  "listPrice": 2450,
+                  "netRevenue": 7215250,
+                  "clawbackPct": 0,
+                  "grossRevenue": 7595000,
+                  "netMarginPct": 0.95,
+                  "totalDeductionPct": 0.05,
+                  "statutoryRebatePct": 0.05,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 640,
+                  "market": "US",
+                  "product": "InsuFlow MX pump",
+                  "netPrice": 3432,
+                  "listPrice": 3900,
+                  "netRevenue": 2196480,
+                  "clawbackPct": 0.02,
+                  "grossRevenue": 2496000,
+                  "netMarginPct": 0.88,
+                  "totalDeductionPct": 0.12,
+                  "statutoryRebatePct": 0.1,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 2200,
+                  "market": "DE",
+                  "product": "Oncozar 200mg vial",
+                  "netPrice": 2555,
+                  "listPrice": 3650,
+                  "netRevenue": 5621000,
+                  "clawbackPct": 0.07,
+                  "grossRevenue": 8030000,
+                  "netMarginPct": 0.7,
+                  "totalDeductionPct": 0.3,
+                  "statutoryRebatePct": 0.07,
+                  "austerityDiscountPct": 0.16
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 510000,
+                  "market": "DE",
+                  "product": "Cardevol 10mg tab",
+                  "netPrice": 0.65,
+                  "listPrice": 1.42,
+                  "netRevenue": 331500,
+                  "clawbackPct": 0.31,
+                  "grossRevenue": 724200,
+                  "netMarginPct": 0.4577,
+                  "totalDeductionPct": 0.54,
+                  "statutoryRebatePct": 0.16,
+                  "austerityDiscountPct": 0.07
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 4050,
+                  "market": "DE",
+                  "product": "DX coronary stent",
+                  "netPrice": 1743,
+                  "listPrice": 2100,
+                  "netRevenue": 7059150,
+                  "clawbackPct": 0,
+                  "grossRevenue": 8505000,
+                  "netMarginPct": 0.83,
+                  "totalDeductionPct": 0.17,
+                  "statutoryRebatePct": 0.07,
+                  "austerityDiscountPct": 0.1
+                },
+                {
+                  "sku": "ONC-200",
+                  "units": 1340,
+                  "market": "JP",
+                  "product": "Oncozar 200mg vial",
+                  "netPrice": 4038.78,
+                  "listPrice": 4980,
+                  "netRevenue": 5411965.2,
+                  "clawbackPct": 0.044,
+                  "grossRevenue": 6673200,
+                  "netMarginPct": 0.811,
+                  "totalDeductionPct": 0.189,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0.06
+                },
+                {
+                  "sku": "CAR-010",
+                  "units": 295000,
+                  "market": "JP",
+                  "product": "Cardevol 10mg tab",
+                  "netPrice": 1.73,
+                  "listPrice": 2.1,
+                  "netRevenue": 510350,
+                  "clawbackPct": 0.092,
+                  "grossRevenue": 619500,
+                  "netMarginPct": 0.8238,
+                  "totalDeductionPct": 0.177,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0
+                },
+                {
+                  "sku": "STENT-DX",
+                  "units": 2600,
+                  "market": "JP",
+                  "product": "DX coronary stent",
+                  "netPrice": 2404.7,
+                  "listPrice": 2780,
+                  "netRevenue": 6252220,
+                  "clawbackPct": 0,
+                  "grossRevenue": 7228000,
+                  "netMarginPct": 0.865,
+                  "totalDeductionPct": 0.135,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0.05
+                },
+                {
+                  "sku": "PUMP-MX",
+                  "units": 480,
+                  "market": "JP",
+                  "product": "InsuFlow MX pump",
+                  "netPrice": 2953.75,
+                  "listPrice": 4250,
+                  "netRevenue": 1417800,
+                  "clawbackPct": 0.1,
+                  "grossRevenue": 2040000,
+                  "netMarginPct": 0.695,
+                  "totalDeductionPct": 0.305,
+                  "statutoryRebatePct": 0.085,
+                  "austerityDiscountPct": 0.12
+                }
+              ],
+              "rowCount": 12,
+              "perMarket": [
+                {
+                  "market": "DE",
+                  "skuCount": 3,
+                  "netRevenue": 13011650,
+                  "grossRevenue": 17259200,
+                  "netMarginPct": 0.7539
+                },
+                {
+                  "market": "JP",
+                  "skuCount": 4,
+                  "netRevenue": 13592335.2,
+                  "grossRevenue": 16560700,
+                  "netMarginPct": 0.8208
+                },
+                {
+                  "market": "US",
+                  "skuCount": 4,
+                  "netRevenue": 15743860,
+                  "grossRevenue": 18638000,
+                  "netMarginPct": 0.8447
+                }
+              ],
+              "cleanCount": 11,
+              "exceptions": [
+                {
+                  "sku": "PUMP-MX",
+                  "type": "data_integrity_exception",
+                  "market": "DE",
+                  "product": "InsuFlow MX pump",
+                  "netPrice": -748,
+                  "listPrice": 3400,
+                  "rationale": "total deductions 122.0% of list (statutory 7.0% + austerity 85.0% + clawback 30.0%) yield an impossible net of -748.00 for DE/PUMP-MX — exceeds 100% of list, a likely double-counted austerity discount; excluded from the comparable view pending source correction",
+                  "clawbackPct": 0.3,
+                  "totalDeductionPct": 1.22,
+                  "statutoryRebatePct": 0.07,
+                  "austerityDiscountPct": 0.85
+                }
+              ],
+              "consolidated": {
+                "markets": 3,
+                "netRevenue": 42347845.2,
+                "grossRevenue": 52457900,
+                "netMarginPct": 0.8073,
+                "cleanSkuCount": 11
+              },
+              "exceptionCount": 1
+            },
+            "output": {
+              "channel": "#finance",
+              "message": "Gross-to-net margin certified: consolidated net margin 80.7%, total rebate accrual 10110054.80 across 3 market(s).",
+              "accruals": [
+                {
+                  "market": "DE",
+                  "netRevenue": 13011650,
+                  "grossRevenue": 17259200,
+                  "rebateAccrual": 4247550
+                },
+                {
+                  "market": "JP",
+                  "netRevenue": 13592335.2,
+                  "grossRevenue": 16560700,
+                  "rebateAccrual": 2968364.8
+                },
+                {
+                  "market": "US",
+                  "netRevenue": 15743860,
+                  "grossRevenue": 18638000,
+                  "rebateAccrual": 2894140
+                }
+              ],
+              "accrualCount": 3,
+              "consolidated": {
+                "markets": 3,
+                "netRevenue": 42347845.2,
+                "grossRevenue": 52457900,
+                "netMarginPct": 0.8073,
+                "cleanSkuCount": 11
+              },
+              "totalAccrual": 10110054.8
+            },
+            "stepKey": "certify",
+            "skillRef": "accrual-draft@1"
+          },
+          "hash": "167584211889af1dec2204dd188d8bb1b33cbbb30482db58eb1b6f0e3df055f9"
+        },
+        {
+          "seq": "25",
+          "occurred_at": "2026-06-13T14:07:20.440Z",
+          "actor": {
+            "id": "34cc10e7-4c18-4a85-a0d9-7f8be58fc04e",
+            "name": "gtn-market-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "channel": "#finance",
+              "message": "Gross-to-net margin certified: consolidated net margin 80.7%, total rebate accrual 10110054.80 across 3 market(s).",
+              "accruals": [
+                {
+                  "market": "DE",
+                  "netRevenue": 13011650,
+                  "grossRevenue": 17259200,
+                  "rebateAccrual": 4247550
+                },
+                {
+                  "market": "JP",
+                  "netRevenue": 13592335.2,
+                  "grossRevenue": 16560700,
+                  "rebateAccrual": 2968364.8
+                },
+                {
+                  "market": "US",
+                  "netRevenue": 15743860,
+                  "grossRevenue": 18638000,
+                  "rebateAccrual": 2894140
+                }
+              ],
+              "accrualCount": 3,
+              "consolidated": {
+                "markets": 3,
+                "netRevenue": 42347845.2,
+                "grossRevenue": 52457900,
+                "netMarginPct": 0.8073,
+                "cleanSkuCount": 11
+              },
+              "totalAccrual": 10110054.8
+            },
+            "output": {
+              "channel": "#finance",
+              "message": "Gross-to-net margin certified: consolidated net margin 80.7%, total rebate accrual 10110054.80 across 3 market(s).",
+              "delivered": true,
+              "deliveredAt": "2026-06-13T14:07:20.437Z"
+            },
+            "stepKey": "certify",
+            "skillRef": "notify@1"
+          },
+          "hash": "d11ec4c06bb6cb1c878543365c739efa1e41fdda76dc8392733512904d3ac7e4"
+        },
+        {
+          "seq": "26",
+          "occurred_at": "2026-06-13T14:07:20.444Z",
+          "actor": {
+            "id": "34cc10e7-4c18-4a85-a0d9-7f8be58fc04e",
+            "name": "gtn-market-analyst",
+            "type": "agent"
+          },
+          "event_type": "run.step.completed",
+          "payload": {
+            "output": {
+              "channel": "#finance",
+              "message": "Gross-to-net margin certified: consolidated net margin 80.7%, total rebate accrual 10110054.80 across 3 market(s).",
+              "delivered": true,
+              "deliveredAt": "2026-06-13T14:07:20.437Z"
+            },
+            "attempt": 1,
+            "stepKey": "certify"
+          },
+          "hash": "b9a16001896847e913342fe59a23830857379d68378bf53dda89153df21dc8ea"
+        },
+        {
+          "seq": "27",
+          "occurred_at": "2026-06-13T14:07:20.451Z",
+          "actor": {
+            "id": "engine",
+            "type": "system"
+          },
+          "event_type": "run.completed",
+          "payload": {},
+          "hash": "3360be3c3ee0af5fe19bd611ba1230f51d7f225653c41d9f3bbca4304528d7e3"
+        }
+      ]
+    }
+  },
+  "approval": {
+    "id": "1349714b-5a64-4e2c-bd3d-cebc3183da7e",
+    "run_id": "9c9b3abb-38d8-45f9-a778-fb0dacf71088",
+    "step_key": "margin_certification",
+    "requested_at": "2026-06-13T14:07:20.300Z",
+    "required_approvals": 1,
+    "approved_count": 0,
+    "age_seconds": 0,
+    "overdue": false,
+    "flow": "gross-to-net-margin"
+  },
+  "blockedDecision": {
+    "status": 403,
+    "message": "the user who triggered this run cannot decide gate \"margin_certification\" (forbid_requester)"
+  },
+  "approvedDecision": {
+    "status": 200
+  },
+  "verify": {
+    "ok": true,
+    "count": 27,
+    "headHash": "3360be3c3ee0af5fe19bd611ba1230f51d7f225653c41d9f3bbca4304528d7e3"
+  },
+  "runsList": {
+    "runs": [
+      {
+        "id": "9c9b3abb-38d8-45f9-a778-fb0dacf71088",
+        "flow": "gross-to-net-margin",
+        "version": 1,
+        "status": "completed",
+        "failure_reason": null,
+        "created_at": "2026-06-13T14:07:20.238Z",
+        "started_at": "2026-06-13T14:07:20.255Z",
+        "finished_at": "2026-06-13T14:07:20.446Z"
+      }
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+# Reference copy of the seeded flow definition (the database is canonical).
+name: daily-cash-reconciliation
+steps:
+  - key: prepare
+    agent: recon-preparer
+    skills: [csv-ingest@1, txn-match@1]
+    instructions: >-
+      Ingest the bank statement and ledger CSVs, match transactions, and
+      produce the exception list.
+    retries: { max_attempts: 3, backoff: exponential }
+    timeout_ms: 120000
+  - key: exception_review
+    type: approval_gate
+    title: Review the exception list before reporting
+  - key: report
+    agent: recon-reporter
+    skills: [report-gen@1, notify@1]
+    instructions: >-
+      Generate the reconciliation summary report and deliver it to the
+      #recon channel.
+    timeout_ms: 120000
