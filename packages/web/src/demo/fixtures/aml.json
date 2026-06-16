@@ -1,0 +1,1732 @@
+{
+  "meta": {
+    "flow": "aml-alert-triage",
+    "note": "Captured from a real seeded run (auth enabled). Do not hand-edit; regenerate with CAPTURE_WRITE=1."
+  },
+  "actors": {
+    "analyst": {
+      "name": "Demo Admin",
+      "email": "admin@makerchecker.local"
+    },
+    "officer": {
+      "name": "Demo Approving Officer",
+      "email": "officer@makerchecker.local"
+    }
+  },
+  "scenes": {
+    "running": {
+      "run": {
+        "id": "fdcbba3e-420a-4e6e-9cde-4f1288808e72",
+        "flow": "aml-alert-triage",
+        "version": 1,
+        "definition": {
+          "name": "aml-alert-triage",
+          "steps": [
+            {
+              "key": "triage",
+              "agent": "aml-l1-analyst",
+              "skills": [
+                "alert-ingest@1",
+                "alert-triage@1"
+              ],
+              "retries": {
+                "backoff": "exponential",
+                "max_attempts": 3
+              },
+              "timeout_ms": 120000,
+              "instructions": "Ingest the day's AML alerts and triage them: escalate sanctions near-matches and high-risk structuring patterns with a rationale per alert."
+            },
+            {
+              "key": "sar_decision",
+              "type": "approval_gate",
+              "title": "SAR filing decision — BSA officer must disposition the escalated alerts",
+              "approvals": {
+                "min_approvals": 1,
+                "forbid_requester": true
+              }
+            },
+            {
+              "key": "file",
+              "agent": "aml-l1-analyst",
+              "skills": [
+                "sar-draft@1",
+                "notify@1"
+              ],
+              "timeout_ms": 120000,
+              "instructions": "Draft the SAR narratives for the approved escalations and notify the FIU channel."
+            }
+          ]
+        },
+        "status": "running",
+        "failure_reason": null,
+        "input": {
+          "alertsPath": "examples/aml-alert-triage/alerts.csv"
+        },
+        "triggered_by": {
+          "id": "467ddfef-3b0c-4549-a862-8d068f9187c0",
+          "name": "admin@makerchecker.local",
+          "type": "user"
+        },
+        "created_at": "2026-06-13T14:07:20.228Z",
+        "started_at": "2026-06-13T14:07:20.251Z",
+        "finished_at": null
+      },
+      "steps": [
+        {
+          "id": "10b1a850-96d9-4c19-9c86-4609aa271669",
+          "step_index": 0,
+          "step_key": "triage",
+          "status": "running",
+          "attempt": 1,
+          "input": {
+            "alertsPath": "examples/aml-alert-triage/alerts.csv"
+          },
+          "output": null,
+          "error": null,
+          "agent": "aml-l1-analyst",
+          "started_at": "2026-06-13T14:07:20.251Z",
+          "finished_at": null
+        }
+      ],
+      "approvals": [],
+      "auditEvents": [
+        {
+          "seq": "14",
+          "occurred_at": "2026-06-13T14:07:20.237Z",
+          "actor": {
+            "id": "467ddfef-3b0c-4549-a862-8d068f9187c0",
+            "name": "admin@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "run.created",
+          "payload": {
+            "input": {
+              "alertsPath": "examples/aml-alert-triage/alerts.csv"
+            },
+            "flowVersionId": "4cd63609-b8b9-4a2e-a845-34bad99b49fd"
+          },
+          "hash": "f1cf9015dcc38d58b4339f7025a5453e568929712f6030ef96390694362609a6"
+        },
+        {
+          "seq": "15",
+          "occurred_at": "2026-06-13T14:07:20.261Z",
+          "actor": {
+            "id": "46e953e3-6627-4b95-9623-d342dcebb771",
+            "name": "aml-l1-analyst",
+            "type": "agent"
+          },
+          "event_type": "run.step.started",
+          "payload": {
+            "skills": [
+              "alert-ingest@1",
+              "alert-triage@1"
+            ],
+            "attempt": 1,
+            "stepKey": "triage",
+            "stepIndex": 0
+          },
+          "hash": "edc352cbe0d072edaa0e48109f1d48c4f43f8458d02b8444b4b8b55ff1141b11"
+        },
+        {
+          "seq": "16",
+          "occurred_at": "2026-06-13T14:07:20.280Z",
+          "actor": {
+            "id": "46e953e3-6627-4b95-9623-d342dcebb771",
+            "name": "aml-l1-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "alertsPath": "examples/aml-alert-triage/alerts.csv"
+            },
+            "output": {
+              "alerts": [
+                {
+                  "type": "velocity",
+                  "amount": 14200,
+                  "alert_id": "A-2001",
+                  "customer": "Orion Imports Ltd",
+                  "risk_score": 35
+                },
+                {
+                  "type": "threshold",
+                  "amount": 10100,
+                  "alert_id": "A-2002",
+                  "customer": "Helena Vargas",
+                  "risk_score": 42
+                },
+                {
+                  "type": "structuring",
+                  "amount": 9400,
+                  "alert_id": "A-2003",
+                  "customer": "Cobalt Freight LLC",
+                  "risk_score": 55
+                },
+                {
+                  "type": "velocity",
+                  "amount": 7800,
+                  "alert_id": "A-2004",
+                  "customer": "Marcus Tan",
+                  "risk_score": 28
+                },
+                {
+                  "type": "sanctions_near_match",
+                  "amount": 61000,
+                  "alert_id": "A-2005",
+                  "customer": "Sable Trading FZE",
+                  "risk_score": 74
+                },
+                {
+                  "type": "threshold",
+                  "amount": 12650,
+                  "alert_id": "A-2006",
+                  "customer": "Priya Raman",
+                  "risk_score": 31
+                },
+                {
+                  "type": "structuring",
+                  "amount": 9750,
+                  "alert_id": "A-2007",
+                  "customer": "Northgate Vending Inc",
+                  "risk_score": 86
+                },
+                {
+                  "type": "geo_risk",
+                  "amount": 5300,
+                  "alert_id": "A-2008",
+                  "customer": "Lena Okafor",
+                  "risk_score": 47
+                },
+                {
+                  "type": "threshold",
+                  "amount": 18900,
+                  "alert_id": "A-2009",
+                  "customer": "Quayside Marine SA",
+                  "risk_score": 39
+                },
+                {
+                  "type": "velocity",
+                  "amount": 4100,
+                  "alert_id": "A-2010",
+                  "customer": "Tomas Keller",
+                  "risk_score": 22
+                }
+              ]
+            },
+            "stepKey": "triage",
+            "skillRef": "alert-ingest@1"
+          },
+          "hash": "2457828a70e3c79dbd006eec63704b34764f7188da8d85a5d192b333badd1e37"
+        },
+        {
+          "seq": "17",
+          "occurred_at": "2026-06-13T14:07:20.286Z",
+          "actor": {
+            "id": "46e953e3-6627-4b95-9623-d342dcebb771",
+            "name": "aml-l1-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "alerts": [
+                {
+                  "type": "velocity",
+                  "amount": 14200,
+                  "alert_id": "A-2001",
+                  "customer": "Orion Imports Ltd",
+                  "risk_score": 35
+                },
+                {
+                  "type": "threshold",
+                  "amount": 10100,
+                  "alert_id": "A-2002",
+                  "customer": "Helena Vargas",
+                  "risk_score": 42
+                },
+                {
+                  "type": "structuring",
+                  "amount": 9400,
+                  "alert_id": "A-2003",
+                  "customer": "Cobalt Freight LLC",
+                  "risk_score": 55
+                },
+                {
+                  "type": "velocity",
+                  "amount": 7800,
+                  "alert_id": "A-2004",
+                  "customer": "Marcus Tan",
+                  "risk_score": 28
+                },
+                {
+                  "type": "sanctions_near_match",
+                  "amount": 61000,
+                  "alert_id": "A-2005",
+                  "customer": "Sable Trading FZE",
+                  "risk_score": 74
+                },
+                {
+                  "type": "threshold",
+                  "amount": 12650,
+                  "alert_id": "A-2006",
+                  "customer": "Priya Raman",
+                  "risk_score": 31
+                },
+                {
+                  "type": "structuring",
+                  "amount": 9750,
+                  "alert_id": "A-2007",
+                  "customer": "Northgate Vending Inc",
+                  "risk_score": 86
+                },
+                {
+                  "type": "geo_risk",
+                  "amount": 5300,
+                  "alert_id": "A-2008",
+                  "customer": "Lena Okafor",
+                  "risk_score": 47
+                },
+                {
+                  "type": "threshold",
+                  "amount": 18900,
+                  "alert_id": "A-2009",
+                  "customer": "Quayside Marine SA",
+                  "risk_score": 39
+                },
+                {
+                  "type": "velocity",
+                  "amount": 4100,
+                  "alert_id": "A-2010",
+                  "customer": "Tomas Keller",
+                  "risk_score": 22
+                }
+              ]
+            },
+            "output": {
+              "cleared": [
+                {
+                  "alertId": "A-2001",
+                  "rationale": "risk score 35 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2002",
+                  "rationale": "risk score 42 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2003",
+                  "rationale": "risk score 55 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2004",
+                  "rationale": "risk score 28 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2006",
+                  "rationale": "risk score 31 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2008",
+                  "rationale": "risk score 47 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2009",
+                  "rationale": "risk score 39 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2010",
+                  "rationale": "risk score 22 below 80 and no mandatory-escalation type"
+                }
+              ],
+              "alertCount": 10,
+              "escalations": [
+                {
+                  "type": "sanctions_near_match",
+                  "amount": 61000,
+                  "alertId": "A-2005",
+                  "customer": "Sable Trading FZE",
+                  "rationale": "sanctions near-match requires officer disposition",
+                  "riskScore": 74
+                },
+                {
+                  "type": "structuring",
+                  "amount": 9750,
+                  "alertId": "A-2007",
+                  "customer": "Northgate Vending Inc",
+                  "rationale": "risk score 86 >= 80",
+                  "riskScore": 86
+                }
+              ],
+              "escalatedCount": 2
+            },
+            "stepKey": "triage",
+            "skillRef": "alert-triage@1"
+          },
+          "hash": "5ca92ec61b1b5ab0d415db089fe3fa7f92707a92207660e52e8a7b06d3946845"
+        }
+      ]
+    },
+    "waiting": {
+      "run": {
+        "id": "fdcbba3e-420a-4e6e-9cde-4f1288808e72",
+        "flow": "aml-alert-triage",
+        "version": 1,
+        "definition": {
+          "name": "aml-alert-triage",
+          "steps": [
+            {
+              "key": "triage",
+              "agent": "aml-l1-analyst",
+              "skills": [
+                "alert-ingest@1",
+                "alert-triage@1"
+              ],
+              "retries": {
+                "backoff": "exponential",
+                "max_attempts": 3
+              },
+              "timeout_ms": 120000,
+              "instructions": "Ingest the day's AML alerts and triage them: escalate sanctions near-matches and high-risk structuring patterns with a rationale per alert."
+            },
+            {
+              "key": "sar_decision",
+              "type": "approval_gate",
+              "title": "SAR filing decision — BSA officer must disposition the escalated alerts",
+              "approvals": {
+                "min_approvals": 1,
+                "forbid_requester": true
+              }
+            },
+            {
+              "key": "file",
+              "agent": "aml-l1-analyst",
+              "skills": [
+                "sar-draft@1",
+                "notify@1"
+              ],
+              "timeout_ms": 120000,
+              "instructions": "Draft the SAR narratives for the approved escalations and notify the FIU channel."
+            }
+          ]
+        },
+        "status": "waiting_approval",
+        "failure_reason": null,
+        "input": {
+          "alertsPath": "examples/aml-alert-triage/alerts.csv"
+        },
+        "triggered_by": {
+          "id": "467ddfef-3b0c-4549-a862-8d068f9187c0",
+          "name": "admin@makerchecker.local",
+          "type": "user"
+        },
+        "created_at": "2026-06-13T14:07:20.228Z",
+        "started_at": "2026-06-13T14:07:20.251Z",
+        "finished_at": null
+      },
+      "steps": [
+        {
+          "id": "10b1a850-96d9-4c19-9c86-4609aa271669",
+          "step_index": 0,
+          "step_key": "triage",
+          "status": "completed",
+          "attempt": 1,
+          "input": {
+            "alertsPath": "examples/aml-alert-triage/alerts.csv"
+          },
+          "output": {
+            "cleared": [
+              {
+                "alertId": "A-2001",
+                "rationale": "risk score 35 below 80 and no mandatory-escalation type"
+              },
+              {
+                "alertId": "A-2002",
+                "rationale": "risk score 42 below 80 and no mandatory-escalation type"
+              },
+              {
+                "alertId": "A-2003",
+                "rationale": "risk score 55 below 80 and no mandatory-escalation type"
+              },
+              {
+                "alertId": "A-2004",
+                "rationale": "risk score 28 below 80 and no mandatory-escalation type"
+              },
+              {
+                "alertId": "A-2006",
+                "rationale": "risk score 31 below 80 and no mandatory-escalation type"
+              },
+              {
+                "alertId": "A-2008",
+                "rationale": "risk score 47 below 80 and no mandatory-escalation type"
+              },
+              {
+                "alertId": "A-2009",
+                "rationale": "risk score 39 below 80 and no mandatory-escalation type"
+              },
+              {
+                "alertId": "A-2010",
+                "rationale": "risk score 22 below 80 and no mandatory-escalation type"
+              }
+            ],
+            "alertCount": 10,
+            "escalations": [
+              {
+                "type": "sanctions_near_match",
+                "amount": 61000,
+                "alertId": "A-2005",
+                "customer": "Sable Trading FZE",
+                "rationale": "sanctions near-match requires officer disposition",
+                "riskScore": 74
+              },
+              {
+                "type": "structuring",
+                "amount": 9750,
+                "alertId": "A-2007",
+                "customer": "Northgate Vending Inc",
+                "rationale": "risk score 86 >= 80",
+                "riskScore": 86
+              }
+            ],
+            "escalatedCount": 2
+          },
+          "error": null,
+          "agent": "aml-l1-analyst",
+          "started_at": "2026-06-13T14:07:20.251Z",
+          "finished_at": "2026-06-13T14:07:20.286Z"
+        }
+      ],
+      "approvals": [
+        {
+          "id": "6958042d-3160-4007-8529-c6e7b2a14b28",
+          "step_key": "sar_decision",
+          "status": "pending",
+          "requested_at": "2026-06-13T14:07:20.291Z",
+          "decided_at": null,
+          "reason": null,
+          "required_approvals": 1,
+          "decided_by": null,
+          "decisions": []
+        }
+      ],
+      "auditEvents": [
+        {
+          "seq": "14",
+          "occurred_at": "2026-06-13T14:07:20.237Z",
+          "actor": {
+            "id": "467ddfef-3b0c-4549-a862-8d068f9187c0",
+            "name": "admin@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "run.created",
+          "payload": {
+            "input": {
+              "alertsPath": "examples/aml-alert-triage/alerts.csv"
+            },
+            "flowVersionId": "4cd63609-b8b9-4a2e-a845-34bad99b49fd"
+          },
+          "hash": "f1cf9015dcc38d58b4339f7025a5453e568929712f6030ef96390694362609a6"
+        },
+        {
+          "seq": "15",
+          "occurred_at": "2026-06-13T14:07:20.261Z",
+          "actor": {
+            "id": "46e953e3-6627-4b95-9623-d342dcebb771",
+            "name": "aml-l1-analyst",
+            "type": "agent"
+          },
+          "event_type": "run.step.started",
+          "payload": {
+            "skills": [
+              "alert-ingest@1",
+              "alert-triage@1"
+            ],
+            "attempt": 1,
+            "stepKey": "triage",
+            "stepIndex": 0
+          },
+          "hash": "edc352cbe0d072edaa0e48109f1d48c4f43f8458d02b8444b4b8b55ff1141b11"
+        },
+        {
+          "seq": "16",
+          "occurred_at": "2026-06-13T14:07:20.280Z",
+          "actor": {
+            "id": "46e953e3-6627-4b95-9623-d342dcebb771",
+            "name": "aml-l1-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "alertsPath": "examples/aml-alert-triage/alerts.csv"
+            },
+            "output": {
+              "alerts": [
+                {
+                  "type": "velocity",
+                  "amount": 14200,
+                  "alert_id": "A-2001",
+                  "customer": "Orion Imports Ltd",
+                  "risk_score": 35
+                },
+                {
+                  "type": "threshold",
+                  "amount": 10100,
+                  "alert_id": "A-2002",
+                  "customer": "Helena Vargas",
+                  "risk_score": 42
+                },
+                {
+                  "type": "structuring",
+                  "amount": 9400,
+                  "alert_id": "A-2003",
+                  "customer": "Cobalt Freight LLC",
+                  "risk_score": 55
+                },
+                {
+                  "type": "velocity",
+                  "amount": 7800,
+                  "alert_id": "A-2004",
+                  "customer": "Marcus Tan",
+                  "risk_score": 28
+                },
+                {
+                  "type": "sanctions_near_match",
+                  "amount": 61000,
+                  "alert_id": "A-2005",
+                  "customer": "Sable Trading FZE",
+                  "risk_score": 74
+                },
+                {
+                  "type": "threshold",
+                  "amount": 12650,
+                  "alert_id": "A-2006",
+                  "customer": "Priya Raman",
+                  "risk_score": 31
+                },
+                {
+                  "type": "structuring",
+                  "amount": 9750,
+                  "alert_id": "A-2007",
+                  "customer": "Northgate Vending Inc",
+                  "risk_score": 86
+                },
+                {
+                  "type": "geo_risk",
+                  "amount": 5300,
+                  "alert_id": "A-2008",
+                  "customer": "Lena Okafor",
+                  "risk_score": 47
+                },
+                {
+                  "type": "threshold",
+                  "amount": 18900,
+                  "alert_id": "A-2009",
+                  "customer": "Quayside Marine SA",
+                  "risk_score": 39
+                },
+                {
+                  "type": "velocity",
+                  "amount": 4100,
+                  "alert_id": "A-2010",
+                  "customer": "Tomas Keller",
+                  "risk_score": 22
+                }
+              ]
+            },
+            "stepKey": "triage",
+            "skillRef": "alert-ingest@1"
+          },
+          "hash": "2457828a70e3c79dbd006eec63704b34764f7188da8d85a5d192b333badd1e37"
+        },
+        {
+          "seq": "17",
+          "occurred_at": "2026-06-13T14:07:20.286Z",
+          "actor": {
+            "id": "46e953e3-6627-4b95-9623-d342dcebb771",
+            "name": "aml-l1-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "alerts": [
+                {
+                  "type": "velocity",
+                  "amount": 14200,
+                  "alert_id": "A-2001",
+                  "customer": "Orion Imports Ltd",
+                  "risk_score": 35
+                },
+                {
+                  "type": "threshold",
+                  "amount": 10100,
+                  "alert_id": "A-2002",
+                  "customer": "Helena Vargas",
+                  "risk_score": 42
+                },
+                {
+                  "type": "structuring",
+                  "amount": 9400,
+                  "alert_id": "A-2003",
+                  "customer": "Cobalt Freight LLC",
+                  "risk_score": 55
+                },
+                {
+                  "type": "velocity",
+                  "amount": 7800,
+                  "alert_id": "A-2004",
+                  "customer": "Marcus Tan",
+                  "risk_score": 28
+                },
+                {
+                  "type": "sanctions_near_match",
+                  "amount": 61000,
+                  "alert_id": "A-2005",
+                  "customer": "Sable Trading FZE",
+                  "risk_score": 74
+                },
+                {
+                  "type": "threshold",
+                  "amount": 12650,
+                  "alert_id": "A-2006",
+                  "customer": "Priya Raman",
+                  "risk_score": 31
+                },
+                {
+                  "type": "structuring",
+                  "amount": 9750,
+                  "alert_id": "A-2007",
+                  "customer": "Northgate Vending Inc",
+                  "risk_score": 86
+                },
+                {
+                  "type": "geo_risk",
+                  "amount": 5300,
+                  "alert_id": "A-2008",
+                  "customer": "Lena Okafor",
+                  "risk_score": 47
+                },
+                {
+                  "type": "threshold",
+                  "amount": 18900,
+                  "alert_id": "A-2009",
+                  "customer": "Quayside Marine SA",
+                  "risk_score": 39
+                },
+                {
+                  "type": "velocity",
+                  "amount": 4100,
+                  "alert_id": "A-2010",
+                  "customer": "Tomas Keller",
+                  "risk_score": 22
+                }
+              ]
+            },
+            "output": {
+              "cleared": [
+                {
+                  "alertId": "A-2001",
+                  "rationale": "risk score 35 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2002",
+                  "rationale": "risk score 42 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2003",
+                  "rationale": "risk score 55 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2004",
+                  "rationale": "risk score 28 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2006",
+                  "rationale": "risk score 31 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2008",
+                  "rationale": "risk score 47 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2009",
+                  "rationale": "risk score 39 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2010",
+                  "rationale": "risk score 22 below 80 and no mandatory-escalation type"
+                }
+              ],
+              "alertCount": 10,
+              "escalations": [
+                {
+                  "type": "sanctions_near_match",
+                  "amount": 61000,
+                  "alertId": "A-2005",
+                  "customer": "Sable Trading FZE",
+                  "rationale": "sanctions near-match requires officer disposition",
+                  "riskScore": 74
+                },
+                {
+                  "type": "structuring",
+                  "amount": 9750,
+                  "alertId": "A-2007",
+                  "customer": "Northgate Vending Inc",
+                  "rationale": "risk score 86 >= 80",
+                  "riskScore": 86
+                }
+              ],
+              "escalatedCount": 2
+            },
+            "stepKey": "triage",
+            "skillRef": "alert-triage@1"
+          },
+          "hash": "5ca92ec61b1b5ab0d415db089fe3fa7f92707a92207660e52e8a7b06d3946845"
+        },
+        {
+          "seq": "18",
+          "occurred_at": "2026-06-13T14:07:20.289Z",
+          "actor": {
+            "id": "46e953e3-6627-4b95-9623-d342dcebb771",
+            "name": "aml-l1-analyst",
+            "type": "agent"
+          },
+          "event_type": "run.step.completed",
+          "payload": {
+            "output": {
+              "cleared": [
+                {
+                  "alertId": "A-2001",
+                  "rationale": "risk score 35 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2002",
+                  "rationale": "risk score 42 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2003",
+                  "rationale": "risk score 55 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2004",
+                  "rationale": "risk score 28 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2006",
+                  "rationale": "risk score 31 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2008",
+                  "rationale": "risk score 47 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2009",
+                  "rationale": "risk score 39 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2010",
+                  "rationale": "risk score 22 below 80 and no mandatory-escalation type"
+                }
+              ],
+              "alertCount": 10,
+              "escalations": [
+                {
+                  "type": "sanctions_near_match",
+                  "amount": 61000,
+                  "alertId": "A-2005",
+                  "customer": "Sable Trading FZE",
+                  "rationale": "sanctions near-match requires officer disposition",
+                  "riskScore": 74
+                },
+                {
+                  "type": "structuring",
+                  "amount": 9750,
+                  "alertId": "A-2007",
+                  "customer": "Northgate Vending Inc",
+                  "rationale": "risk score 86 >= 80",
+                  "riskScore": 86
+                }
+              ],
+              "escalatedCount": 2
+            },
+            "attempt": 1,
+            "stepKey": "triage"
+          },
+          "hash": "ecb48ce4edbdb4dd4f3661deb6016af3350e0f87d2299c47d2654af3f03d1b3c"
+        },
+        {
+          "seq": "19",
+          "occurred_at": "2026-06-13T14:07:20.295Z",
+          "actor": {
+            "id": "engine",
+            "type": "system"
+          },
+          "event_type": "approval.requested",
+          "payload": {
+            "title": "SAR filing decision — BSA officer must disposition the escalated alerts",
+            "stepKey": "sar_decision",
+            "stepIndex": 1,
+            "requiredApprovals": 1
+          },
+          "hash": "2d918311583c4f9e65fd469ba91111304ca223ea7ed2af82838c9a506cff0ba2"
+        }
+      ]
+    },
+    "completed": {
+      "run": {
+        "id": "fdcbba3e-420a-4e6e-9cde-4f1288808e72",
+        "flow": "aml-alert-triage",
+        "version": 1,
+        "definition": {
+          "name": "aml-alert-triage",
+          "steps": [
+            {
+              "key": "triage",
+              "agent": "aml-l1-analyst",
+              "skills": [
+                "alert-ingest@1",
+                "alert-triage@1"
+              ],
+              "retries": {
+                "backoff": "exponential",
+                "max_attempts": 3
+              },
+              "timeout_ms": 120000,
+              "instructions": "Ingest the day's AML alerts and triage them: escalate sanctions near-matches and high-risk structuring patterns with a rationale per alert."
+            },
+            {
+              "key": "sar_decision",
+              "type": "approval_gate",
+              "title": "SAR filing decision — BSA officer must disposition the escalated alerts",
+              "approvals": {
+                "min_approvals": 1,
+                "forbid_requester": true
+              }
+            },
+            {
+              "key": "file",
+              "agent": "aml-l1-analyst",
+              "skills": [
+                "sar-draft@1",
+                "notify@1"
+              ],
+              "timeout_ms": 120000,
+              "instructions": "Draft the SAR narratives for the approved escalations and notify the FIU channel."
+            }
+          ]
+        },
+        "status": "completed",
+        "failure_reason": null,
+        "input": {
+          "alertsPath": "examples/aml-alert-triage/alerts.csv"
+        },
+        "triggered_by": {
+          "id": "467ddfef-3b0c-4549-a862-8d068f9187c0",
+          "name": "admin@makerchecker.local",
+          "type": "user"
+        },
+        "created_at": "2026-06-13T14:07:20.228Z",
+        "started_at": "2026-06-13T14:07:20.251Z",
+        "finished_at": "2026-06-13T14:07:20.446Z"
+      },
+      "steps": [
+        {
+          "id": "10b1a850-96d9-4c19-9c86-4609aa271669",
+          "step_index": 0,
+          "step_key": "triage",
+          "status": "completed",
+          "attempt": 1,
+          "input": {
+            "alertsPath": "examples/aml-alert-triage/alerts.csv"
+          },
+          "output": {
+            "cleared": [
+              {
+                "alertId": "A-2001",
+                "rationale": "risk score 35 below 80 and no mandatory-escalation type"
+              },
+              {
+                "alertId": "A-2002",
+                "rationale": "risk score 42 below 80 and no mandatory-escalation type"
+              },
+              {
+                "alertId": "A-2003",
+                "rationale": "risk score 55 below 80 and no mandatory-escalation type"
+              },
+              {
+                "alertId": "A-2004",
+                "rationale": "risk score 28 below 80 and no mandatory-escalation type"
+              },
+              {
+                "alertId": "A-2006",
+                "rationale": "risk score 31 below 80 and no mandatory-escalation type"
+              },
+              {
+                "alertId": "A-2008",
+                "rationale": "risk score 47 below 80 and no mandatory-escalation type"
+              },
+              {
+                "alertId": "A-2009",
+                "rationale": "risk score 39 below 80 and no mandatory-escalation type"
+              },
+              {
+                "alertId": "A-2010",
+                "rationale": "risk score 22 below 80 and no mandatory-escalation type"
+              }
+            ],
+            "alertCount": 10,
+            "escalations": [
+              {
+                "type": "sanctions_near_match",
+                "amount": 61000,
+                "alertId": "A-2005",
+                "customer": "Sable Trading FZE",
+                "rationale": "sanctions near-match requires officer disposition",
+                "riskScore": 74
+              },
+              {
+                "type": "structuring",
+                "amount": 9750,
+                "alertId": "A-2007",
+                "customer": "Northgate Vending Inc",
+                "rationale": "risk score 86 >= 80",
+                "riskScore": 86
+              }
+            ],
+            "escalatedCount": 2
+          },
+          "error": null,
+          "agent": "aml-l1-analyst",
+          "started_at": "2026-06-13T14:07:20.251Z",
+          "finished_at": "2026-06-13T14:07:20.286Z"
+        },
+        {
+          "id": "465d0a81-5913-401f-84d3-dd461e0b60b6",
+          "step_index": 2,
+          "step_key": "file",
+          "status": "completed",
+          "attempt": 1,
+          "input": {
+            "cleared": [
+              {
+                "alertId": "A-2001",
+                "rationale": "risk score 35 below 80 and no mandatory-escalation type"
+              },
+              {
+                "alertId": "A-2002",
+                "rationale": "risk score 42 below 80 and no mandatory-escalation type"
+              },
+              {
+                "alertId": "A-2003",
+                "rationale": "risk score 55 below 80 and no mandatory-escalation type"
+              },
+              {
+                "alertId": "A-2004",
+                "rationale": "risk score 28 below 80 and no mandatory-escalation type"
+              },
+              {
+                "alertId": "A-2006",
+                "rationale": "risk score 31 below 80 and no mandatory-escalation type"
+              },
+              {
+                "alertId": "A-2008",
+                "rationale": "risk score 47 below 80 and no mandatory-escalation type"
+              },
+              {
+                "alertId": "A-2009",
+                "rationale": "risk score 39 below 80 and no mandatory-escalation type"
+              },
+              {
+                "alertId": "A-2010",
+                "rationale": "risk score 22 below 80 and no mandatory-escalation type"
+              }
+            ],
+            "alertCount": 10,
+            "escalations": [
+              {
+                "type": "sanctions_near_match",
+                "amount": 61000,
+                "alertId": "A-2005",
+                "customer": "Sable Trading FZE",
+                "rationale": "sanctions near-match requires officer disposition",
+                "riskScore": 74
+              },
+              {
+                "type": "structuring",
+                "amount": 9750,
+                "alertId": "A-2007",
+                "customer": "Northgate Vending Inc",
+                "rationale": "risk score 86 >= 80",
+                "riskScore": 86
+              }
+            ],
+            "escalatedCount": 2
+          },
+          "output": {
+            "channel": "#aml",
+            "message": "AML alert triage complete: 2 SAR narrative(s) drafted for officer-approved escalations.",
+            "delivered": true,
+            "deliveredAt": "2026-06-13T14:07:20.438Z"
+          },
+          "error": null,
+          "agent": "aml-l1-analyst",
+          "started_at": "2026-06-13T14:07:20.315Z",
+          "finished_at": "2026-06-13T14:07:20.442Z"
+        }
+      ],
+      "approvals": [
+        {
+          "id": "6958042d-3160-4007-8529-c6e7b2a14b28",
+          "step_key": "sar_decision",
+          "status": "approved",
+          "requested_at": "2026-06-13T14:07:20.291Z",
+          "decided_at": "2026-06-13T14:07:20.309Z",
+          "reason": "A-2005 (Sable Trading FZE) is a sanctions near-match requiring disposition; A-2007 (Northgate Vending) is a structuring pattern at risk 86. File SARs on both.",
+          "required_approvals": 1,
+          "decided_by": "officer@makerchecker.local",
+          "decisions": [
+            {
+              "id": "3cc4a203-8b8a-405a-8b74-cdec82c03be1",
+              "decision": "approved",
+              "reason": "A-2005 (Sable Trading FZE) is a sanctions near-match requiring disposition; A-2007 (Northgate Vending) is a structuring pattern at risk 86. File SARs on both.",
+              "created_at": "2026-06-13T14:07:20.309Z",
+              "decided_by": "officer@makerchecker.local"
+            }
+          ]
+        }
+      ],
+      "auditEvents": [
+        {
+          "seq": "14",
+          "occurred_at": "2026-06-13T14:07:20.237Z",
+          "actor": {
+            "id": "467ddfef-3b0c-4549-a862-8d068f9187c0",
+            "name": "admin@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "run.created",
+          "payload": {
+            "input": {
+              "alertsPath": "examples/aml-alert-triage/alerts.csv"
+            },
+            "flowVersionId": "4cd63609-b8b9-4a2e-a845-34bad99b49fd"
+          },
+          "hash": "f1cf9015dcc38d58b4339f7025a5453e568929712f6030ef96390694362609a6"
+        },
+        {
+          "seq": "15",
+          "occurred_at": "2026-06-13T14:07:20.261Z",
+          "actor": {
+            "id": "46e953e3-6627-4b95-9623-d342dcebb771",
+            "name": "aml-l1-analyst",
+            "type": "agent"
+          },
+          "event_type": "run.step.started",
+          "payload": {
+            "skills": [
+              "alert-ingest@1",
+              "alert-triage@1"
+            ],
+            "attempt": 1,
+            "stepKey": "triage",
+            "stepIndex": 0
+          },
+          "hash": "edc352cbe0d072edaa0e48109f1d48c4f43f8458d02b8444b4b8b55ff1141b11"
+        },
+        {
+          "seq": "16",
+          "occurred_at": "2026-06-13T14:07:20.280Z",
+          "actor": {
+            "id": "46e953e3-6627-4b95-9623-d342dcebb771",
+            "name": "aml-l1-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "alertsPath": "examples/aml-alert-triage/alerts.csv"
+            },
+            "output": {
+              "alerts": [
+                {
+                  "type": "velocity",
+                  "amount": 14200,
+                  "alert_id": "A-2001",
+                  "customer": "Orion Imports Ltd",
+                  "risk_score": 35
+                },
+                {
+                  "type": "threshold",
+                  "amount": 10100,
+                  "alert_id": "A-2002",
+                  "customer": "Helena Vargas",
+                  "risk_score": 42
+                },
+                {
+                  "type": "structuring",
+                  "amount": 9400,
+                  "alert_id": "A-2003",
+                  "customer": "Cobalt Freight LLC",
+                  "risk_score": 55
+                },
+                {
+                  "type": "velocity",
+                  "amount": 7800,
+                  "alert_id": "A-2004",
+                  "customer": "Marcus Tan",
+                  "risk_score": 28
+                },
+                {
+                  "type": "sanctions_near_match",
+                  "amount": 61000,
+                  "alert_id": "A-2005",
+                  "customer": "Sable Trading FZE",
+                  "risk_score": 74
+                },
+                {
+                  "type": "threshold",
+                  "amount": 12650,
+                  "alert_id": "A-2006",
+                  "customer": "Priya Raman",
+                  "risk_score": 31
+                },
+                {
+                  "type": "structuring",
+                  "amount": 9750,
+                  "alert_id": "A-2007",
+                  "customer": "Northgate Vending Inc",
+                  "risk_score": 86
+                },
+                {
+                  "type": "geo_risk",
+                  "amount": 5300,
+                  "alert_id": "A-2008",
+                  "customer": "Lena Okafor",
+                  "risk_score": 47
+                },
+                {
+                  "type": "threshold",
+                  "amount": 18900,
+                  "alert_id": "A-2009",
+                  "customer": "Quayside Marine SA",
+                  "risk_score": 39
+                },
+                {
+                  "type": "velocity",
+                  "amount": 4100,
+                  "alert_id": "A-2010",
+                  "customer": "Tomas Keller",
+                  "risk_score": 22
+                }
+              ]
+            },
+            "stepKey": "triage",
+            "skillRef": "alert-ingest@1"
+          },
+          "hash": "2457828a70e3c79dbd006eec63704b34764f7188da8d85a5d192b333badd1e37"
+        },
+        {
+          "seq": "17",
+          "occurred_at": "2026-06-13T14:07:20.286Z",
+          "actor": {
+            "id": "46e953e3-6627-4b95-9623-d342dcebb771",
+            "name": "aml-l1-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "alerts": [
+                {
+                  "type": "velocity",
+                  "amount": 14200,
+                  "alert_id": "A-2001",
+                  "customer": "Orion Imports Ltd",
+                  "risk_score": 35
+                },
+                {
+                  "type": "threshold",
+                  "amount": 10100,
+                  "alert_id": "A-2002",
+                  "customer": "Helena Vargas",
+                  "risk_score": 42
+                },
+                {
+                  "type": "structuring",
+                  "amount": 9400,
+                  "alert_id": "A-2003",
+                  "customer": "Cobalt Freight LLC",
+                  "risk_score": 55
+                },
+                {
+                  "type": "velocity",
+                  "amount": 7800,
+                  "alert_id": "A-2004",
+                  "customer": "Marcus Tan",
+                  "risk_score": 28
+                },
+                {
+                  "type": "sanctions_near_match",
+                  "amount": 61000,
+                  "alert_id": "A-2005",
+                  "customer": "Sable Trading FZE",
+                  "risk_score": 74
+                },
+                {
+                  "type": "threshold",
+                  "amount": 12650,
+                  "alert_id": "A-2006",
+                  "customer": "Priya Raman",
+                  "risk_score": 31
+                },
+                {
+                  "type": "structuring",
+                  "amount": 9750,
+                  "alert_id": "A-2007",
+                  "customer": "Northgate Vending Inc",
+                  "risk_score": 86
+                },
+                {
+                  "type": "geo_risk",
+                  "amount": 5300,
+                  "alert_id": "A-2008",
+                  "customer": "Lena Okafor",
+                  "risk_score": 47
+                },
+                {
+                  "type": "threshold",
+                  "amount": 18900,
+                  "alert_id": "A-2009",
+                  "customer": "Quayside Marine SA",
+                  "risk_score": 39
+                },
+                {
+                  "type": "velocity",
+                  "amount": 4100,
+                  "alert_id": "A-2010",
+                  "customer": "Tomas Keller",
+                  "risk_score": 22
+                }
+              ]
+            },
+            "output": {
+              "cleared": [
+                {
+                  "alertId": "A-2001",
+                  "rationale": "risk score 35 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2002",
+                  "rationale": "risk score 42 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2003",
+                  "rationale": "risk score 55 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2004",
+                  "rationale": "risk score 28 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2006",
+                  "rationale": "risk score 31 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2008",
+                  "rationale": "risk score 47 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2009",
+                  "rationale": "risk score 39 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2010",
+                  "rationale": "risk score 22 below 80 and no mandatory-escalation type"
+                }
+              ],
+              "alertCount": 10,
+              "escalations": [
+                {
+                  "type": "sanctions_near_match",
+                  "amount": 61000,
+                  "alertId": "A-2005",
+                  "customer": "Sable Trading FZE",
+                  "rationale": "sanctions near-match requires officer disposition",
+                  "riskScore": 74
+                },
+                {
+                  "type": "structuring",
+                  "amount": 9750,
+                  "alertId": "A-2007",
+                  "customer": "Northgate Vending Inc",
+                  "rationale": "risk score 86 >= 80",
+                  "riskScore": 86
+                }
+              ],
+              "escalatedCount": 2
+            },
+            "stepKey": "triage",
+            "skillRef": "alert-triage@1"
+          },
+          "hash": "5ca92ec61b1b5ab0d415db089fe3fa7f92707a92207660e52e8a7b06d3946845"
+        },
+        {
+          "seq": "18",
+          "occurred_at": "2026-06-13T14:07:20.289Z",
+          "actor": {
+            "id": "46e953e3-6627-4b95-9623-d342dcebb771",
+            "name": "aml-l1-analyst",
+            "type": "agent"
+          },
+          "event_type": "run.step.completed",
+          "payload": {
+            "output": {
+              "cleared": [
+                {
+                  "alertId": "A-2001",
+                  "rationale": "risk score 35 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2002",
+                  "rationale": "risk score 42 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2003",
+                  "rationale": "risk score 55 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2004",
+                  "rationale": "risk score 28 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2006",
+                  "rationale": "risk score 31 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2008",
+                  "rationale": "risk score 47 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2009",
+                  "rationale": "risk score 39 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2010",
+                  "rationale": "risk score 22 below 80 and no mandatory-escalation type"
+                }
+              ],
+              "alertCount": 10,
+              "escalations": [
+                {
+                  "type": "sanctions_near_match",
+                  "amount": 61000,
+                  "alertId": "A-2005",
+                  "customer": "Sable Trading FZE",
+                  "rationale": "sanctions near-match requires officer disposition",
+                  "riskScore": 74
+                },
+                {
+                  "type": "structuring",
+                  "amount": 9750,
+                  "alertId": "A-2007",
+                  "customer": "Northgate Vending Inc",
+                  "rationale": "risk score 86 >= 80",
+                  "riskScore": 86
+                }
+              ],
+              "escalatedCount": 2
+            },
+            "attempt": 1,
+            "stepKey": "triage"
+          },
+          "hash": "ecb48ce4edbdb4dd4f3661deb6016af3350e0f87d2299c47d2654af3f03d1b3c"
+        },
+        {
+          "seq": "19",
+          "occurred_at": "2026-06-13T14:07:20.295Z",
+          "actor": {
+            "id": "engine",
+            "type": "system"
+          },
+          "event_type": "approval.requested",
+          "payload": {
+            "title": "SAR filing decision — BSA officer must disposition the escalated alerts",
+            "stepKey": "sar_decision",
+            "stepIndex": 1,
+            "requiredApprovals": 1
+          },
+          "hash": "2d918311583c4f9e65fd469ba91111304ca223ea7ed2af82838c9a506cff0ba2"
+        },
+        {
+          "seq": "20",
+          "occurred_at": "2026-06-13T14:07:20.309Z",
+          "actor": {
+            "id": "467ddfef-3b0c-4549-a862-8d068f9187c0",
+            "name": "admin@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "approval.decision_denied",
+          "payload": {
+            "code": "requester_forbidden",
+            "reason": "the user who triggered this run cannot decide gate \"sar_decision\" (forbid_requester)",
+            "stepKey": "sar_decision",
+            "attemptedDecision": "approved"
+          },
+          "hash": "6d84d78b5c75e125e75a0ed8dd51c6f3c99fa1d78f2d360d32f3d855d4ef38e4"
+        },
+        {
+          "seq": "21",
+          "occurred_at": "2026-06-13T14:07:20.312Z",
+          "actor": {
+            "id": "4cd3af27-f794-43ef-b60c-e261f2b927c5",
+            "name": "officer@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "approval.decided",
+          "payload": {
+            "reason": "A-2005 (Sable Trading FZE) is a sanctions near-match requiring disposition; A-2007 (Northgate Vending) is a structuring pattern at risk 86. File SARs on both.",
+            "stepKey": "sar_decision",
+            "decision": "approved",
+            "approvedCount": 1,
+            "rejectedCount": 0,
+            "requiredApprovals": 1
+          },
+          "hash": "2682600260add247aa0ca4eab2ba4c48e8aae0883ccb11bb2f0f2781427599ce"
+        },
+        {
+          "seq": "22",
+          "occurred_at": "2026-06-13T14:07:20.313Z",
+          "actor": {
+            "id": "4cd3af27-f794-43ef-b60c-e261f2b927c5",
+            "name": "officer@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "approval.resolved",
+          "payload": {
+            "outcome": "approved",
+            "stepKey": "sar_decision",
+            "approvedCount": 1,
+            "rejectedCount": 0,
+            "requiredApprovals": 1
+          },
+          "hash": "b6cdc0ab7dd46617ac865bc37dd2552743c836a48f7b39fc8c97320f2ba8791f"
+        },
+        {
+          "seq": "23",
+          "occurred_at": "2026-06-13T14:07:20.320Z",
+          "actor": {
+            "id": "46e953e3-6627-4b95-9623-d342dcebb771",
+            "name": "aml-l1-analyst",
+            "type": "agent"
+          },
+          "event_type": "run.step.started",
+          "payload": {
+            "skills": [
+              "sar-draft@1",
+              "notify@1"
+            ],
+            "attempt": 1,
+            "stepKey": "file",
+            "stepIndex": 2
+          },
+          "hash": "ac16b51c54b42fdb1484cac851434d97a277b6f396e907ae1a16380720b74afb"
+        },
+        {
+          "seq": "24",
+          "occurred_at": "2026-06-13T14:07:20.328Z",
+          "actor": {
+            "id": "46e953e3-6627-4b95-9623-d342dcebb771",
+            "name": "aml-l1-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "cleared": [
+                {
+                  "alertId": "A-2001",
+                  "rationale": "risk score 35 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2002",
+                  "rationale": "risk score 42 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2003",
+                  "rationale": "risk score 55 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2004",
+                  "rationale": "risk score 28 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2006",
+                  "rationale": "risk score 31 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2008",
+                  "rationale": "risk score 47 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2009",
+                  "rationale": "risk score 39 below 80 and no mandatory-escalation type"
+                },
+                {
+                  "alertId": "A-2010",
+                  "rationale": "risk score 22 below 80 and no mandatory-escalation type"
+                }
+              ],
+              "alertCount": 10,
+              "escalations": [
+                {
+                  "type": "sanctions_near_match",
+                  "amount": 61000,
+                  "alertId": "A-2005",
+                  "customer": "Sable Trading FZE",
+                  "rationale": "sanctions near-match requires officer disposition",
+                  "riskScore": 74
+                },
+                {
+                  "type": "structuring",
+                  "amount": 9750,
+                  "alertId": "A-2007",
+                  "customer": "Northgate Vending Inc",
+                  "rationale": "risk score 86 >= 80",
+                  "riskScore": 86
+                }
+              ],
+              "escalatedCount": 2
+            },
+            "output": {
+              "channel": "#aml",
+              "message": "AML alert triage complete: 2 SAR narrative(s) drafted for officer-approved escalations.",
+              "sarCount": 2,
+              "narratives": [
+                {
+                  "alertId": "A-2005",
+                  "customer": "Sable Trading FZE",
+                  "narrative": "SAR draft for A-2005 (Sable Trading FZE): sanctions_near_match alert, amount 61000.00, risk score 74. Escalation rationale: sanctions near-match requires officer disposition. Disposition approved at the SAR filing decision gate."
+                },
+                {
+                  "alertId": "A-2007",
+                  "customer": "Northgate Vending Inc",
+                  "narrative": "SAR draft for A-2007 (Northgate Vending Inc): structuring alert, amount 9750.00, risk score 86. Escalation rationale: risk score 86 >= 80. Disposition approved at the SAR filing decision gate."
+                }
+              ]
+            },
+            "stepKey": "file",
+            "skillRef": "sar-draft@1"
+          },
+          "hash": "12b1342e9c4088aa72aa70dd477ada9089b1a20dfa942de176dc1facc0bf18c1"
+        },
+        {
+          "seq": "25",
+          "occurred_at": "2026-06-13T14:07:20.441Z",
+          "actor": {
+            "id": "46e953e3-6627-4b95-9623-d342dcebb771",
+            "name": "aml-l1-analyst",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "channel": "#aml",
+              "message": "AML alert triage complete: 2 SAR narrative(s) drafted for officer-approved escalations.",
+              "sarCount": 2,
+              "narratives": [
+                {
+                  "alertId": "A-2005",
+                  "customer": "Sable Trading FZE",
+                  "narrative": "SAR draft for A-2005 (Sable Trading FZE): sanctions_near_match alert, amount 61000.00, risk score 74. Escalation rationale: sanctions near-match requires officer disposition. Disposition approved at the SAR filing decision gate."
+                },
+                {
+                  "alertId": "A-2007",
+                  "customer": "Northgate Vending Inc",
+                  "narrative": "SAR draft for A-2007 (Northgate Vending Inc): structuring alert, amount 9750.00, risk score 86. Escalation rationale: risk score 86 >= 80. Disposition approved at the SAR filing decision gate."
+                }
+              ]
+            },
+            "output": {
+              "channel": "#aml",
+              "message": "AML alert triage complete: 2 SAR narrative(s) drafted for officer-approved escalations.",
+              "delivered": true,
+              "deliveredAt": "2026-06-13T14:07:20.438Z"
+            },
+            "stepKey": "file",
+            "skillRef": "notify@1"
+          },
+          "hash": "46a13aa5b9e3697032cf9a1d260b3a0021ce3a7f1ed26ddbf8d5298bdea90ce7"
+        },
+        {
+          "seq": "26",
+          "occurred_at": "2026-06-13T14:07:20.444Z",
+          "actor": {
+            "id": "46e953e3-6627-4b95-9623-d342dcebb771",
+            "name": "aml-l1-analyst",
+            "type": "agent"
+          },
+          "event_type": "run.step.completed",
+          "payload": {
+            "output": {
+              "channel": "#aml",
+              "message": "AML alert triage complete: 2 SAR narrative(s) drafted for officer-approved escalations.",
+              "delivered": true,
+              "deliveredAt": "2026-06-13T14:07:20.438Z"
+            },
+            "attempt": 1,
+            "stepKey": "file"
+          },
+          "hash": "2e86e2c70afb16c77edeff168a1dfa26132363a8a0ca40f9ad5f4e870cc4ef10"
+        },
+        {
+          "seq": "27",
+          "occurred_at": "2026-06-13T14:07:20.451Z",
+          "actor": {
+            "id": "engine",
+            "type": "system"
+          },
+          "event_type": "run.completed",
+          "payload": {},
+          "hash": "3381fa0efb9eb774d2d925a6730443da0c8eedfed4bc3eb0b946e5a8bc6db33a"
+        }
+      ]
+    }
+  },
+  "approval": {
+    "id": "6958042d-3160-4007-8529-c6e7b2a14b28",
+    "run_id": "fdcbba3e-420a-4e6e-9cde-4f1288808e72",
+    "step_key": "sar_decision",
+    "requested_at": "2026-06-13T14:07:20.291Z",
+    "required_approvals": 1,
+    "approved_count": 0,
+    "age_seconds": 0,
+    "overdue": false,
+    "flow": "aml-alert-triage"
+  },
+  "blockedDecision": {
+    "status": 403,
+    "message": "the user who triggered this run cannot decide gate \"sar_decision\" (forbid_requester)"
+  },
+  "approvedDecision": {
+    "status": 200
+  },
+  "verify": {
+    "ok": true,
+    "count": 27,
+    "headHash": "3381fa0efb9eb774d2d925a6730443da0c8eedfed4bc3eb0b946e5a8bc6db33a"
+  },
+  "runsList": {
+    "runs": [
+      {
+        "id": "fdcbba3e-420a-4e6e-9cde-4f1288808e72",
+        "flow": "aml-alert-triage",
+        "version": 1,
+        "status": "completed",
+        "failure_reason": null,
+        "created_at": "2026-06-13T14:07:20.228Z",
+        "started_at": "2026-06-13T14:07:20.251Z",
+        "finished_at": "2026-06-13T14:07:20.446Z"
+      }
+    ]
+  }
+}

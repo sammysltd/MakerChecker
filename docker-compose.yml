@@ -1,0 +1,58 @@
+# Default quickstart: SINGLE-ROLE. The server connects as the Postgres owner and
+# runs migrations at boot. Simplest path, but the owner can disable the
+# append-only audit triggers. For tamper-resistance against a compromised app
+# credential, use the hardened two-role variant instead:
+#
+#   MC_RUNTIME_PASSWORD=<strong-password> \
+#     docker compose -f docker-compose.hardened.yml up --build
+#
+# It runs migrations + ops/harden-db.sql as the owner, then runs the server as
+# the non-owner mc_app_runtime role. See SECURITY.md ("Run the server as a
+# non-owner DB role") and docs/security-model.md.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: makerchecker
+      POSTGRES_PASSWORD: makerchecker
+      POSTGRES_DB: makerchecker
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U makerchecker"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  server:
+    build:
+      context: .
+      dockerfile: packages/server/Dockerfile
+    environment:
+      DATABASE_URL: postgres://makerchecker:makerchecker@postgres:5432/makerchecker
+      PORT: "3000"
+      MAKERCHECKER_DATA_DIR: /data
+      # The quickstart relies on the demo seed + bundled sample data. Seeding is
+      # opt-in (it provisions an admin account and prints an admin API key), so
+      # enable it explicitly here. DEMO_DATA_DIR points the demo skills at the
+      # bundled examples; they read only within that tree's parent directory.
+      MAKERCHECKER_SEED_DEMO: "1"
+      DEMO_DATA_DIR: /app/examples/daily-cash-reconciliation
+      # Optional: set one of these on the host to run demo agents with a real
+      # model; otherwise steps execute deterministically (scripted mode).
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    volumes:
+      - mcdata:/data
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  mcdata:

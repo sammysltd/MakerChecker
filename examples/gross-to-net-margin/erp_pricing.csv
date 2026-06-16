@@ -1,0 +1,13 @@
+market,sku,product,list_price,statutory_rebate_pct,austerity_discount_pct,clawback_pct,units
+US,ONC-200,Oncozar 200mg vial,4200.00,0.231,0.04,0.00,1850
+US,CAR-010,Cardevol 10mg tab,1.85,0.131,0.00,0.012,420000
+US,STENT-DX,DX coronary stent,2450.00,0.05,0.00,0.00,3100
+US,PUMP-MX,InsuFlow MX pump,3900.00,0.10,0.00,0.02,640
+DE,ONC-200,Oncozar 200mg vial,3650.00,0.07,0.16,0.07,2200
+DE,CAR-010,Cardevol 10mg tab,1.42,0.16,0.07,0.31,510000
+DE,STENT-DX,DX coronary stent,2100.00,0.07,0.10,0.00,4050
+DE,PUMP-MX,InsuFlow MX pump,3400.00,0.07,0.85,0.30,720
+JP,ONC-200,Oncozar 200mg vial,4980.00,0.085,0.06,0.044,1340
+JP,CAR-010,Cardevol 10mg tab,2.10,0.085,0.00,0.092,295000
+JP,STENT-DX,DX coronary stent,2780.00,0.085,0.05,0.00,2600
+JP,PUMP-MX,InsuFlow MX pump,4250.00,0.085,0.12,0.10,480

@@ -1,0 +1,117 @@
+# Hardened two-role deployment (Layer 2 DB least-privilege, see SECURITY.md).
+#
+# The default docker-compose.yml is single-role: the server connects as the
+# Postgres owner and runs migrations at boot. That is the simplest quickstart,
+# but the owner can DISABLE the append-only audit triggers, so a compromised
+# application credential could rewrite history.
+#
+# This file splits the two jobs across two DB roles:
+#   - makerchecker (the owner): creates the schema, runs migrations, and applies
+#     ops/harden-db.sql (which provisions the runtime role and locks it down).
+#   - mc_app_runtime (non-owner): the role the long-running server connects as.
+#     It can read/write run-state and APPEND audit rows, but cannot UPDATE,
+#     DELETE, TRUNCATE, or DISABLE TRIGGER on audit_events / instance.
+#
+# Run it as a full stack (it does NOT inherit docker-compose.yml; use it alone):
+#
+#   MC_RUNTIME_PASSWORD=<strong-password> \
+#     docker compose -f docker-compose.hardened.yml up --build
+#
+# Order of operations is enforced by service_completed_successfully depends_on:
+#   postgres healthy -> migrate (owner: migrations) -> harden (owner: roles)
+#   -> server (runtime). The server runs with MAKERCHECKER_SKIP_MIGRATE=1 because
+#   the non-owner runtime role lacks CREATE on the public schema and cannot run
+#   migrate() itself.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: makerchecker
+      POSTGRES_PASSWORD: makerchecker
+      POSTGRES_DB: makerchecker
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U makerchecker"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  # One-shot owner step 1: apply migrations as the schema owner (the server image
+  # ships the migrate CLI). Exits 0 on success; the harden step waits for that.
+  migrate:
+    build:
+      context: .
+      dockerfile: packages/server/Dockerfile
+    environment:
+      # Owner connection: full privileges, used only to run migrations.
+      DATABASE_URL: postgres://makerchecker:makerchecker@postgres:5432/makerchecker
+    command: ["node", "dist/cli.js", "migrate"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # One-shot owner step 2: apply ops/harden-db.sql as the owner. Uses the
+  # postgres image (it has psql; the node server image does not). Creates
+  # mc_app_runtime, grants/revokes, and the default privileges. Idempotent.
+  harden:
+    image: postgres:17-alpine
+    environment:
+      # PGPASSWORD authenticates as the owner; the harden script must run as the
+      # role that owns the tables (or a superuser) to GRANT/REVOKE on them.
+      PGPASSWORD: makerchecker
+      MC_RUNTIME_PASSWORD: ${MC_RUNTIME_PASSWORD:-mc_app_runtime}
+    volumes:
+      # harden-db.sql lives in the repo; mount it read-only for psql.
+      - ./ops:/ops:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        echo "[harden] applying ops/harden-db.sql as owner"
+        psql -h postgres -U makerchecker -d makerchecker \
+          -v ON_ERROR_STOP=1 \
+          -v mc_runtime_password="$$MC_RUNTIME_PASSWORD" \
+          -f /ops/harden-db.sql
+        echo "[harden] done"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  server:
+    build:
+      context: .
+      dockerfile: packages/server/Dockerfile
+    environment:
+      # Runtime connection: the NON-OWNER role. It cannot disable the audit
+      # triggers or mutate audit_events / instance even if compromised.
+      DATABASE_URL: postgres://mc_app_runtime:${MC_RUNTIME_PASSWORD:-mc_app_runtime}@postgres:5432/makerchecker
+      PORT: "3000"
+      MAKERCHECKER_DATA_DIR: /data
+      # Migrations were applied by the owner migrate step above; the runtime role
+      # cannot run them (no CREATE on public). Skip the boot-time migrate.
+      MAKERCHECKER_SKIP_MIGRATE: "1"
+      # Demo seeding stays opt-in. Seeding writes to mutable tables the runtime
+      # role can INSERT into, so it works under the runtime role too.
+      MAKERCHECKER_SEED_DEMO: "1"
+      DEMO_DATA_DIR: /app/examples/daily-cash-reconciliation
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    volumes:
+      - mcdata:/data
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      harden:
+        condition: service_completed_successfully
+
+volumes:
+  pgdata:
+  mcdata:

@@ -1,0 +1,2580 @@
+{
+  "meta": {
+    "flow": "cold-chain-disposition",
+    "note": "Captured from a real seeded run (auth enabled). Do not hand-edit; regenerate with CAPTURE_WRITE=1."
+  },
+  "actors": {
+    "analyst": {
+      "name": "Demo Admin",
+      "email": "admin@makerchecker.local"
+    },
+    "officer": {
+      "name": "Demo Approving Officer",
+      "email": "officer@makerchecker.local"
+    }
+  },
+  "scenes": {
+    "running": {
+      "run": {
+        "id": "20531a55-d72d-42e3-a007-328d187f7c97",
+        "flow": "cold-chain-disposition",
+        "version": 1,
+        "definition": {
+          "name": "cold-chain-disposition",
+          "steps": [
+            {
+              "key": "assess",
+              "agent": "cold-chain-monitor",
+              "skills": [
+                "excursion-ingest@1",
+                "stability-assess@1",
+                "quarantine@1"
+              ],
+              "retries": {
+                "backoff": "exponential",
+                "max_attempts": 3
+              },
+              "timeout_ms": 120000,
+              "instructions": "Ingest the excursion log and the validated stability limits, assess each affected lot (within / beyond / borderline) with a rationale and a recommended disposition, and quarantine every affected lot — holding is the safe direction and needs no gate."
+            },
+            {
+              "key": "disposition_decision",
+              "type": "approval_gate",
+              "title": "Disposition decision — QA release or destroy",
+              "approvals": {
+                "min_approvals": 1,
+                "forbid_requester": true
+              }
+            },
+            {
+              "key": "act",
+              "agent": "cold-chain-monitor",
+              "skills": [
+                "disposition-act@1",
+                "notify@1"
+              ],
+              "timeout_ms": 120000,
+              "instructions": "Execute the QA-decided disposition: release the within-spec lots, destroy the beyond-spec lots, leave borderline lots held for QA judgment, and notify the cold-chain channel."
+            }
+          ]
+        },
+        "status": "running",
+        "failure_reason": null,
+        "input": {
+          "limitsPath": "examples/cold-chain-disposition/stability_limits.csv",
+          "readingsPath": "examples/cold-chain-disposition/readings.csv",
+          "excursionsPath": "examples/cold-chain-disposition/excursions.csv"
+        },
+        "triggered_by": {
+          "id": "dd4477f1-ac94-4616-be8f-cccf21ee3ebe",
+          "name": "admin@makerchecker.local",
+          "type": "user"
+        },
+        "created_at": "2026-06-14T10:10:23.555Z",
+        "started_at": "2026-06-14T10:10:23.563Z",
+        "finished_at": null
+      },
+      "steps": [
+        {
+          "id": "7ac1aaba-70b8-47be-8f66-05c3289064cd",
+          "step_index": 0,
+          "step_key": "assess",
+          "status": "running",
+          "attempt": 1,
+          "input": {
+            "limitsPath": "examples/cold-chain-disposition/stability_limits.csv",
+            "readingsPath": "examples/cold-chain-disposition/readings.csv",
+            "excursionsPath": "examples/cold-chain-disposition/excursions.csv"
+          },
+          "output": null,
+          "error": null,
+          "agent": "cold-chain-monitor",
+          "started_at": "2026-06-14T10:10:23.563Z",
+          "finished_at": null
+        }
+      ],
+      "approvals": [],
+      "auditEvents": [
+        {
+          "seq": "14",
+          "occurred_at": "2026-06-14T10:10:23.557Z",
+          "actor": {
+            "id": "dd4477f1-ac94-4616-be8f-cccf21ee3ebe",
+            "name": "admin@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "run.created",
+          "payload": {
+            "input": {
+              "limitsPath": "examples/cold-chain-disposition/stability_limits.csv",
+              "readingsPath": "examples/cold-chain-disposition/readings.csv",
+              "excursionsPath": "examples/cold-chain-disposition/excursions.csv"
+            },
+            "flowVersionId": "94bdd90e-560c-4ad6-829e-9d11895bf63e"
+          },
+          "hash": "a5d4ea85924ae02d893501405b7f2ac478d76347e34d84f9cfb3b00780a6b9ca"
+        },
+        {
+          "seq": "15",
+          "occurred_at": "2026-06-14T10:10:23.570Z",
+          "actor": {
+            "id": "8220b704-0b0d-4673-b324-2ab79a277c64",
+            "name": "cold-chain-monitor",
+            "type": "agent"
+          },
+          "event_type": "run.step.started",
+          "payload": {
+            "skills": [
+              "excursion-ingest@1",
+              "stability-assess@1",
+              "quarantine@1"
+            ],
+            "attempt": 1,
+            "stepKey": "assess",
+            "stepIndex": 0
+          },
+          "hash": "1e164a17c44efeee1164710e65097fa690119a833f3aa9a1febce46c7c5cd254"
+        },
+        {
+          "seq": "16",
+          "occurred_at": "2026-06-14T10:10:23.582Z",
+          "actor": {
+            "id": "8220b704-0b0d-4673-b324-2ab79a277c64",
+            "name": "cold-chain-monitor",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "limitsPath": "examples/cold-chain-disposition/stability_limits.csv",
+              "readingsPath": "examples/cold-chain-disposition/readings.csv",
+              "excursionsPath": "examples/cold-chain-disposition/excursions.csv"
+            },
+            "output": {
+              "limitC": 8,
+              "incident": {
+                "lot": "LOT-5002",
+                "units": 9800,
+                "product": "VaxFlu Quad vaccine",
+                "shipment": "VAX-2026-114",
+                "valueUsd": 235200
+              },
+              "readings": [
+                {
+                  "tempC": 4,
+                  "minute": 0
+                },
+                {
+                  "tempC": 4,
+                  "minute": 30
+                },
+                {
+                  "tempC": 5,
+                  "minute": 60
+                },
+                {
+                  "tempC": 6,
+                  "minute": 90
+                },
+                {
+                  "tempC": 9,
+                  "minute": 120
+                },
+                {
+                  "tempC": 12,
+                  "minute": 150
+                },
+                {
+                  "tempC": 15,
+                  "minute": 180
+                },
+                {
+                  "tempC": 14,
+                  "minute": 210
+                },
+                {
+                  "tempC": 11,
+                  "minute": 240
+                },
+                {
+                  "tempC": 9,
+                  "minute": 270
+                },
+                {
+                  "tempC": 7,
+                  "minute": 300
+                },
+                {
+                  "tempC": 6,
+                  "minute": 330
+                },
+                {
+                  "tempC": 5,
+                  "minute": 360
+                }
+              ],
+              "intervalMinutes": 30,
+              "maxExcursionMinutes": 120
+            },
+            "stepKey": "assess",
+            "skillRef": "excursion-ingest@1"
+          },
+          "hash": "563b37d0f0b5d04188a86d17681bc4ea16eddc233348b7e9930c4561d3179a59"
+        },
+        {
+          "seq": "17",
+          "occurred_at": "2026-06-14T10:10:23.592Z",
+          "actor": {
+            "id": "8220b704-0b0d-4673-b324-2ab79a277c64",
+            "name": "cold-chain-monitor",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "limitC": 8,
+              "incident": {
+                "lot": "LOT-5002",
+                "units": 9800,
+                "product": "VaxFlu Quad vaccine",
+                "shipment": "VAX-2026-114",
+                "valueUsd": 235200
+              },
+              "readings": [
+                {
+                  "tempC": 4,
+                  "minute": 0
+                },
+                {
+                  "tempC": 4,
+                  "minute": 30
+                },
+                {
+                  "tempC": 5,
+                  "minute": 60
+                },
+                {
+                  "tempC": 6,
+                  "minute": 90
+                },
+                {
+                  "tempC": 9,
+                  "minute": 120
+                },
+                {
+                  "tempC": 12,
+                  "minute": 150
+                },
+                {
+                  "tempC": 15,
+                  "minute": 180
+                },
+                {
+                  "tempC": 14,
+                  "minute": 210
+                },
+                {
+                  "tempC": 11,
+                  "minute": 240
+                },
+                {
+                  "tempC": 9,
+                  "minute": 270
+                },
+                {
+                  "tempC": 7,
+                  "minute": 300
+                },
+                {
+                  "tempC": 6,
+                  "minute": 330
+                },
+                {
+                  "tempC": 5,
+                  "minute": 360
+                }
+              ],
+              "intervalMinutes": 30,
+              "maxExcursionMinutes": 120
+            },
+            "output": {
+              "limitC": 8,
+              "report": {
+                "ref": "CCIR-2026-0613",
+                "body": [
+                  "A temperature excursion was detected on shipment VAX-2026-114 carrying VaxFlu Quad vaccine (lot LOT-5002, 9,800 units). The datalogger recorded a peak of 15.0 °C against the labelled 8 °C limit, with temperature above the limit for 180 minutes [1].",
+                  "Against the validated stability profile, cumulative time above the limit (180 minutes) exceeds the validated 120-minute excursion allowance, which bears directly on potency [2]. The lot is beyond validated stability and is recommended for destruction [3].",
+                  "Quarantine has been placed on the lot. Disposition is a one-way door and must be decided by the independent quality unit (21 CFR 211.22) — it is not the agent's to make."
+                ],
+                "title": "Cold-Chain Incident Report",
+                "footnotes": [
+                  "Datalogger trace DL-114-2026.csv",
+                  "Stability Study SR-2024-118 — VaxFlu Quad vaccine",
+                  "SOP QA-014 — Excursion Disposition"
+                ]
+              },
+              "holdList": [
+                "LOT-5002"
+              ],
+              "incident": {
+                "lot": "LOT-5002",
+                "units": 9800,
+                "product": "VaxFlu Quad vaccine",
+                "shipment": "VAX-2026-114",
+                "valueUsd": 235200
+              },
+              "readings": [
+                {
+                  "tempC": 4,
+                  "minute": 0
+                },
+                {
+                  "tempC": 4,
+                  "minute": 30
+                },
+                {
+                  "tempC": 5,
+                  "minute": 60
+                },
+                {
+                  "tempC": 6,
+                  "minute": 90
+                },
+                {
+                  "tempC": 9,
+                  "minute": 120
+                },
+                {
+                  "tempC": 12,
+                  "minute": 150
+                },
+                {
+                  "tempC": 15,
+                  "minute": 180
+                },
+                {
+                  "tempC": 14,
+                  "minute": 210
+                },
+                {
+                  "tempC": 11,
+                  "minute": 240
+                },
+                {
+                  "tempC": 9,
+                  "minute": 270
+                },
+                {
+                  "tempC": 7,
+                  "minute": 300
+                },
+                {
+                  "tempC": 6,
+                  "minute": 330
+                },
+                {
+                  "tempC": 5,
+                  "minute": 360
+                }
+              ],
+              "peakTempC": 15,
+              "classification": "beyond",
+              "intervalMinutes": 30,
+              "minutesOverLimit": 180,
+              "maxExcursionMinutes": 120,
+              "recommendedDisposition": "destroy"
+            },
+            "stepKey": "assess",
+            "skillRef": "stability-assess@1"
+          },
+          "hash": "ee3ad972d022a866a7c5bebc86b6372ade72771202597edea19c108d895856c0"
+        },
+        {
+          "seq": "18",
+          "occurred_at": "2026-06-14T10:10:23.593Z",
+          "actor": {
+            "id": "8220b704-0b0d-4673-b324-2ab79a277c64",
+            "name": "cold-chain-monitor",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "limitC": 8,
+              "report": {
+                "ref": "CCIR-2026-0613",
+                "body": [
+                  "A temperature excursion was detected on shipment VAX-2026-114 carrying VaxFlu Quad vaccine (lot LOT-5002, 9,800 units). The datalogger recorded a peak of 15.0 °C against the labelled 8 °C limit, with temperature above the limit for 180 minutes [1].",
+                  "Against the validated stability profile, cumulative time above the limit (180 minutes) exceeds the validated 120-minute excursion allowance, which bears directly on potency [2]. The lot is beyond validated stability and is recommended for destruction [3].",
+                  "Quarantine has been placed on the lot. Disposition is a one-way door and must be decided by the independent quality unit (21 CFR 211.22) — it is not the agent's to make."
+                ],
+                "title": "Cold-Chain Incident Report",
+                "footnotes": [
+                  "Datalogger trace DL-114-2026.csv",
+                  "Stability Study SR-2024-118 — VaxFlu Quad vaccine",
+                  "SOP QA-014 — Excursion Disposition"
+                ]
+              },
+              "holdList": [
+                "LOT-5002"
+              ],
+              "incident": {
+                "lot": "LOT-5002",
+                "units": 9800,
+                "product": "VaxFlu Quad vaccine",
+                "shipment": "VAX-2026-114",
+                "valueUsd": 235200
+              },
+              "readings": [
+                {
+                  "tempC": 4,
+                  "minute": 0
+                },
+                {
+                  "tempC": 4,
+                  "minute": 30
+                },
+                {
+                  "tempC": 5,
+                  "minute": 60
+                },
+                {
+                  "tempC": 6,
+                  "minute": 90
+                },
+                {
+                  "tempC": 9,
+                  "minute": 120
+                },
+                {
+                  "tempC": 12,
+                  "minute": 150
+                },
+                {
+                  "tempC": 15,
+                  "minute": 180
+                },
+                {
+                  "tempC": 14,
+                  "minute": 210
+                },
+                {
+                  "tempC": 11,
+                  "minute": 240
+                },
+                {
+                  "tempC": 9,
+                  "minute": 270
+                },
+                {
+                  "tempC": 7,
+                  "minute": 300
+                },
+                {
+                  "tempC": 6,
+                  "minute": 330
+                },
+                {
+                  "tempC": 5,
+                  "minute": 360
+                }
+              ],
+              "peakTempC": 15,
+              "classification": "beyond",
+              "intervalMinutes": 30,
+              "minutesOverLimit": 180,
+              "maxExcursionMinutes": 120,
+              "recommendedDisposition": "destroy"
+            },
+            "output": {
+              "held": true,
+              "limitC": 8,
+              "report": {
+                "ref": "CCIR-2026-0613",
+                "body": [
+                  "A temperature excursion was detected on shipment VAX-2026-114 carrying VaxFlu Quad vaccine (lot LOT-5002, 9,800 units). The datalogger recorded a peak of 15.0 °C against the labelled 8 °C limit, with temperature above the limit for 180 minutes [1].",
+                  "Against the validated stability profile, cumulative time above the limit (180 minutes) exceeds the validated 120-minute excursion allowance, which bears directly on potency [2]. The lot is beyond validated stability and is recommended for destruction [3].",
+                  "Quarantine has been placed on the lot. Disposition is a one-way door and must be decided by the independent quality unit (21 CFR 211.22) — it is not the agent's to make."
+                ],
+                "title": "Cold-Chain Incident Report",
+                "footnotes": [
+                  "Datalogger trace DL-114-2026.csv",
+                  "Stability Study SR-2024-118 — VaxFlu Quad vaccine",
+                  "SOP QA-014 — Excursion Disposition"
+                ]
+              },
+              "holdList": [
+                "LOT-5002"
+              ],
+              "incident": {
+                "lot": "LOT-5002",
+                "units": 9800,
+                "product": "VaxFlu Quad vaccine",
+                "shipment": "VAX-2026-114",
+                "valueUsd": 235200
+              },
+              "readings": [
+                {
+                  "tempC": 4,
+                  "minute": 0
+                },
+                {
+                  "tempC": 4,
+                  "minute": 30
+                },
+                {
+                  "tempC": 5,
+                  "minute": 60
+                },
+                {
+                  "tempC": 6,
+                  "minute": 90
+                },
+                {
+                  "tempC": 9,
+                  "minute": 120
+                },
+                {
+                  "tempC": 12,
+                  "minute": 150
+                },
+                {
+                  "tempC": 15,
+                  "minute": 180
+                },
+                {
+                  "tempC": 14,
+                  "minute": 210
+                },
+                {
+                  "tempC": 11,
+                  "minute": 240
+                },
+                {
+                  "tempC": 9,
+                  "minute": 270
+                },
+                {
+                  "tempC": 7,
+                  "minute": 300
+                },
+                {
+                  "tempC": 6,
+                  "minute": 330
+                },
+                {
+                  "tempC": 5,
+                  "minute": 360
+                }
+              ],
+              "heldUnits": 9800,
+              "peakTempC": 15,
+              "classification": "beyond",
+              "intervalMinutes": 30,
+              "minutesOverLimit": 180,
+              "maxExcursionMinutes": 120,
+              "recommendedDisposition": "destroy"
+            },
+            "stepKey": "assess",
+            "skillRef": "quarantine@1"
+          },
+          "hash": "29285b9c9011ab579c43f996cff394b3ea0bd0c6d25006787cbe6f63960d92ee"
+        }
+      ]
+    },
+    "waiting": {
+      "run": {
+        "id": "20531a55-d72d-42e3-a007-328d187f7c97",
+        "flow": "cold-chain-disposition",
+        "version": 1,
+        "definition": {
+          "name": "cold-chain-disposition",
+          "steps": [
+            {
+              "key": "assess",
+              "agent": "cold-chain-monitor",
+              "skills": [
+                "excursion-ingest@1",
+                "stability-assess@1",
+                "quarantine@1"
+              ],
+              "retries": {
+                "backoff": "exponential",
+                "max_attempts": 3
+              },
+              "timeout_ms": 120000,
+              "instructions": "Ingest the excursion log and the validated stability limits, assess each affected lot (within / beyond / borderline) with a rationale and a recommended disposition, and quarantine every affected lot — holding is the safe direction and needs no gate."
+            },
+            {
+              "key": "disposition_decision",
+              "type": "approval_gate",
+              "title": "Disposition decision — QA release or destroy",
+              "approvals": {
+                "min_approvals": 1,
+                "forbid_requester": true
+              }
+            },
+            {
+              "key": "act",
+              "agent": "cold-chain-monitor",
+              "skills": [
+                "disposition-act@1",
+                "notify@1"
+              ],
+              "timeout_ms": 120000,
+              "instructions": "Execute the QA-decided disposition: release the within-spec lots, destroy the beyond-spec lots, leave borderline lots held for QA judgment, and notify the cold-chain channel."
+            }
+          ]
+        },
+        "status": "waiting_approval",
+        "failure_reason": null,
+        "input": {
+          "limitsPath": "examples/cold-chain-disposition/stability_limits.csv",
+          "readingsPath": "examples/cold-chain-disposition/readings.csv",
+          "excursionsPath": "examples/cold-chain-disposition/excursions.csv"
+        },
+        "triggered_by": {
+          "id": "dd4477f1-ac94-4616-be8f-cccf21ee3ebe",
+          "name": "admin@makerchecker.local",
+          "type": "user"
+        },
+        "created_at": "2026-06-14T10:10:23.555Z",
+        "started_at": "2026-06-14T10:10:23.563Z",
+        "finished_at": null
+      },
+      "steps": [
+        {
+          "id": "7ac1aaba-70b8-47be-8f66-05c3289064cd",
+          "step_index": 0,
+          "step_key": "assess",
+          "status": "completed",
+          "attempt": 1,
+          "input": {
+            "limitsPath": "examples/cold-chain-disposition/stability_limits.csv",
+            "readingsPath": "examples/cold-chain-disposition/readings.csv",
+            "excursionsPath": "examples/cold-chain-disposition/excursions.csv"
+          },
+          "output": {
+            "held": true,
+            "limitC": 8,
+            "report": {
+              "ref": "CCIR-2026-0613",
+              "body": [
+                "A temperature excursion was detected on shipment VAX-2026-114 carrying VaxFlu Quad vaccine (lot LOT-5002, 9,800 units). The datalogger recorded a peak of 15.0 °C against the labelled 8 °C limit, with temperature above the limit for 180 minutes [1].",
+                "Against the validated stability profile, cumulative time above the limit (180 minutes) exceeds the validated 120-minute excursion allowance, which bears directly on potency [2]. The lot is beyond validated stability and is recommended for destruction [3].",
+                "Quarantine has been placed on the lot. Disposition is a one-way door and must be decided by the independent quality unit (21 CFR 211.22) — it is not the agent's to make."
+              ],
+              "title": "Cold-Chain Incident Report",
+              "footnotes": [
+                "Datalogger trace DL-114-2026.csv",
+                "Stability Study SR-2024-118 — VaxFlu Quad vaccine",
+                "SOP QA-014 — Excursion Disposition"
+              ]
+            },
+            "holdList": [
+              "LOT-5002"
+            ],
+            "incident": {
+              "lot": "LOT-5002",
+              "units": 9800,
+              "product": "VaxFlu Quad vaccine",
+              "shipment": "VAX-2026-114",
+              "valueUsd": 235200
+            },
+            "readings": [
+              {
+                "tempC": 4,
+                "minute": 0
+              },
+              {
+                "tempC": 4,
+                "minute": 30
+              },
+              {
+                "tempC": 5,
+                "minute": 60
+              },
+              {
+                "tempC": 6,
+                "minute": 90
+              },
+              {
+                "tempC": 9,
+                "minute": 120
+              },
+              {
+                "tempC": 12,
+                "minute": 150
+              },
+              {
+                "tempC": 15,
+                "minute": 180
+              },
+              {
+                "tempC": 14,
+                "minute": 210
+              },
+              {
+                "tempC": 11,
+                "minute": 240
+              },
+              {
+                "tempC": 9,
+                "minute": 270
+              },
+              {
+                "tempC": 7,
+                "minute": 300
+              },
+              {
+                "tempC": 6,
+                "minute": 330
+              },
+              {
+                "tempC": 5,
+                "minute": 360
+              }
+            ],
+            "heldUnits": 9800,
+            "peakTempC": 15,
+            "classification": "beyond",
+            "intervalMinutes": 30,
+            "minutesOverLimit": 180,
+            "maxExcursionMinutes": 120,
+            "recommendedDisposition": "destroy"
+          },
+          "error": null,
+          "agent": "cold-chain-monitor",
+          "started_at": "2026-06-14T10:10:23.563Z",
+          "finished_at": "2026-06-14T10:10:23.593Z"
+        }
+      ],
+      "approvals": [
+        {
+          "id": "651fc2ac-0e66-4e23-ae46-a962be34b85c",
+          "step_key": "disposition_decision",
+          "status": "pending",
+          "requested_at": "2026-06-14T10:10:23.596Z",
+          "decided_at": null,
+          "reason": null,
+          "required_approvals": 1,
+          "decided_by": null,
+          "decisions": []
+        }
+      ],
+      "auditEvents": [
+        {
+          "seq": "14",
+          "occurred_at": "2026-06-14T10:10:23.557Z",
+          "actor": {
+            "id": "dd4477f1-ac94-4616-be8f-cccf21ee3ebe",
+            "name": "admin@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "run.created",
+          "payload": {
+            "input": {
+              "limitsPath": "examples/cold-chain-disposition/stability_limits.csv",
+              "readingsPath": "examples/cold-chain-disposition/readings.csv",
+              "excursionsPath": "examples/cold-chain-disposition/excursions.csv"
+            },
+            "flowVersionId": "94bdd90e-560c-4ad6-829e-9d11895bf63e"
+          },
+          "hash": "a5d4ea85924ae02d893501405b7f2ac478d76347e34d84f9cfb3b00780a6b9ca"
+        },
+        {
+          "seq": "15",
+          "occurred_at": "2026-06-14T10:10:23.570Z",
+          "actor": {
+            "id": "8220b704-0b0d-4673-b324-2ab79a277c64",
+            "name": "cold-chain-monitor",
+            "type": "agent"
+          },
+          "event_type": "run.step.started",
+          "payload": {
+            "skills": [
+              "excursion-ingest@1",
+              "stability-assess@1",
+              "quarantine@1"
+            ],
+            "attempt": 1,
+            "stepKey": "assess",
+            "stepIndex": 0
+          },
+          "hash": "1e164a17c44efeee1164710e65097fa690119a833f3aa9a1febce46c7c5cd254"
+        },
+        {
+          "seq": "16",
+          "occurred_at": "2026-06-14T10:10:23.582Z",
+          "actor": {
+            "id": "8220b704-0b0d-4673-b324-2ab79a277c64",
+            "name": "cold-chain-monitor",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "limitsPath": "examples/cold-chain-disposition/stability_limits.csv",
+              "readingsPath": "examples/cold-chain-disposition/readings.csv",
+              "excursionsPath": "examples/cold-chain-disposition/excursions.csv"
+            },
+            "output": {
+              "limitC": 8,
+              "incident": {
+                "lot": "LOT-5002",
+                "units": 9800,
+                "product": "VaxFlu Quad vaccine",
+                "shipment": "VAX-2026-114",
+                "valueUsd": 235200
+              },
+              "readings": [
+                {
+                  "tempC": 4,
+                  "minute": 0
+                },
+                {
+                  "tempC": 4,
+                  "minute": 30
+                },
+                {
+                  "tempC": 5,
+                  "minute": 60
+                },
+                {
+                  "tempC": 6,
+                  "minute": 90
+                },
+                {
+                  "tempC": 9,
+                  "minute": 120
+                },
+                {
+                  "tempC": 12,
+                  "minute": 150
+                },
+                {
+                  "tempC": 15,
+                  "minute": 180
+                },
+                {
+                  "tempC": 14,
+                  "minute": 210
+                },
+                {
+                  "tempC": 11,
+                  "minute": 240
+                },
+                {
+                  "tempC": 9,
+                  "minute": 270
+                },
+                {
+                  "tempC": 7,
+                  "minute": 300
+                },
+                {
+                  "tempC": 6,
+                  "minute": 330
+                },
+                {
+                  "tempC": 5,
+                  "minute": 360
+                }
+              ],
+              "intervalMinutes": 30,
+              "maxExcursionMinutes": 120
+            },
+            "stepKey": "assess",
+            "skillRef": "excursion-ingest@1"
+          },
+          "hash": "563b37d0f0b5d04188a86d17681bc4ea16eddc233348b7e9930c4561d3179a59"
+        },
+        {
+          "seq": "17",
+          "occurred_at": "2026-06-14T10:10:23.592Z",
+          "actor": {
+            "id": "8220b704-0b0d-4673-b324-2ab79a277c64",
+            "name": "cold-chain-monitor",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "limitC": 8,
+              "incident": {
+                "lot": "LOT-5002",
+                "units": 9800,
+                "product": "VaxFlu Quad vaccine",
+                "shipment": "VAX-2026-114",
+                "valueUsd": 235200
+              },
+              "readings": [
+                {
+                  "tempC": 4,
+                  "minute": 0
+                },
+                {
+                  "tempC": 4,
+                  "minute": 30
+                },
+                {
+                  "tempC": 5,
+                  "minute": 60
+                },
+                {
+                  "tempC": 6,
+                  "minute": 90
+                },
+                {
+                  "tempC": 9,
+                  "minute": 120
+                },
+                {
+                  "tempC": 12,
+                  "minute": 150
+                },
+                {
+                  "tempC": 15,
+                  "minute": 180
+                },
+                {
+                  "tempC": 14,
+                  "minute": 210
+                },
+                {
+                  "tempC": 11,
+                  "minute": 240
+                },
+                {
+                  "tempC": 9,
+                  "minute": 270
+                },
+                {
+                  "tempC": 7,
+                  "minute": 300
+                },
+                {
+                  "tempC": 6,
+                  "minute": 330
+                },
+                {
+                  "tempC": 5,
+                  "minute": 360
+                }
+              ],
+              "intervalMinutes": 30,
+              "maxExcursionMinutes": 120
+            },
+            "output": {
+              "limitC": 8,
+              "report": {
+                "ref": "CCIR-2026-0613",
+                "body": [
+                  "A temperature excursion was detected on shipment VAX-2026-114 carrying VaxFlu Quad vaccine (lot LOT-5002, 9,800 units). The datalogger recorded a peak of 15.0 °C against the labelled 8 °C limit, with temperature above the limit for 180 minutes [1].",
+                  "Against the validated stability profile, cumulative time above the limit (180 minutes) exceeds the validated 120-minute excursion allowance, which bears directly on potency [2]. The lot is beyond validated stability and is recommended for destruction [3].",
+                  "Quarantine has been placed on the lot. Disposition is a one-way door and must be decided by the independent quality unit (21 CFR 211.22) — it is not the agent's to make."
+                ],
+                "title": "Cold-Chain Incident Report",
+                "footnotes": [
+                  "Datalogger trace DL-114-2026.csv",
+                  "Stability Study SR-2024-118 — VaxFlu Quad vaccine",
+                  "SOP QA-014 — Excursion Disposition"
+                ]
+              },
+              "holdList": [
+                "LOT-5002"
+              ],
+              "incident": {
+                "lot": "LOT-5002",
+                "units": 9800,
+                "product": "VaxFlu Quad vaccine",
+                "shipment": "VAX-2026-114",
+                "valueUsd": 235200
+              },
+              "readings": [
+                {
+                  "tempC": 4,
+                  "minute": 0
+                },
+                {
+                  "tempC": 4,
+                  "minute": 30
+                },
+                {
+                  "tempC": 5,
+                  "minute": 60
+                },
+                {
+                  "tempC": 6,
+                  "minute": 90
+                },
+                {
+                  "tempC": 9,
+                  "minute": 120
+                },
+                {
+                  "tempC": 12,
+                  "minute": 150
+                },
+                {
+                  "tempC": 15,
+                  "minute": 180
+                },
+                {
+                  "tempC": 14,
+                  "minute": 210
+                },
+                {
+                  "tempC": 11,
+                  "minute": 240
+                },
+                {
+                  "tempC": 9,
+                  "minute": 270
+                },
+                {
+                  "tempC": 7,
+                  "minute": 300
+                },
+                {
+                  "tempC": 6,
+                  "minute": 330
+                },
+                {
+                  "tempC": 5,
+                  "minute": 360
+                }
+              ],
+              "peakTempC": 15,
+              "classification": "beyond",
+              "intervalMinutes": 30,
+              "minutesOverLimit": 180,
+              "maxExcursionMinutes": 120,
+              "recommendedDisposition": "destroy"
+            },
+            "stepKey": "assess",
+            "skillRef": "stability-assess@1"
+          },
+          "hash": "ee3ad972d022a866a7c5bebc86b6372ade72771202597edea19c108d895856c0"
+        },
+        {
+          "seq": "18",
+          "occurred_at": "2026-06-14T10:10:23.593Z",
+          "actor": {
+            "id": "8220b704-0b0d-4673-b324-2ab79a277c64",
+            "name": "cold-chain-monitor",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "limitC": 8,
+              "report": {
+                "ref": "CCIR-2026-0613",
+                "body": [
+                  "A temperature excursion was detected on shipment VAX-2026-114 carrying VaxFlu Quad vaccine (lot LOT-5002, 9,800 units). The datalogger recorded a peak of 15.0 °C against the labelled 8 °C limit, with temperature above the limit for 180 minutes [1].",
+                  "Against the validated stability profile, cumulative time above the limit (180 minutes) exceeds the validated 120-minute excursion allowance, which bears directly on potency [2]. The lot is beyond validated stability and is recommended for destruction [3].",
+                  "Quarantine has been placed on the lot. Disposition is a one-way door and must be decided by the independent quality unit (21 CFR 211.22) — it is not the agent's to make."
+                ],
+                "title": "Cold-Chain Incident Report",
+                "footnotes": [
+                  "Datalogger trace DL-114-2026.csv",
+                  "Stability Study SR-2024-118 — VaxFlu Quad vaccine",
+                  "SOP QA-014 — Excursion Disposition"
+                ]
+              },
+              "holdList": [
+                "LOT-5002"
+              ],
+              "incident": {
+                "lot": "LOT-5002",
+                "units": 9800,
+                "product": "VaxFlu Quad vaccine",
+                "shipment": "VAX-2026-114",
+                "valueUsd": 235200
+              },
+              "readings": [
+                {
+                  "tempC": 4,
+                  "minute": 0
+                },
+                {
+                  "tempC": 4,
+                  "minute": 30
+                },
+                {
+                  "tempC": 5,
+                  "minute": 60
+                },
+                {
+                  "tempC": 6,
+                  "minute": 90
+                },
+                {
+                  "tempC": 9,
+                  "minute": 120
+                },
+                {
+                  "tempC": 12,
+                  "minute": 150
+                },
+                {
+                  "tempC": 15,
+                  "minute": 180
+                },
+                {
+                  "tempC": 14,
+                  "minute": 210
+                },
+                {
+                  "tempC": 11,
+                  "minute": 240
+                },
+                {
+                  "tempC": 9,
+                  "minute": 270
+                },
+                {
+                  "tempC": 7,
+                  "minute": 300
+                },
+                {
+                  "tempC": 6,
+                  "minute": 330
+                },
+                {
+                  "tempC": 5,
+                  "minute": 360
+                }
+              ],
+              "peakTempC": 15,
+              "classification": "beyond",
+              "intervalMinutes": 30,
+              "minutesOverLimit": 180,
+              "maxExcursionMinutes": 120,
+              "recommendedDisposition": "destroy"
+            },
+            "output": {
+              "held": true,
+              "limitC": 8,
+              "report": {
+                "ref": "CCIR-2026-0613",
+                "body": [
+                  "A temperature excursion was detected on shipment VAX-2026-114 carrying VaxFlu Quad vaccine (lot LOT-5002, 9,800 units). The datalogger recorded a peak of 15.0 °C against the labelled 8 °C limit, with temperature above the limit for 180 minutes [1].",
+                  "Against the validated stability profile, cumulative time above the limit (180 minutes) exceeds the validated 120-minute excursion allowance, which bears directly on potency [2]. The lot is beyond validated stability and is recommended for destruction [3].",
+                  "Quarantine has been placed on the lot. Disposition is a one-way door and must be decided by the independent quality unit (21 CFR 211.22) — it is not the agent's to make."
+                ],
+                "title": "Cold-Chain Incident Report",
+                "footnotes": [
+                  "Datalogger trace DL-114-2026.csv",
+                  "Stability Study SR-2024-118 — VaxFlu Quad vaccine",
+                  "SOP QA-014 — Excursion Disposition"
+                ]
+              },
+              "holdList": [
+                "LOT-5002"
+              ],
+              "incident": {
+                "lot": "LOT-5002",
+                "units": 9800,
+                "product": "VaxFlu Quad vaccine",
+                "shipment": "VAX-2026-114",
+                "valueUsd": 235200
+              },
+              "readings": [
+                {
+                  "tempC": 4,
+                  "minute": 0
+                },
+                {
+                  "tempC": 4,
+                  "minute": 30
+                },
+                {
+                  "tempC": 5,
+                  "minute": 60
+                },
+                {
+                  "tempC": 6,
+                  "minute": 90
+                },
+                {
+                  "tempC": 9,
+                  "minute": 120
+                },
+                {
+                  "tempC": 12,
+                  "minute": 150
+                },
+                {
+                  "tempC": 15,
+                  "minute": 180
+                },
+                {
+                  "tempC": 14,
+                  "minute": 210
+                },
+                {
+                  "tempC": 11,
+                  "minute": 240
+                },
+                {
+                  "tempC": 9,
+                  "minute": 270
+                },
+                {
+                  "tempC": 7,
+                  "minute": 300
+                },
+                {
+                  "tempC": 6,
+                  "minute": 330
+                },
+                {
+                  "tempC": 5,
+                  "minute": 360
+                }
+              ],
+              "heldUnits": 9800,
+              "peakTempC": 15,
+              "classification": "beyond",
+              "intervalMinutes": 30,
+              "minutesOverLimit": 180,
+              "maxExcursionMinutes": 120,
+              "recommendedDisposition": "destroy"
+            },
+            "stepKey": "assess",
+            "skillRef": "quarantine@1"
+          },
+          "hash": "29285b9c9011ab579c43f996cff394b3ea0bd0c6d25006787cbe6f63960d92ee"
+        },
+        {
+          "seq": "19",
+          "occurred_at": "2026-06-14T10:10:23.595Z",
+          "actor": {
+            "id": "8220b704-0b0d-4673-b324-2ab79a277c64",
+            "name": "cold-chain-monitor",
+            "type": "agent"
+          },
+          "event_type": "run.step.completed",
+          "payload": {
+            "output": {
+              "held": true,
+              "limitC": 8,
+              "report": {
+                "ref": "CCIR-2026-0613",
+                "body": [
+                  "A temperature excursion was detected on shipment VAX-2026-114 carrying VaxFlu Quad vaccine (lot LOT-5002, 9,800 units). The datalogger recorded a peak of 15.0 °C against the labelled 8 °C limit, with temperature above the limit for 180 minutes [1].",
+                  "Against the validated stability profile, cumulative time above the limit (180 minutes) exceeds the validated 120-minute excursion allowance, which bears directly on potency [2]. The lot is beyond validated stability and is recommended for destruction [3].",
+                  "Quarantine has been placed on the lot. Disposition is a one-way door and must be decided by the independent quality unit (21 CFR 211.22) — it is not the agent's to make."
+                ],
+                "title": "Cold-Chain Incident Report",
+                "footnotes": [
+                  "Datalogger trace DL-114-2026.csv",
+                  "Stability Study SR-2024-118 — VaxFlu Quad vaccine",
+                  "SOP QA-014 — Excursion Disposition"
+                ]
+              },
+              "holdList": [
+                "LOT-5002"
+              ],
+              "incident": {
+                "lot": "LOT-5002",
+                "units": 9800,
+                "product": "VaxFlu Quad vaccine",
+                "shipment": "VAX-2026-114",
+                "valueUsd": 235200
+              },
+              "readings": [
+                {
+                  "tempC": 4,
+                  "minute": 0
+                },
+                {
+                  "tempC": 4,
+                  "minute": 30
+                },
+                {
+                  "tempC": 5,
+                  "minute": 60
+                },
+                {
+                  "tempC": 6,
+                  "minute": 90
+                },
+                {
+                  "tempC": 9,
+                  "minute": 120
+                },
+                {
+                  "tempC": 12,
+                  "minute": 150
+                },
+                {
+                  "tempC": 15,
+                  "minute": 180
+                },
+                {
+                  "tempC": 14,
+                  "minute": 210
+                },
+                {
+                  "tempC": 11,
+                  "minute": 240
+                },
+                {
+                  "tempC": 9,
+                  "minute": 270
+                },
+                {
+                  "tempC": 7,
+                  "minute": 300
+                },
+                {
+                  "tempC": 6,
+                  "minute": 330
+                },
+                {
+                  "tempC": 5,
+                  "minute": 360
+                }
+              ],
+              "heldUnits": 9800,
+              "peakTempC": 15,
+              "classification": "beyond",
+              "intervalMinutes": 30,
+              "minutesOverLimit": 180,
+              "maxExcursionMinutes": 120,
+              "recommendedDisposition": "destroy"
+            },
+            "attempt": 1,
+            "stepKey": "assess"
+          },
+          "hash": "478890a7cdefcbc6585226b1852599f48734a326682aafd9fc26aa811b93928b"
+        },
+        {
+          "seq": "20",
+          "occurred_at": "2026-06-14T10:10:23.599Z",
+          "actor": {
+            "id": "engine",
+            "type": "system"
+          },
+          "event_type": "approval.requested",
+          "payload": {
+            "title": "Disposition decision — QA release or destroy",
+            "stepKey": "disposition_decision",
+            "stepIndex": 1,
+            "requiredApprovals": 1
+          },
+          "hash": "fd895b59702bd8027615572b70a6c3ad4691154fa60e36e78c1dcbec9a054bab"
+        }
+      ]
+    },
+    "completed": {
+      "run": {
+        "id": "20531a55-d72d-42e3-a007-328d187f7c97",
+        "flow": "cold-chain-disposition",
+        "version": 1,
+        "definition": {
+          "name": "cold-chain-disposition",
+          "steps": [
+            {
+              "key": "assess",
+              "agent": "cold-chain-monitor",
+              "skills": [
+                "excursion-ingest@1",
+                "stability-assess@1",
+                "quarantine@1"
+              ],
+              "retries": {
+                "backoff": "exponential",
+                "max_attempts": 3
+              },
+              "timeout_ms": 120000,
+              "instructions": "Ingest the excursion log and the validated stability limits, assess each affected lot (within / beyond / borderline) with a rationale and a recommended disposition, and quarantine every affected lot — holding is the safe direction and needs no gate."
+            },
+            {
+              "key": "disposition_decision",
+              "type": "approval_gate",
+              "title": "Disposition decision — QA release or destroy",
+              "approvals": {
+                "min_approvals": 1,
+                "forbid_requester": true
+              }
+            },
+            {
+              "key": "act",
+              "agent": "cold-chain-monitor",
+              "skills": [
+                "disposition-act@1",
+                "notify@1"
+              ],
+              "timeout_ms": 120000,
+              "instructions": "Execute the QA-decided disposition: release the within-spec lots, destroy the beyond-spec lots, leave borderline lots held for QA judgment, and notify the cold-chain channel."
+            }
+          ]
+        },
+        "status": "completed",
+        "failure_reason": null,
+        "input": {
+          "limitsPath": "examples/cold-chain-disposition/stability_limits.csv",
+          "readingsPath": "examples/cold-chain-disposition/readings.csv",
+          "excursionsPath": "examples/cold-chain-disposition/excursions.csv"
+        },
+        "triggered_by": {
+          "id": "dd4477f1-ac94-4616-be8f-cccf21ee3ebe",
+          "name": "admin@makerchecker.local",
+          "type": "user"
+        },
+        "created_at": "2026-06-14T10:10:23.555Z",
+        "started_at": "2026-06-14T10:10:23.563Z",
+        "finished_at": "2026-06-14T10:10:23.714Z"
+      },
+      "steps": [
+        {
+          "id": "7ac1aaba-70b8-47be-8f66-05c3289064cd",
+          "step_index": 0,
+          "step_key": "assess",
+          "status": "completed",
+          "attempt": 1,
+          "input": {
+            "limitsPath": "examples/cold-chain-disposition/stability_limits.csv",
+            "readingsPath": "examples/cold-chain-disposition/readings.csv",
+            "excursionsPath": "examples/cold-chain-disposition/excursions.csv"
+          },
+          "output": {
+            "held": true,
+            "limitC": 8,
+            "report": {
+              "ref": "CCIR-2026-0613",
+              "body": [
+                "A temperature excursion was detected on shipment VAX-2026-114 carrying VaxFlu Quad vaccine (lot LOT-5002, 9,800 units). The datalogger recorded a peak of 15.0 °C against the labelled 8 °C limit, with temperature above the limit for 180 minutes [1].",
+                "Against the validated stability profile, cumulative time above the limit (180 minutes) exceeds the validated 120-minute excursion allowance, which bears directly on potency [2]. The lot is beyond validated stability and is recommended for destruction [3].",
+                "Quarantine has been placed on the lot. Disposition is a one-way door and must be decided by the independent quality unit (21 CFR 211.22) — it is not the agent's to make."
+              ],
+              "title": "Cold-Chain Incident Report",
+              "footnotes": [
+                "Datalogger trace DL-114-2026.csv",
+                "Stability Study SR-2024-118 — VaxFlu Quad vaccine",
+                "SOP QA-014 — Excursion Disposition"
+              ]
+            },
+            "holdList": [
+              "LOT-5002"
+            ],
+            "incident": {
+              "lot": "LOT-5002",
+              "units": 9800,
+              "product": "VaxFlu Quad vaccine",
+              "shipment": "VAX-2026-114",
+              "valueUsd": 235200
+            },
+            "readings": [
+              {
+                "tempC": 4,
+                "minute": 0
+              },
+              {
+                "tempC": 4,
+                "minute": 30
+              },
+              {
+                "tempC": 5,
+                "minute": 60
+              },
+              {
+                "tempC": 6,
+                "minute": 90
+              },
+              {
+                "tempC": 9,
+                "minute": 120
+              },
+              {
+                "tempC": 12,
+                "minute": 150
+              },
+              {
+                "tempC": 15,
+                "minute": 180
+              },
+              {
+                "tempC": 14,
+                "minute": 210
+              },
+              {
+                "tempC": 11,
+                "minute": 240
+              },
+              {
+                "tempC": 9,
+                "minute": 270
+              },
+              {
+                "tempC": 7,
+                "minute": 300
+              },
+              {
+                "tempC": 6,
+                "minute": 330
+              },
+              {
+                "tempC": 5,
+                "minute": 360
+              }
+            ],
+            "heldUnits": 9800,
+            "peakTempC": 15,
+            "classification": "beyond",
+            "intervalMinutes": 30,
+            "minutesOverLimit": 180,
+            "maxExcursionMinutes": 120,
+            "recommendedDisposition": "destroy"
+          },
+          "error": null,
+          "agent": "cold-chain-monitor",
+          "started_at": "2026-06-14T10:10:23.563Z",
+          "finished_at": "2026-06-14T10:10:23.593Z"
+        },
+        {
+          "id": "c449d3bb-ebb3-4fd3-8eef-2f2acafc2436",
+          "step_index": 2,
+          "step_key": "act",
+          "status": "completed",
+          "attempt": 1,
+          "input": {
+            "held": true,
+            "limitC": 8,
+            "report": {
+              "ref": "CCIR-2026-0613",
+              "body": [
+                "A temperature excursion was detected on shipment VAX-2026-114 carrying VaxFlu Quad vaccine (lot LOT-5002, 9,800 units). The datalogger recorded a peak of 15.0 °C against the labelled 8 °C limit, with temperature above the limit for 180 minutes [1].",
+                "Against the validated stability profile, cumulative time above the limit (180 minutes) exceeds the validated 120-minute excursion allowance, which bears directly on potency [2]. The lot is beyond validated stability and is recommended for destruction [3].",
+                "Quarantine has been placed on the lot. Disposition is a one-way door and must be decided by the independent quality unit (21 CFR 211.22) — it is not the agent's to make."
+              ],
+              "title": "Cold-Chain Incident Report",
+              "footnotes": [
+                "Datalogger trace DL-114-2026.csv",
+                "Stability Study SR-2024-118 — VaxFlu Quad vaccine",
+                "SOP QA-014 — Excursion Disposition"
+              ]
+            },
+            "holdList": [
+              "LOT-5002"
+            ],
+            "incident": {
+              "lot": "LOT-5002",
+              "units": 9800,
+              "product": "VaxFlu Quad vaccine",
+              "shipment": "VAX-2026-114",
+              "valueUsd": 235200
+            },
+            "readings": [
+              {
+                "tempC": 4,
+                "minute": 0
+              },
+              {
+                "tempC": 4,
+                "minute": 30
+              },
+              {
+                "tempC": 5,
+                "minute": 60
+              },
+              {
+                "tempC": 6,
+                "minute": 90
+              },
+              {
+                "tempC": 9,
+                "minute": 120
+              },
+              {
+                "tempC": 12,
+                "minute": 150
+              },
+              {
+                "tempC": 15,
+                "minute": 180
+              },
+              {
+                "tempC": 14,
+                "minute": 210
+              },
+              {
+                "tempC": 11,
+                "minute": 240
+              },
+              {
+                "tempC": 9,
+                "minute": 270
+              },
+              {
+                "tempC": 7,
+                "minute": 300
+              },
+              {
+                "tempC": 6,
+                "minute": 330
+              },
+              {
+                "tempC": 5,
+                "minute": 360
+              }
+            ],
+            "heldUnits": 9800,
+            "peakTempC": 15,
+            "classification": "beyond",
+            "intervalMinutes": 30,
+            "minutesOverLimit": 180,
+            "maxExcursionMinutes": 120,
+            "recommendedDisposition": "destroy"
+          },
+          "output": {
+            "channel": "#cold-chain",
+            "message": "Cold-chain disposition executed at QA decision: 0 lot(s) released (0.00), 1 destroyed (235200.00), 0 held for QA judgment.",
+            "delivered": true,
+            "deliveredAt": "2026-06-14T10:10:23.708Z"
+          },
+          "error": null,
+          "agent": "cold-chain-monitor",
+          "started_at": "2026-06-14T10:10:23.622Z",
+          "finished_at": "2026-06-14T10:10:23.711Z"
+        }
+      ],
+      "approvals": [
+        {
+          "id": "651fc2ac-0e66-4e23-ae46-a962be34b85c",
+          "step_key": "disposition_decision",
+          "status": "approved",
+          "requested_at": "2026-06-14T10:10:23.596Z",
+          "decided_at": "2026-06-14T10:10:23.618Z",
+          "reason": "Lots exceeding stability limits during the excursion are to be destroyed; unaffected lots released. Quarantine confirmed.",
+          "required_approvals": 1,
+          "decided_by": "officer@makerchecker.local",
+          "decisions": [
+            {
+              "id": "2cad87e3-f8f4-4086-b5d4-b69c0dd14f8c",
+              "decision": "approved",
+              "reason": "Lots exceeding stability limits during the excursion are to be destroyed; unaffected lots released. Quarantine confirmed.",
+              "created_at": "2026-06-14T10:10:23.618Z",
+              "decided_by": "officer@makerchecker.local"
+            }
+          ]
+        }
+      ],
+      "auditEvents": [
+        {
+          "seq": "14",
+          "occurred_at": "2026-06-14T10:10:23.557Z",
+          "actor": {
+            "id": "dd4477f1-ac94-4616-be8f-cccf21ee3ebe",
+            "name": "admin@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "run.created",
+          "payload": {
+            "input": {
+              "limitsPath": "examples/cold-chain-disposition/stability_limits.csv",
+              "readingsPath": "examples/cold-chain-disposition/readings.csv",
+              "excursionsPath": "examples/cold-chain-disposition/excursions.csv"
+            },
+            "flowVersionId": "94bdd90e-560c-4ad6-829e-9d11895bf63e"
+          },
+          "hash": "a5d4ea85924ae02d893501405b7f2ac478d76347e34d84f9cfb3b00780a6b9ca"
+        },
+        {
+          "seq": "15",
+          "occurred_at": "2026-06-14T10:10:23.570Z",
+          "actor": {
+            "id": "8220b704-0b0d-4673-b324-2ab79a277c64",
+            "name": "cold-chain-monitor",
+            "type": "agent"
+          },
+          "event_type": "run.step.started",
+          "payload": {
+            "skills": [
+              "excursion-ingest@1",
+              "stability-assess@1",
+              "quarantine@1"
+            ],
+            "attempt": 1,
+            "stepKey": "assess",
+            "stepIndex": 0
+          },
+          "hash": "1e164a17c44efeee1164710e65097fa690119a833f3aa9a1febce46c7c5cd254"
+        },
+        {
+          "seq": "16",
+          "occurred_at": "2026-06-14T10:10:23.582Z",
+          "actor": {
+            "id": "8220b704-0b0d-4673-b324-2ab79a277c64",
+            "name": "cold-chain-monitor",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "limitsPath": "examples/cold-chain-disposition/stability_limits.csv",
+              "readingsPath": "examples/cold-chain-disposition/readings.csv",
+              "excursionsPath": "examples/cold-chain-disposition/excursions.csv"
+            },
+            "output": {
+              "limitC": 8,
+              "incident": {
+                "lot": "LOT-5002",
+                "units": 9800,
+                "product": "VaxFlu Quad vaccine",
+                "shipment": "VAX-2026-114",
+                "valueUsd": 235200
+              },
+              "readings": [
+                {
+                  "tempC": 4,
+                  "minute": 0
+                },
+                {
+                  "tempC": 4,
+                  "minute": 30
+                },
+                {
+                  "tempC": 5,
+                  "minute": 60
+                },
+                {
+                  "tempC": 6,
+                  "minute": 90
+                },
+                {
+                  "tempC": 9,
+                  "minute": 120
+                },
+                {
+                  "tempC": 12,
+                  "minute": 150
+                },
+                {
+                  "tempC": 15,
+                  "minute": 180
+                },
+                {
+                  "tempC": 14,
+                  "minute": 210
+                },
+                {
+                  "tempC": 11,
+                  "minute": 240
+                },
+                {
+                  "tempC": 9,
+                  "minute": 270
+                },
+                {
+                  "tempC": 7,
+                  "minute": 300
+                },
+                {
+                  "tempC": 6,
+                  "minute": 330
+                },
+                {
+                  "tempC": 5,
+                  "minute": 360
+                }
+              ],
+              "intervalMinutes": 30,
+              "maxExcursionMinutes": 120
+            },
+            "stepKey": "assess",
+            "skillRef": "excursion-ingest@1"
+          },
+          "hash": "563b37d0f0b5d04188a86d17681bc4ea16eddc233348b7e9930c4561d3179a59"
+        },
+        {
+          "seq": "17",
+          "occurred_at": "2026-06-14T10:10:23.592Z",
+          "actor": {
+            "id": "8220b704-0b0d-4673-b324-2ab79a277c64",
+            "name": "cold-chain-monitor",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "limitC": 8,
+              "incident": {
+                "lot": "LOT-5002",
+                "units": 9800,
+                "product": "VaxFlu Quad vaccine",
+                "shipment": "VAX-2026-114",
+                "valueUsd": 235200
+              },
+              "readings": [
+                {
+                  "tempC": 4,
+                  "minute": 0
+                },
+                {
+                  "tempC": 4,
+                  "minute": 30
+                },
+                {
+                  "tempC": 5,
+                  "minute": 60
+                },
+                {
+                  "tempC": 6,
+                  "minute": 90
+                },
+                {
+                  "tempC": 9,
+                  "minute": 120
+                },
+                {
+                  "tempC": 12,
+                  "minute": 150
+                },
+                {
+                  "tempC": 15,
+                  "minute": 180
+                },
+                {
+                  "tempC": 14,
+                  "minute": 210
+                },
+                {
+                  "tempC": 11,
+                  "minute": 240
+                },
+                {
+                  "tempC": 9,
+                  "minute": 270
+                },
+                {
+                  "tempC": 7,
+                  "minute": 300
+                },
+                {
+                  "tempC": 6,
+                  "minute": 330
+                },
+                {
+                  "tempC": 5,
+                  "minute": 360
+                }
+              ],
+              "intervalMinutes": 30,
+              "maxExcursionMinutes": 120
+            },
+            "output": {
+              "limitC": 8,
+              "report": {
+                "ref": "CCIR-2026-0613",
+                "body": [
+                  "A temperature excursion was detected on shipment VAX-2026-114 carrying VaxFlu Quad vaccine (lot LOT-5002, 9,800 units). The datalogger recorded a peak of 15.0 °C against the labelled 8 °C limit, with temperature above the limit for 180 minutes [1].",
+                  "Against the validated stability profile, cumulative time above the limit (180 minutes) exceeds the validated 120-minute excursion allowance, which bears directly on potency [2]. The lot is beyond validated stability and is recommended for destruction [3].",
+                  "Quarantine has been placed on the lot. Disposition is a one-way door and must be decided by the independent quality unit (21 CFR 211.22) — it is not the agent's to make."
+                ],
+                "title": "Cold-Chain Incident Report",
+                "footnotes": [
+                  "Datalogger trace DL-114-2026.csv",
+                  "Stability Study SR-2024-118 — VaxFlu Quad vaccine",
+                  "SOP QA-014 — Excursion Disposition"
+                ]
+              },
+              "holdList": [
+                "LOT-5002"
+              ],
+              "incident": {
+                "lot": "LOT-5002",
+                "units": 9800,
+                "product": "VaxFlu Quad vaccine",
+                "shipment": "VAX-2026-114",
+                "valueUsd": 235200
+              },
+              "readings": [
+                {
+                  "tempC": 4,
+                  "minute": 0
+                },
+                {
+                  "tempC": 4,
+                  "minute": 30
+                },
+                {
+                  "tempC": 5,
+                  "minute": 60
+                },
+                {
+                  "tempC": 6,
+                  "minute": 90
+                },
+                {
+                  "tempC": 9,
+                  "minute": 120
+                },
+                {
+                  "tempC": 12,
+                  "minute": 150
+                },
+                {
+                  "tempC": 15,
+                  "minute": 180
+                },
+                {
+                  "tempC": 14,
+                  "minute": 210
+                },
+                {
+                  "tempC": 11,
+                  "minute": 240
+                },
+                {
+                  "tempC": 9,
+                  "minute": 270
+                },
+                {
+                  "tempC": 7,
+                  "minute": 300
+                },
+                {
+                  "tempC": 6,
+                  "minute": 330
+                },
+                {
+                  "tempC": 5,
+                  "minute": 360
+                }
+              ],
+              "peakTempC": 15,
+              "classification": "beyond",
+              "intervalMinutes": 30,
+              "minutesOverLimit": 180,
+              "maxExcursionMinutes": 120,
+              "recommendedDisposition": "destroy"
+            },
+            "stepKey": "assess",
+            "skillRef": "stability-assess@1"
+          },
+          "hash": "ee3ad972d022a866a7c5bebc86b6372ade72771202597edea19c108d895856c0"
+        },
+        {
+          "seq": "18",
+          "occurred_at": "2026-06-14T10:10:23.593Z",
+          "actor": {
+            "id": "8220b704-0b0d-4673-b324-2ab79a277c64",
+            "name": "cold-chain-monitor",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "limitC": 8,
+              "report": {
+                "ref": "CCIR-2026-0613",
+                "body": [
+                  "A temperature excursion was detected on shipment VAX-2026-114 carrying VaxFlu Quad vaccine (lot LOT-5002, 9,800 units). The datalogger recorded a peak of 15.0 °C against the labelled 8 °C limit, with temperature above the limit for 180 minutes [1].",
+                  "Against the validated stability profile, cumulative time above the limit (180 minutes) exceeds the validated 120-minute excursion allowance, which bears directly on potency [2]. The lot is beyond validated stability and is recommended for destruction [3].",
+                  "Quarantine has been placed on the lot. Disposition is a one-way door and must be decided by the independent quality unit (21 CFR 211.22) — it is not the agent's to make."
+                ],
+                "title": "Cold-Chain Incident Report",
+                "footnotes": [
+                  "Datalogger trace DL-114-2026.csv",
+                  "Stability Study SR-2024-118 — VaxFlu Quad vaccine",
+                  "SOP QA-014 — Excursion Disposition"
+                ]
+              },
+              "holdList": [
+                "LOT-5002"
+              ],
+              "incident": {
+                "lot": "LOT-5002",
+                "units": 9800,
+                "product": "VaxFlu Quad vaccine",
+                "shipment": "VAX-2026-114",
+                "valueUsd": 235200
+              },
+              "readings": [
+                {
+                  "tempC": 4,
+                  "minute": 0
+                },
+                {
+                  "tempC": 4,
+                  "minute": 30
+                },
+                {
+                  "tempC": 5,
+                  "minute": 60
+                },
+                {
+                  "tempC": 6,
+                  "minute": 90
+                },
+                {
+                  "tempC": 9,
+                  "minute": 120
+                },
+                {
+                  "tempC": 12,
+                  "minute": 150
+                },
+                {
+                  "tempC": 15,
+                  "minute": 180
+                },
+                {
+                  "tempC": 14,
+                  "minute": 210
+                },
+                {
+                  "tempC": 11,
+                  "minute": 240
+                },
+                {
+                  "tempC": 9,
+                  "minute": 270
+                },
+                {
+                  "tempC": 7,
+                  "minute": 300
+                },
+                {
+                  "tempC": 6,
+                  "minute": 330
+                },
+                {
+                  "tempC": 5,
+                  "minute": 360
+                }
+              ],
+              "peakTempC": 15,
+              "classification": "beyond",
+              "intervalMinutes": 30,
+              "minutesOverLimit": 180,
+              "maxExcursionMinutes": 120,
+              "recommendedDisposition": "destroy"
+            },
+            "output": {
+              "held": true,
+              "limitC": 8,
+              "report": {
+                "ref": "CCIR-2026-0613",
+                "body": [
+                  "A temperature excursion was detected on shipment VAX-2026-114 carrying VaxFlu Quad vaccine (lot LOT-5002, 9,800 units). The datalogger recorded a peak of 15.0 °C against the labelled 8 °C limit, with temperature above the limit for 180 minutes [1].",
+                  "Against the validated stability profile, cumulative time above the limit (180 minutes) exceeds the validated 120-minute excursion allowance, which bears directly on potency [2]. The lot is beyond validated stability and is recommended for destruction [3].",
+                  "Quarantine has been placed on the lot. Disposition is a one-way door and must be decided by the independent quality unit (21 CFR 211.22) — it is not the agent's to make."
+                ],
+                "title": "Cold-Chain Incident Report",
+                "footnotes": [
+                  "Datalogger trace DL-114-2026.csv",
+                  "Stability Study SR-2024-118 — VaxFlu Quad vaccine",
+                  "SOP QA-014 — Excursion Disposition"
+                ]
+              },
+              "holdList": [
+                "LOT-5002"
+              ],
+              "incident": {
+                "lot": "LOT-5002",
+                "units": 9800,
+                "product": "VaxFlu Quad vaccine",
+                "shipment": "VAX-2026-114",
+                "valueUsd": 235200
+              },
+              "readings": [
+                {
+                  "tempC": 4,
+                  "minute": 0
+                },
+                {
+                  "tempC": 4,
+                  "minute": 30
+                },
+                {
+                  "tempC": 5,
+                  "minute": 60
+                },
+                {
+                  "tempC": 6,
+                  "minute": 90
+                },
+                {
+                  "tempC": 9,
+                  "minute": 120
+                },
+                {
+                  "tempC": 12,
+                  "minute": 150
+                },
+                {
+                  "tempC": 15,
+                  "minute": 180
+                },
+                {
+                  "tempC": 14,
+                  "minute": 210
+                },
+                {
+                  "tempC": 11,
+                  "minute": 240
+                },
+                {
+                  "tempC": 9,
+                  "minute": 270
+                },
+                {
+                  "tempC": 7,
+                  "minute": 300
+                },
+                {
+                  "tempC": 6,
+                  "minute": 330
+                },
+                {
+                  "tempC": 5,
+                  "minute": 360
+                }
+              ],
+              "heldUnits": 9800,
+              "peakTempC": 15,
+              "classification": "beyond",
+              "intervalMinutes": 30,
+              "minutesOverLimit": 180,
+              "maxExcursionMinutes": 120,
+              "recommendedDisposition": "destroy"
+            },
+            "stepKey": "assess",
+            "skillRef": "quarantine@1"
+          },
+          "hash": "29285b9c9011ab579c43f996cff394b3ea0bd0c6d25006787cbe6f63960d92ee"
+        },
+        {
+          "seq": "19",
+          "occurred_at": "2026-06-14T10:10:23.595Z",
+          "actor": {
+            "id": "8220b704-0b0d-4673-b324-2ab79a277c64",
+            "name": "cold-chain-monitor",
+            "type": "agent"
+          },
+          "event_type": "run.step.completed",
+          "payload": {
+            "output": {
+              "held": true,
+              "limitC": 8,
+              "report": {
+                "ref": "CCIR-2026-0613",
+                "body": [
+                  "A temperature excursion was detected on shipment VAX-2026-114 carrying VaxFlu Quad vaccine (lot LOT-5002, 9,800 units). The datalogger recorded a peak of 15.0 °C against the labelled 8 °C limit, with temperature above the limit for 180 minutes [1].",
+                  "Against the validated stability profile, cumulative time above the limit (180 minutes) exceeds the validated 120-minute excursion allowance, which bears directly on potency [2]. The lot is beyond validated stability and is recommended for destruction [3].",
+                  "Quarantine has been placed on the lot. Disposition is a one-way door and must be decided by the independent quality unit (21 CFR 211.22) — it is not the agent's to make."
+                ],
+                "title": "Cold-Chain Incident Report",
+                "footnotes": [
+                  "Datalogger trace DL-114-2026.csv",
+                  "Stability Study SR-2024-118 — VaxFlu Quad vaccine",
+                  "SOP QA-014 — Excursion Disposition"
+                ]
+              },
+              "holdList": [
+                "LOT-5002"
+              ],
+              "incident": {
+                "lot": "LOT-5002",
+                "units": 9800,
+                "product": "VaxFlu Quad vaccine",
+                "shipment": "VAX-2026-114",
+                "valueUsd": 235200
+              },
+              "readings": [
+                {
+                  "tempC": 4,
+                  "minute": 0
+                },
+                {
+                  "tempC": 4,
+                  "minute": 30
+                },
+                {
+                  "tempC": 5,
+                  "minute": 60
+                },
+                {
+                  "tempC": 6,
+                  "minute": 90
+                },
+                {
+                  "tempC": 9,
+                  "minute": 120
+                },
+                {
+                  "tempC": 12,
+                  "minute": 150
+                },
+                {
+                  "tempC": 15,
+                  "minute": 180
+                },
+                {
+                  "tempC": 14,
+                  "minute": 210
+                },
+                {
+                  "tempC": 11,
+                  "minute": 240
+                },
+                {
+                  "tempC": 9,
+                  "minute": 270
+                },
+                {
+                  "tempC": 7,
+                  "minute": 300
+                },
+                {
+                  "tempC": 6,
+                  "minute": 330
+                },
+                {
+                  "tempC": 5,
+                  "minute": 360
+                }
+              ],
+              "heldUnits": 9800,
+              "peakTempC": 15,
+              "classification": "beyond",
+              "intervalMinutes": 30,
+              "minutesOverLimit": 180,
+              "maxExcursionMinutes": 120,
+              "recommendedDisposition": "destroy"
+            },
+            "attempt": 1,
+            "stepKey": "assess"
+          },
+          "hash": "478890a7cdefcbc6585226b1852599f48734a326682aafd9fc26aa811b93928b"
+        },
+        {
+          "seq": "20",
+          "occurred_at": "2026-06-14T10:10:23.599Z",
+          "actor": {
+            "id": "engine",
+            "type": "system"
+          },
+          "event_type": "approval.requested",
+          "payload": {
+            "title": "Disposition decision — QA release or destroy",
+            "stepKey": "disposition_decision",
+            "stepIndex": 1,
+            "requiredApprovals": 1
+          },
+          "hash": "fd895b59702bd8027615572b70a6c3ad4691154fa60e36e78c1dcbec9a054bab"
+        },
+        {
+          "seq": "21",
+          "occurred_at": "2026-06-14T10:10:23.617Z",
+          "actor": {
+            "id": "dd4477f1-ac94-4616-be8f-cccf21ee3ebe",
+            "name": "admin@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "approval.decision_denied",
+          "payload": {
+            "code": "requester_forbidden",
+            "reason": "the user who triggered this run cannot decide gate \"disposition_decision\" (forbid_requester)",
+            "stepKey": "disposition_decision",
+            "attemptedDecision": "approved"
+          },
+          "hash": "f5b745895e31e3e220834e2c44df5e79068ba6ec5b92b4a4765a35d67fc42ae2"
+        },
+        {
+          "seq": "22",
+          "occurred_at": "2026-06-14T10:10:23.620Z",
+          "actor": {
+            "id": "add1bd4c-ec7d-43d1-894d-c44eb5ba3625",
+            "name": "officer@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "approval.decided",
+          "payload": {
+            "reason": "Lots exceeding stability limits during the excursion are to be destroyed; unaffected lots released. Quarantine confirmed.",
+            "stepKey": "disposition_decision",
+            "decision": "approved",
+            "approvedCount": 1,
+            "rejectedCount": 0,
+            "requiredApprovals": 1
+          },
+          "hash": "15e1fc9c94f66ce54caedb578645ae7882a1ccb22d8c2ec020617f084e5fb2c5"
+        },
+        {
+          "seq": "23",
+          "occurred_at": "2026-06-14T10:10:23.621Z",
+          "actor": {
+            "id": "add1bd4c-ec7d-43d1-894d-c44eb5ba3625",
+            "name": "officer@makerchecker.local",
+            "type": "user"
+          },
+          "event_type": "approval.resolved",
+          "payload": {
+            "outcome": "approved",
+            "stepKey": "disposition_decision",
+            "approvedCount": 1,
+            "rejectedCount": 0,
+            "requiredApprovals": 1
+          },
+          "hash": "7fa5c5ecad27682782f921c0183b7a25811bfadba6ce141f745dcf6d1ed16e99"
+        },
+        {
+          "seq": "24",
+          "occurred_at": "2026-06-14T10:10:23.626Z",
+          "actor": {
+            "id": "8220b704-0b0d-4673-b324-2ab79a277c64",
+            "name": "cold-chain-monitor",
+            "type": "agent"
+          },
+          "event_type": "run.step.started",
+          "payload": {
+            "skills": [
+              "disposition-act@1",
+              "notify@1"
+            ],
+            "attempt": 1,
+            "stepKey": "act",
+            "stepIndex": 2
+          },
+          "hash": "9393fb836b50a97f00c5df499aafecdbfbeedf8f049f139e9dfdade440523247"
+        },
+        {
+          "seq": "25",
+          "occurred_at": "2026-06-14T10:10:23.631Z",
+          "actor": {
+            "id": "8220b704-0b0d-4673-b324-2ab79a277c64",
+            "name": "cold-chain-monitor",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "held": true,
+              "limitC": 8,
+              "report": {
+                "ref": "CCIR-2026-0613",
+                "body": [
+                  "A temperature excursion was detected on shipment VAX-2026-114 carrying VaxFlu Quad vaccine (lot LOT-5002, 9,800 units). The datalogger recorded a peak of 15.0 °C against the labelled 8 °C limit, with temperature above the limit for 180 minutes [1].",
+                  "Against the validated stability profile, cumulative time above the limit (180 minutes) exceeds the validated 120-minute excursion allowance, which bears directly on potency [2]. The lot is beyond validated stability and is recommended for destruction [3].",
+                  "Quarantine has been placed on the lot. Disposition is a one-way door and must be decided by the independent quality unit (21 CFR 211.22) — it is not the agent's to make."
+                ],
+                "title": "Cold-Chain Incident Report",
+                "footnotes": [
+                  "Datalogger trace DL-114-2026.csv",
+                  "Stability Study SR-2024-118 — VaxFlu Quad vaccine",
+                  "SOP QA-014 — Excursion Disposition"
+                ]
+              },
+              "holdList": [
+                "LOT-5002"
+              ],
+              "incident": {
+                "lot": "LOT-5002",
+                "units": 9800,
+                "product": "VaxFlu Quad vaccine",
+                "shipment": "VAX-2026-114",
+                "valueUsd": 235200
+              },
+              "readings": [
+                {
+                  "tempC": 4,
+                  "minute": 0
+                },
+                {
+                  "tempC": 4,
+                  "minute": 30
+                },
+                {
+                  "tempC": 5,
+                  "minute": 60
+                },
+                {
+                  "tempC": 6,
+                  "minute": 90
+                },
+                {
+                  "tempC": 9,
+                  "minute": 120
+                },
+                {
+                  "tempC": 12,
+                  "minute": 150
+                },
+                {
+                  "tempC": 15,
+                  "minute": 180
+                },
+                {
+                  "tempC": 14,
+                  "minute": 210
+                },
+                {
+                  "tempC": 11,
+                  "minute": 240
+                },
+                {
+                  "tempC": 9,
+                  "minute": 270
+                },
+                {
+                  "tempC": 7,
+                  "minute": 300
+                },
+                {
+                  "tempC": 6,
+                  "minute": 330
+                },
+                {
+                  "tempC": 5,
+                  "minute": 360
+                }
+              ],
+              "heldUnits": 9800,
+              "peakTempC": 15,
+              "classification": "beyond",
+              "intervalMinutes": 30,
+              "minutesOverLimit": 180,
+              "maxExcursionMinutes": 120,
+              "recommendedDisposition": "destroy"
+            },
+            "output": {
+              "channel": "#cold-chain",
+              "message": "Cold-chain disposition executed at QA decision: 0 lot(s) released (0.00), 1 destroyed (235200.00), 0 held for QA judgment.",
+              "released": [],
+              "destroyed": [
+                {
+                  "lotId": "LOT-5002",
+                  "units": 9800,
+                  "valueUsd": 235200
+                }
+              ],
+              "releasedCount": 0,
+              "releasedValue": 0,
+              "destroyedCount": 1,
+              "destroyedValue": 235200,
+              "heldForJudgment": [],
+              "heldForJudgmentCount": 0
+            },
+            "stepKey": "act",
+            "skillRef": "disposition-act@1"
+          },
+          "hash": "19bc8bf3f544c23763d5764a515163974f3d968b28195e1522f8cfd357e7da53"
+        },
+        {
+          "seq": "26",
+          "occurred_at": "2026-06-14T10:10:23.711Z",
+          "actor": {
+            "id": "8220b704-0b0d-4673-b324-2ab79a277c64",
+            "name": "cold-chain-monitor",
+            "type": "agent"
+          },
+          "event_type": "skill.invoked",
+          "payload": {
+            "input": {
+              "channel": "#cold-chain",
+              "message": "Cold-chain disposition executed at QA decision: 0 lot(s) released (0.00), 1 destroyed (235200.00), 0 held for QA judgment.",
+              "released": [],
+              "destroyed": [
+                {
+                  "lotId": "LOT-5002",
+                  "units": 9800,
+                  "valueUsd": 235200
+                }
+              ],
+              "releasedCount": 0,
+              "releasedValue": 0,
+              "destroyedCount": 1,
+              "destroyedValue": 235200,
+              "heldForJudgment": [],
+              "heldForJudgmentCount": 0
+            },
+            "output": {
+              "channel": "#cold-chain",
+              "message": "Cold-chain disposition executed at QA decision: 0 lot(s) released (0.00), 1 destroyed (235200.00), 0 held for QA judgment.",
+              "delivered": true,
+              "deliveredAt": "2026-06-14T10:10:23.708Z"
+            },
+            "stepKey": "act",
+            "skillRef": "notify@1"
+          },
+          "hash": "813597160da8bc10aab1eb160d180ba5808020798f38c97c97092ec2fa4967f2"
+        },
+        {
+          "seq": "27",
+          "occurred_at": "2026-06-14T10:10:23.713Z",
+          "actor": {
+            "id": "8220b704-0b0d-4673-b324-2ab79a277c64",
+            "name": "cold-chain-monitor",
+            "type": "agent"
+          },
+          "event_type": "run.step.completed",
+          "payload": {
+            "output": {
+              "channel": "#cold-chain",
+              "message": "Cold-chain disposition executed at QA decision: 0 lot(s) released (0.00), 1 destroyed (235200.00), 0 held for QA judgment.",
+              "delivered": true,
+              "deliveredAt": "2026-06-14T10:10:23.708Z"
+            },
+            "attempt": 1,
+            "stepKey": "act"
+          },
+          "hash": "d6eb3b1959cae85432a383a6ada54636ed90976f9a6b745c0d8282046aed74c6"
+        },
+        {
+          "seq": "28",
+          "occurred_at": "2026-06-14T10:10:23.716Z",
+          "actor": {
+            "id": "engine",
+            "type": "system"
+          },
+          "event_type": "run.completed",
+          "payload": {},
+          "hash": "3e68721e6c76ae678c04b58106b71c251668c0bd51e3ccafb2e1384886ade12a"
+        }
+      ]
+    }
+  },
+  "approval": {
+    "id": "651fc2ac-0e66-4e23-ae46-a962be34b85c",
+    "run_id": "20531a55-d72d-42e3-a007-328d187f7c97",
+    "step_key": "disposition_decision",
+    "requested_at": "2026-06-14T10:10:23.596Z",
+    "required_approvals": 1,
+    "approved_count": 0,
+    "age_seconds": 0,
+    "overdue": false,
+    "flow": "cold-chain-disposition"
+  },
+  "blockedDecision": {
+    "status": 403,
+    "message": "the user who triggered this run cannot decide gate \"disposition_decision\" (forbid_requester)"
+  },
+  "approvedDecision": {
+    "status": 200
+  },
+  "verify": {
+    "ok": true,
+    "count": 28,
+    "headHash": "3e68721e6c76ae678c04b58106b71c251668c0bd51e3ccafb2e1384886ade12a"
+  },
+  "runsList": {
+    "runs": [
+      {
+        "id": "20531a55-d72d-42e3-a007-328d187f7c97",
+        "flow": "cold-chain-disposition",
+        "version": 1,
+        "status": "completed",
+        "failure_reason": null,
+        "created_at": "2026-06-14T10:10:23.555Z",
+        "started_at": "2026-06-14T10:10:23.563Z",
+        "finished_at": "2026-06-14T10:10:23.714Z"
+      }
+    ]
+  }
+}

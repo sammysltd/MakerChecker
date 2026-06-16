@@ -1,0 +1,8 @@
+MakerChecker
+Copyright 2026 Mashini Investments Ltd.
+
+The control plane (packages/server, packages/web, packages/shared) is licensed under
+the GNU Affero General Public License v3.0 (AGPL-3.0-only); the integration layer
+(packages/sdk, packages/sdk-python, packages/connector-langchain,
+packages/connector-claude-agent, and examples/) is licensed under the Apache License,
+Version 2.0.

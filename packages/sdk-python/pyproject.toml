@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "makerchecker"
+version = "1.0.0"
+description = "Python SDK for MakerChecker: govern AI-agent tool calls with deny-by-default grants, segregation of duties, and a hash-chained audit trail."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Mashini Investments Ltd.", email = "hello@makerchecker.ai" }]
+keywords = ["ai-agents", "governance", "audit", "segregation-of-duties", "crewai", "langchain"]
+classifiers = [
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Typing :: Typed",
+]
+dependencies = ["httpx>=0.24"]
+
+[project.urls]
+Homepage = "https://makerchecker.ai"
+Repository = "https://github.com/sammysltd/makerchecker"
+"Bug Tracker" = "https://github.com/sammysltd/makerchecker/issues"
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.8"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/makerchecker"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+strict = true
+files = ["src/makerchecker"]
