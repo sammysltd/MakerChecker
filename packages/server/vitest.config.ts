@@ -3,6 +3,10 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     globalSetup: ["./test/global-setup.ts"],
+    // Runs once per test worker (globalSetup runs in a separate process, so its
+    // env never reaches the workers): pins the logger silent so the suite stays
+    // quiet without a test asserting on stdout.
+    setupFiles: ["./test/setup.ts"],
     testTimeout: 30_000,
     coverage: {
       provider: "v8",

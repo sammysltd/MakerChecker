@@ -2,6 +2,7 @@ import { createHmac } from "node:crypto";
 
 import type { Pool } from "pg";
 
+import { workerLogger } from "../boot/logger.js";
 import { resolveRedactionHook } from "../llm/redaction.js";
 import { assertSafeHttpUrl } from "../skills/invoker.js";
 import { createPinnedFetch, SsrfBlockedError } from "../skills/ssrf-guard.js";
@@ -102,9 +103,9 @@ async function deliverWithRetry(
     assertSafeHttpUrl(endpoint.url);
   } catch (err) {
     failedDeliveries += 1;
-    console.error(
-      `webhooks: delivery to ${endpoint.url} blocked by SSRF guard ` +
-        `for ${event}: ${(err as Error).message}`,
+    workerLogger.error(
+      { url: endpoint.url, event, err: { message: (err as Error).message } },
+      "webhooks: delivery blocked by SSRF guard",
     );
     return;
   }
@@ -132,9 +133,9 @@ async function deliverWithRetry(
     } catch (err) {
       if (isWebhookSsrfBlocked(err)) {
         failedDeliveries += 1;
-        console.error(
-          `webhooks: delivery to ${endpoint.url} blocked by connect-time SSRF ` +
-            `pin (DNS rebinding) for ${event}: ${extractCauseMessage(err)}`,
+        workerLogger.error(
+          { url: endpoint.url, event, err: { message: extractCauseMessage(err) } },
+          "webhooks: delivery blocked by connect-time SSRF pin (DNS rebinding)",
         );
         return;
       }
@@ -145,9 +146,9 @@ async function deliverWithRetry(
     }
   }
   failedDeliveries += 1;
-  console.error(
-    `webhooks: delivery to ${endpoint.url} failed after ${MAX_ATTEMPTS} attempts ` +
-      `for ${event}: ${lastError}`,
+  workerLogger.error(
+    { url: endpoint.url, event, attempts: MAX_ATTEMPTS, err: { message: lastError } },
+    "webhooks: delivery failed after all attempts",
   );
 }
 
@@ -168,7 +169,10 @@ export async function notifyWebhooks(
     );
     endpoints = res.rows;
   } catch (err) {
-    console.error(`webhooks: failed to load endpoints: ${(err as Error).message}`);
+    workerLogger.error(
+      { event, err: { message: (err as Error).message } },
+      "webhooks: failed to load endpoints",
+    );
     return;
   }
   if (endpoints.length === 0) return;

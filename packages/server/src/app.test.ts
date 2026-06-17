@@ -1,7 +1,34 @@
+import { randomBytes } from "node:crypto";
+
+import pino from "pino";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { buildApp } from "./app.js";
+import { loggerOptions } from "./boot/logger.js";
 import type { EngineContext } from "./engine/orchestrator.js";
+
+/**
+ * Builds an app whose Fastify logger writes JSON to a captured buffer at info
+ * level (the suite default is silent), so a test can read the access line and
+ * the error log. Each captured line is one parsed pino record.
+ */
+async function buildAppWithCapturedLog(
+  ctx?: EngineContext,
+): Promise<{ app: Awaited<ReturnType<typeof buildApp>>; lines: () => Record<string, unknown>[] }> {
+  const chunks: string[] = [];
+  const stream = { write: (s: string) => chunks.push(s) };
+  const logger = pino(loggerOptions("info"), stream as never);
+  const app = await buildApp(ctx, { loggerInstance: logger });
+  return {
+    app,
+    lines: () =>
+      chunks
+        .join("")
+        .split("\n")
+        .filter((l) => l.trim().length > 0)
+        .map((l) => JSON.parse(l) as Record<string, unknown>),
+  };
+}
 
 describe("GET /healthz", () => {
   it("returns ok with the schema version", async () => {
@@ -233,6 +260,107 @@ describe("security hardening", () => {
         expect(res.statusCode).toBe(200);
       }
       await app.close();
+    });
+  });
+
+  describe("structured access logging", () => {
+    afterEach(() => {
+      delete process.env.MAKERCHECKER_AUTH_DISABLED;
+      delete process.env.MAKERCHECKER_REDACTION;
+    });
+
+    it("emits one access line per response carrying a correlation id", async () => {
+      const { app, lines } = await buildAppWithCapturedLog();
+      const res = await app.inject({ method: "GET", url: "/healthz" });
+      expect(res.statusCode).toBe(200);
+      await app.close();
+      const access = lines().find((l) => l.msg === "request completed");
+      expect(access).toBeDefined();
+      expect(access).toMatchObject({ method: "GET", url: "/healthz", statusCode: 200 });
+      expect(typeof access?.reqId).toBe("string");
+      expect((access?.reqId as string).length).toBeGreaterThan(0);
+    });
+
+    it("propagates an inbound x-request-id as the correlation id", async () => {
+      const { app, lines } = await buildAppWithCapturedLog();
+      const res = await app.inject({
+        method: "GET",
+        url: "/healthz",
+        headers: { "x-request-id": "trace-abc-123" },
+      });
+      expect(res.statusCode).toBe(200);
+      await app.close();
+      const access = lines().find((l) => l.msg === "request completed");
+      expect(access?.reqId).toBe("trace-abc-123");
+    });
+
+    it("never logs the Bearer token or a planted mk_ key in the access line", async () => {
+      // A stub pool so /api/runs reaches the access log; auth is on, so the
+      // request 401s before any handler — the access line is still emitted, and
+      // must not carry the planted credential.
+      const stubCtx = {
+        pool: { query: async () => ({ rows: [] }) },
+      } as unknown as EngineContext;
+      const { app, lines } = await buildAppWithCapturedLog(stubCtx);
+      const token = `mk_${randomBytes(16).toString("hex")}`;
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/runs",
+        headers: { authorization: `Bearer ${token}` },
+      });
+      expect(res.statusCode).toBe(401);
+      await app.close();
+      const serialized = JSON.stringify(lines());
+      expect(serialized).not.toContain(token);
+      expect(serialized).not.toContain("Bearer");
+    });
+
+    it("logs a redacted structured error for a >=500 without leaking infra details", async () => {
+      const throwingCtx = {
+        pool: {
+          query: async () => {
+            throw new Error("connect ECONNREFUSED 10.0.3.5:5432 user@secret.host");
+          },
+        },
+      } as unknown as EngineContext;
+      process.env.MAKERCHECKER_AUTH_DISABLED = "1";
+      const { app, lines } = await buildAppWithCapturedLog(throwingCtx);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/runs/11111111-1111-1111-1111-111111111111",
+      });
+      expect(res.statusCode).toBe(500);
+      await app.close();
+      const errLine = lines().find((l) => l.msg === "unhandled error");
+      expect(errLine).toBeDefined();
+      // The error is logged server-side (so it is reachable for triage) but the
+      // generic client body never carried the infra detail.
+      expect(res.body).not.toContain("ECONNREFUSED");
+    });
+
+    it("redacts planted PII from BOTH the error message and stack in the error log", async () => {
+      const email = "victim@bank.example";
+      const card = "4111111111111111";
+      const throwingCtx = {
+        pool: {
+          query: async () => {
+            throw new Error(`boom ${email} account=${card}`);
+          },
+        },
+      } as unknown as EngineContext;
+      process.env.MAKERCHECKER_AUTH_DISABLED = "1";
+      process.env.MAKERCHECKER_REDACTION = "example";
+      const { app, lines } = await buildAppWithCapturedLog(throwingCtx);
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/runs/11111111-1111-1111-1111-111111111111",
+      });
+      expect(res.statusCode).toBe(500);
+      await app.close();
+      // The message is on the stack's first line, so both fields must be clean.
+      const serialized = JSON.stringify(lines().find((l) => l.msg === "unhandled error"));
+      expect(serialized).not.toContain(email);
+      expect(serialized).not.toContain(card);
     });
   });
 });

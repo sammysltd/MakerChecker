@@ -1,6 +1,7 @@
 import { buildApp } from "./app.js";
 import { assertAuthBindSafe } from "./boot/bind-guard.js";
 import { createCronTriggerHandler, loadCronItems, TASK_CRON_TRIGGER } from "./boot/cron.js";
+import { workerLogger } from "./boot/logger.js";
 import { migrate } from "./db/migrate.js";
 import { createPool } from "./db/pool.js";
 import { demoLocalRegistry } from "./demo/skills.js";
@@ -88,7 +89,7 @@ async function main(): Promise<void> {
     cronItems.length > 0 ? { parsedCronItems: cronItems } : {},
   );
   if (cronItems.length > 0) {
-    console.log(`makerchecker: ${cronItems.length} cron trigger(s) scheduled`);
+    workerLogger.info({ cronTriggers: cronItems.length }, "cron triggers scheduled");
   }
 
   // Watchdog: recover steps orphaned by crashed workers and flag approvals
@@ -96,10 +97,13 @@ async function main(): Promise<void> {
   // fatal — the next tick tries again.
   setInterval(() => {
     void sweepStuckSteps(ctx).catch((err: Error) =>
-      console.error(`watchdog: stuck-step sweep failed: ${err.message}`),
+      workerLogger.error({ err: { message: err.message } }, "watchdog: stuck-step sweep failed"),
     );
     void sweepOverdueApprovals(ctx).catch((err: Error) =>
-      console.error(`watchdog: overdue-approval sweep failed: ${err.message}`),
+      workerLogger.error(
+        { err: { message: err.message } },
+        "watchdog: overdue-approval sweep failed",
+      ),
     );
   }, WATCHDOG_INTERVAL_MS).unref();
 
@@ -107,10 +111,10 @@ async function main(): Promise<void> {
   const host = "0.0.0.0";
   assertAuthBindSafe(host, process.env.MAKERCHECKER_AUTH_DISABLED === "1");
   await app.listen({ port, host });
-  console.log(`makerchecker server listening on :${port} (executor: ${mode})`);
+  workerLogger.info({ port, host, executor: mode }, "makerchecker server listening");
 }
 
-main().catch((err) => {
-  console.error(err);
+main().catch((err: Error) => {
+  workerLogger.fatal({ err: { message: err.message, stack: err.stack } }, "fatal boot error");
   process.exit(1);
 });

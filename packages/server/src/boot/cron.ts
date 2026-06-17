@@ -3,6 +3,7 @@ import type { Pool } from "pg";
 
 import type { TaskHandler } from "../engine/backend.js";
 import { startRun, type EngineContext } from "../engine/orchestrator.js";
+import { workerLogger } from "./logger.js";
 
 export const TASK_CRON_TRIGGER = "trigger.cron";
 
@@ -34,8 +35,9 @@ export async function loadCronItems(pool: Pool): Promise<ParsedCronItem[]> {
   for (const row of rows) {
     const schedule = row.config?.schedule;
     if (typeof schedule !== "string" || schedule.trim() === "") {
-      console.error(
-        `cron: trigger ${row.id} (flow "${row.flow_name}") has no usable config.schedule; skipping`,
+      workerLogger.error(
+        { triggerId: row.id, flow: row.flow_name },
+        "cron: trigger has no usable config.schedule; skipping",
       );
       continue;
     }
@@ -51,9 +53,9 @@ export async function loadCronItems(pool: Pool): Promise<ParsedCronItem[]> {
         ]),
       );
     } catch (err) {
-      console.error(
-        `cron: trigger ${row.id} (flow "${row.flow_name}") schedule "${schedule}" ` +
-          `did not parse; skipping: ${(err as Error).message}`,
+      workerLogger.error(
+        { triggerId: row.id, flow: row.flow_name, schedule, err: { message: (err as Error).message } },
+        "cron: trigger schedule did not parse; skipping",
       );
     }
   }
@@ -82,7 +84,7 @@ export function createCronTriggerHandler(ctx: EngineContext): TaskHandler {
       throw new Error(`trigger.cron: trigger ${triggerId} is missing or not a cron trigger`);
     }
     if (!row.enabled) {
-      console.error(`cron: trigger ${triggerId} fired but is disabled; not starting a run`);
+      workerLogger.error({ triggerId }, "cron: trigger fired but is disabled; not starting a run");
       return;
     }
     const version = await ctx.pool.query<{ id: string }>(

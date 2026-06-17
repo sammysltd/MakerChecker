@@ -1,15 +1,18 @@
+import { randomUUID } from "node:crypto";
+
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import swagger from "@fastify/swagger";
 import { isApprovalGate, SCHEMA_VERSION, type FlowDefinition } from "@makerchecker/shared";
 import { Type } from "@sinclair/typebox";
-import Fastify, { type FastifyInstance } from "fastify";
+import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 
 import { actorOf, authDisabled, registerAdminRoutes, requireAdmin } from "./api/admin-routes.js";
 import { registerProxyRoutes } from "./api/proxy-routes.js";
 import { authenticateApiKey, type AuthUser } from "./auth/api-keys.js";
 import { verifyChain } from "./audit/verify.js";
+import { loggerOptions } from "./boot/logger.js";
 import { strictSod } from "./config.js";
 import {
   ApprovalDecisionError,
@@ -71,15 +74,56 @@ const IdParams = Type.Object({ id: Type.String({ pattern: UUID_PATTERN }) });
  * /healthz and static web assets stay open. The OpenAPI document is served
  * at /api/openapi.json.
  */
-export async function buildApp(ctx?: EngineContext): Promise<FastifyInstance> {
+export async function buildApp(
+  ctx?: EngineContext,
+  opts?: { loggerInstance?: FastifyServerOptions["loggerInstance"] },
+): Promise<FastifyInstance> {
   // removeAdditional:false makes body schemas REJECT (400) an unknown property
   // instead of silently stripping it (the @fastify/ajv-compiler default is
   // removeAdditional:true). Combined with additionalProperties:false on every
   // body schema, an unexpected top-level key (a mass-assignment or
   // prototype-pollution attempt) is now an explicit 400, not a quiet drop.
+  // Structured JSON logging via pino (level + secret redaction from
+  // boot/logger.ts). genReqId honors an inbound x-request-id as an opaque
+  // correlation token (never trusted for authz) and otherwise mints a UUID.
+  // disableRequestLogging silences Fastify's default two-line-per-request
+  // chatter; the onResponse hook below emits one access line instead.
   const app = Fastify({
-    logger: false,
+    ...(opts?.loggerInstance
+      ? { loggerInstance: opts.loggerInstance }
+      : { logger: loggerOptions() }),
+    disableRequestLogging: true,
+    genReqId: (req) => {
+      const inbound = req.headers["x-request-id"];
+      const id = Array.isArray(inbound) ? inbound[0] : inbound;
+      return id && id.length > 0 ? id : randomUUID();
+    },
     ajv: { customOptions: { removeAdditional: false } },
+  });
+
+  // One access line per response. Body and the Bearer token are never logged;
+  // the actor (id/type) is included when an authenticated user is attached. A
+  // logging failure must never break the response, so it is swallowed.
+  app.addHook("onResponse", (req, reply, done) => {
+    try {
+      const actor = req.authUser
+        ? { actorType: "user" as const, actorId: req.authUser.id }
+        : {};
+      req.log.info(
+        {
+          method: req.method,
+          url: req.url,
+          statusCode: reply.statusCode,
+          responseTime: Math.round(reply.elapsedTime),
+          reqId: req.id,
+          ...actor,
+        },
+        "request completed",
+      );
+    } catch {
+      /* logging must never fail a request */
+    }
+    done();
   });
 
   // Global error handler. Deliberate domain responses (reply.status(4xx).send)
@@ -91,7 +135,15 @@ export async function buildApp(ctx?: EngineContext): Promise<FastifyInstance> {
     const status =
       (err as { statusCode?: number }).statusCode ?? (err as { status?: number }).status ?? 500;
     if (status < 500) return reply.status(status).send(err);
-    req.log.error({ err }, "unhandled error");
+    // Server-side only: scrub BOTH message and stack through the redaction hook.
+    // V8 copies the message verbatim onto the stack's first line, so redacting
+    // only the message would still leak the same PII via the stack field.
+    const redact = resolveRedactionHook();
+    const e = err as Error;
+    req.log.error(
+      { err: { message: redactValue(redact, e.message), stack: redactValue(redact, e.stack) }, reqId: req.id },
+      "unhandled error",
+    );
     return reply.status(500).send({ error: "internal error" });
   });
 
