@@ -3,6 +3,7 @@ import { assertAuthBindSafe } from "./boot/bind-guard.js";
 import { createCronTriggerHandler, loadCronItems, TASK_CRON_TRIGGER } from "./boot/cron.js";
 import { gracefulShutdown } from "./boot/lifecycle.js";
 import { workerLogger } from "./boot/logger.js";
+import { emitOwnerDbWarning } from "./boot/owner-db-warning.js";
 import { emitRedactionDisabledWarning } from "./boot/redaction-warning.js";
 import { migrate } from "./db/migrate.js";
 import { createPool } from "./db/pool.js";
@@ -116,6 +117,7 @@ async function main(): Promise<void> {
   await app.listen({ port, host });
   workerLogger.info({ port, host, executor: mode }, "makerchecker server listening");
   await emitRedactionDisabledWarning(pool, workerLogger);
+  await emitOwnerDbWarning(pool, workerLogger);
 
   for (const signal of ["SIGTERM", "SIGINT"] as const) {
     process.on(signal, () => {
