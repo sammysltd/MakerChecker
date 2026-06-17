@@ -18,4 +18,4 @@ Workarounds you tried, or why existing features don't fit.
 
 **Scope check**
 
-MakerChecker 1.0 does not include drag-and-drop flow builders, SSO/SAML, or multi-tenancy (see the README Status section). Requests in those areas are parked, not rejected.
+MakerChecker 1.0 does not include drag-and-drop flow builders, SSO/SAML, or multi-tenancy (see the README Status section).

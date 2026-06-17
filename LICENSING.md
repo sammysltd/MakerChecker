@@ -25,9 +25,7 @@ apply to the MakerChecker service, not to your application.
 Some organizations have procurement or legal policies that do not permit AGPL-3.0
 software, even when self-hosted behind their own firewall. A **commercial
 license** replaces the AGPL-3.0 terms on the core with conventional commercial
-terms (no copyleft obligation). It also funds continued development and is the
-delivery vehicle for closed enterprise add-ons such as SSO/SAML, multi-tenancy
-controls, and HSM/KMS-backed signing keys.
+terms (no copyleft obligation), and funds continued development.
 
 To discuss commercial terms: **hello@makerchecker.ai**.
 

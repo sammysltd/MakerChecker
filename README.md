@@ -130,7 +130,7 @@ Bundles are Ed25519-signed and carry the manifest needed to recompute the chain.
 
 MakerChecker 1.0. The server, web, shared, integration, and verification paths are covered by unit and integration tests against Postgres in CI.
 
-1.0 has no drag-and-drop flow builder, SSO/SAML, or multi-tenancy. Flow definitions are typed JSON/YAML; SSO/SAML and multi-tenancy are planned commercial add-ons ([LICENSING.md](LICENSING.md)).
+1.0 has no drag-and-drop flow builder, SSO/SAML, or multi-tenancy. Flow definitions are typed JSON/YAML.
 
 ## License
 
