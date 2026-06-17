@@ -138,6 +138,8 @@ node dist/cli.js audit verify-bundle --in bundle.json --key instance.pub  # pin 
 
 `audit export` signs the bundle with the instance's Ed25519 key (created on first use under `MAKERCHECKER_DATA_DIR`, default `./data`). `audit verify-bundle` checks a bundle file with **no database connection**, so an auditor or regulator can verify a `bundle.json` you hand them on an air-gapped machine. `--key <pubkey.pem>` pins the expected instance public key (obtained out of band) so a bundle re-signed with a different key is rejected. No command emits that file: obtain the PEM from a trusted bundle's `manifest.publicKeyPem`, or with `SELECT public_key_pem FROM instance` against the deployment's database. See [the audit spec](audit-spec.md).
 
+Backing up a deployment means the database, the signing key under `MAKERCHECKER_DATA_DIR` (separately), and the retained bundles. See [backup, PITR, and restore drill](backup-restore.md); a restore is only sound once `audit verify` passes and the restored head cross-checks against the last retained bundle.
+
 Under compose: `docker compose exec server node dist/cli.js audit verify`.
 
 ## Live smoke test (real model)

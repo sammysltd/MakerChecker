@@ -1,0 +1,59 @@
+# Optional pg_dump backup sidecar. Self-contained: it does NOT inherit
+# docker-compose.yml; it defines its own postgres + pgdata volume. Use it alone:
+#
+#   docker compose -f docker-compose.backup.yml up
+#
+# This is a minimal illustration for evaluation / small self-host. For real
+# point-in-time recovery use pgBackRest or WAL-G (see docs/backup-restore.md).
+# It backs up ONLY the database; the Ed25519 signing key
+# (MAKERCHECKER_DATA_DIR/instance_key.pem) is a file outside the database and
+# must be escrowed separately. The dumps contain api_keys/users/full chain;
+# protect the backups volume as you protect the live database.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: makerchecker
+      POSTGRES_PASSWORD: makerchecker
+      POSTGRES_DB: makerchecker
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U makerchecker"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  # Loop sidecar: pg_dump as the OWNER role to a gzip in the backups volume on a
+  # fixed interval. Uses the postgres image (it ships pg_dump; the node server
+  # image does not). Literal shell $ is escaped as $$ so compose does not
+  # interpolate it; ${VAR:-default} is resolved by compose at config time.
+  backup:
+    image: postgres:17-alpine
+    environment:
+      PGPASSWORD: makerchecker
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+    volumes:
+      - backups:/backups
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        while true; do
+          ts=$$(date -u +%Y%m%dT%H%M%SZ)
+          echo "[backup] pg_dump makerchecker -> /backups/makerchecker-$$ts.sql.gz"
+          pg_dump -h postgres -U makerchecker -d makerchecker \
+            | gzip > /backups/makerchecker-$$ts.sql.gz
+          echo "[backup] done; sleeping $$BACKUP_INTERVAL_SECONDS s"
+          sleep "$$BACKUP_INTERVAL_SECONDS"
+        done
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  backups:
