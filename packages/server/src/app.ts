@@ -10,6 +10,7 @@ import { actorOf, authDisabled, registerAdminRoutes, requireAdmin } from "./api/
 import { registerProxyRoutes } from "./api/proxy-routes.js";
 import { authenticateApiKey, type AuthUser } from "./auth/api-keys.js";
 import { verifyChain } from "./audit/verify.js";
+import { strictSod } from "./config.js";
 import {
   ApprovalDecisionError,
   decideApproval,
@@ -595,6 +596,11 @@ async function canReadRun(
  * already decided on it). The run's own requester therefore may decide an
  * ungoverned gate (no self-approval rule applies without an `approvals` object),
  * but an unrelated key cannot. Returns a 403 message, or null to proceed.
+ *
+ * In strict mode (MAKERCHECKER_REQUIRE_IDENTITY_GATES=1) a legacy gate is no
+ * longer ungoverned: the orchestrator binds the run's requester (admin included)
+ * with an audited denial, so this edge defers it like an identity gate rather
+ * than admitting the admin or requester here.
  */
 async function authorizeDecision(
   pool: EngineContext["pool"],
@@ -604,7 +610,6 @@ async function authorizeDecision(
   if (authDisabled()) return null; // operator opt-out
   const user = req.authUser;
   if (!user) return "this decision requires an authenticated key"; // auth on, no user
-  if (user.is_admin === true) return null; // admins may decide any gate
 
   const { rows } = await pool.query<{
     definition: FlowDefinition;
@@ -624,8 +629,11 @@ async function authorizeDecision(
   const step = rows[0].definition.steps[rows[0].step_index];
   const gateApprovals = step && isApprovalGate(step) ? step.approvals : undefined;
 
-  // Identity-mode gate: the orchestrator governs AND audits the decision.
-  if (gateApprovals) return null;
+  // Identity-mode gate (and, in strict mode, every legacy gate too): the
+  // orchestrator governs AND audits the decision, including for an admin.
+  if (gateApprovals || strictSod()) return null;
+
+  if (user.is_admin === true) return null; // admins may decide any legacy gate
 
   // Legacy/ungoverned gate: no identity rule, but the decider must be party to
   // the run so an unrelated key cannot clear another actor's gate.

@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { createTestDb, type TestDb } from "../../test/test-db.js";
 import { buildApp } from "../app.js";
@@ -36,11 +36,12 @@ interface TestUser {
 }
 const users: Record<string, TestUser> = {};
 
-async function createUser(name: string): Promise<TestUser> {
+async function createUser(name: string, isAdmin = false): Promise<TestUser> {
   const email = `${name}@bank.example`;
   const row = await db.pool.query<{ id: string }>(
-    `INSERT INTO users (email, password_hash, display_name) VALUES ($1, 'x', $2) RETURNING id`,
-    [email, name],
+    `INSERT INTO users (email, password_hash, display_name, is_admin)
+     VALUES ($1, 'x', $2, $3) RETURNING id`,
+    [email, name, isAdmin],
   );
   const key = await generateApiKey(db.pool, { userId: row.rows[0]!.id, name: `${name}-key` });
   return {
@@ -60,6 +61,7 @@ beforeAll(async () => {
   for (const name of ["alice", "bob", "carol", "dave"]) {
     users[name] = await createUser(name);
   }
+  users.root = await createUser("root", true);
 
   await db.pool.query(
     `WITH role AS (INSERT INTO roles (name) VALUES ('nm-role') RETURNING id)
@@ -405,5 +407,122 @@ describe("legacy and explicitly-open gates", () => {
 
   it("the audit chain verifies after every adversarial path above", async () => {
     expect((await verifyChain(db.pool)).ok).toBe(true);
+  });
+});
+
+describe("strict-SoD mode binds the requester on every gate, however authored", () => {
+  afterEach(() => {
+    delete process.env.MAKERCHECKER_REQUIRE_IDENTITY_GATES;
+  });
+
+  it("denies the run's requester on a legacy gate with an audited denial", async () => {
+    const { runId, approvalId } = await triggerAndPark("legacy-flow", users.carol!);
+    process.env.MAKERCHECKER_REQUIRE_IDENTITY_GATES = "1";
+
+    const res = await decideVia(approvalId, users.carol!, "approved");
+    expect(res.statusCode).toBe(403);
+    expect(res.json().error).toContain("triggered this run");
+
+    const denied = (await runEvents(runId)).filter(
+      (e) => e.event_type === "approval.decision_denied",
+    );
+    expect(denied).toHaveLength(1);
+    expect(denied[0]!.payload).toMatchObject({ code: "requester_forbidden" });
+    const decisions = await db.pool.query(
+      "SELECT count(*)::int AS n FROM approval_decisions WHERE approval_id = $1",
+      [approvalId],
+    );
+    expect(decisions.rows[0].n).toBe(0);
+  });
+
+  it("denies an ADMIN requester on a legacy gate identically", async () => {
+    const { runId, approvalId } = await triggerAndPark("legacy-flow", users.root!);
+    process.env.MAKERCHECKER_REQUIRE_IDENTITY_GATES = "1";
+
+    const res = await decideVia(approvalId, users.root!, "approved");
+    expect(res.statusCode).toBe(403);
+    expect(res.json().error).toContain("triggered this run");
+
+    const denied = (await runEvents(runId)).filter(
+      (e) => e.event_type === "approval.decision_denied",
+    );
+    expect(denied).toHaveLength(1);
+    expect(denied[0]!.payload).toMatchObject({ code: "requester_forbidden" });
+    const decisions = await db.pool.query(
+      "SELECT count(*)::int AS n FROM approval_decisions WHERE approval_id = $1",
+      [approvalId],
+    );
+    expect(decisions.rows[0].n).toBe(0);
+  });
+
+  it("denies an unauthenticated decision on a legacy gate (fail closed)", async () => {
+    const { runId, approvalId } = await triggerAndPark("legacy-flow", users.carol!);
+    process.env.MAKERCHECKER_REQUIRE_IDENTITY_GATES = "1";
+
+    await expect(
+      decideApproval(ctx, {
+        approvalId,
+        decision: "approved",
+        decidedBy: { type: "user", name: "api" },
+      }),
+    ).rejects.toThrow(/requires an authenticated decision/);
+    const denied = (await runEvents(runId)).find(
+      (e) => e.event_type === "approval.decision_denied",
+    );
+    expect(denied!.payload).toMatchObject({ code: "unauthenticated" });
+  });
+
+  it("denies the requester on a gate that explicitly set forbid_requester:false", async () => {
+    const { runId, approvalId } = await triggerAndPark("open-identity-flow", users.carol!);
+    process.env.MAKERCHECKER_REQUIRE_IDENTITY_GATES = "1";
+
+    const res = await decideVia(approvalId, users.carol!, "approved");
+    expect(res.statusCode).toBe(403);
+    expect(res.json().error).toContain("triggered this run");
+
+    const denied = (await runEvents(runId)).filter(
+      (e) => e.event_type === "approval.decision_denied",
+    );
+    expect(denied).toHaveLength(1);
+    expect(denied[0]!.payload).toMatchObject({ code: "requester_forbidden" });
+    const decisions = await db.pool.query(
+      "SELECT count(*)::int AS n FROM approval_decisions WHERE approval_id = $1",
+      [approvalId],
+    );
+    expect(decisions.rows[0].n).toBe(0);
+  });
+
+  it("denies an unauthenticated decision on a forbid_requester:false gate", async () => {
+    const { runId, approvalId } = await triggerAndPark("open-identity-flow", users.carol!);
+    process.env.MAKERCHECKER_REQUIRE_IDENTITY_GATES = "1";
+
+    await expect(
+      decideApproval(ctx, {
+        approvalId,
+        decision: "approved",
+        decidedBy: { type: "user", name: "api" },
+      }),
+    ).rejects.toThrow(/requires an authenticated decision/);
+    const denied = (await runEvents(runId)).find(
+      (e) => e.event_type === "approval.decision_denied",
+    );
+    expect(denied!.payload).toMatchObject({ code: "unauthenticated" });
+  });
+
+  it("lets a non-requester clear the same legacy gate in strict mode", async () => {
+    const { runId, approvalId } = await triggerAndPark("legacy-flow", users.carol!);
+    process.env.MAKERCHECKER_REQUIRE_IDENTITY_GATES = "1";
+
+    const res = await decideVia(approvalId, users.bob!, "approved");
+    expect(res.statusCode).toBe(200);
+    expect(await waitForRunStatus(runId, ["completed", "failed"])).toBe("completed");
+  });
+
+  it("with strict mode OFF the requester may still decide the legacy gate", async () => {
+    const { runId, approvalId } = await triggerAndPark("legacy-flow", users.carol!);
+
+    const res = await decideVia(approvalId, users.carol!, "approved");
+    expect(res.statusCode).toBe(200);
+    expect(await waitForRunStatus(runId, ["completed", "failed"])).toBe("completed");
   });
 });

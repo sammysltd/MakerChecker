@@ -7,6 +7,7 @@ import {
 import type { Pool, PoolClient } from "pg";
 
 import { recordEvent, type Actor } from "../audit/writer.js";
+import { strictSod } from "../config.js";
 import { parseSkillRef } from "./enforcement.js";
 
 export class FlowValidationError extends Error {
@@ -87,13 +88,24 @@ export async function publishFlowVersion(
  * it cannot guard an irreversible high-risk action (see gateEnforcesSeparation).
  * Skills not yet in the registry are tolerated here (runtime enforcement still
  * denies them by default).
+ *
+ * In strict mode (MAKERCHECKER_REQUIRE_IDENTITY_GATES=1) every approval gate must
+ * be separation-enforcing — no self-approvable gate may be published at all.
  */
 async function validateRiskTiers(pool: Pool, definition: FlowDefinition): Promise<void> {
   const errors: string[] = [];
+  const strict = strictSod();
   let separationGateSeen = false;
   for (const step of definition.steps) {
     if (isApprovalGate(step)) {
       if (gateEnforcesSeparation(step)) separationGateSeen = true;
+      else if (strict) {
+        errors.push(
+          `step "${step.key}": strict mode (MAKERCHECKER_REQUIRE_IDENTITY_GATES) requires every ` +
+            "approval gate to enforce approver separation (an `approvals` object with " +
+            "forbid_requester not disabled), so no gate is self-approvable",
+        );
+      }
       continue;
     }
     if (separationGateSeen) continue;

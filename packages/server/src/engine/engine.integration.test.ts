@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { createTestDb, type TestDb } from "../../test/test-db.js";
 import { verifyChain } from "../audit/verify.js";
@@ -800,6 +800,41 @@ describe("M3 — high-risk skills require gates", () => {
       actor: USER,
     });
     expect(published.version).toBeGreaterThan(0);
+  });
+
+  describe("strict-SoD mode forbids self-approvable gates at publish time", () => {
+    afterEach(() => {
+      delete process.env.MAKERCHECKER_REQUIRE_IDENTITY_GATES;
+    });
+
+    const legacyGatedFlow = {
+      name: "strict-legacy-gate-flow",
+      steps: [
+        { key: "review", type: "approval_gate", title: "Rubber stamp" },
+        { key: "work", agent: "low-agent", skills: ["low-skill@1"] },
+      ],
+    };
+
+    it("rejects publishing a flow with a legacy gate in strict mode", async () => {
+      await seedAgent("low-agent");
+      await seedSkill("low-skill@1", async (i) => i);
+      await grant("low-agent", "low-skill@1");
+      process.env.MAKERCHECKER_REQUIRE_IDENTITY_GATES = "1";
+      await expect(
+        publishFlowVersion(db.pool, { definition: legacyGatedFlow, actor: USER }),
+      ).rejects.toThrow(/every.*approval gate to enforce approver separation/);
+    });
+
+    it("allows the same flow when strict mode is OFF (low-risk legacy gate)", async () => {
+      await seedAgent("low-agent");
+      await seedSkill("low-skill@1", async (i) => i);
+      await grant("low-agent", "low-skill@1");
+      const published = await publishFlowVersion(db.pool, {
+        definition: legacyGatedFlow,
+        actor: USER,
+      });
+      expect(published.version).toBeGreaterThan(0);
+    });
   });
 
   // Adversarial: a flow version that predates this rule is immutable, so it can

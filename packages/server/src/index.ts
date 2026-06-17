@@ -1,4 +1,5 @@
 import { buildApp } from "./app.js";
+import { assertAuthBindSafe } from "./boot/bind-guard.js";
 import { createCronTriggerHandler, loadCronItems, TASK_CRON_TRIGGER } from "./boot/cron.js";
 import { migrate } from "./db/migrate.js";
 import { createPool } from "./db/pool.js";
@@ -103,7 +104,9 @@ async function main(): Promise<void> {
   }, WATCHDOG_INTERVAL_MS).unref();
 
   const app = await buildApp(ctx);
-  await app.listen({ port, host: "0.0.0.0" });
+  const host = "0.0.0.0";
+  assertAuthBindSafe(host, process.env.MAKERCHECKER_AUTH_DISABLED === "1");
+  await app.listen({ port, host });
   console.log(`makerchecker server listening on :${port} (executor: ${mode})`);
 }
 

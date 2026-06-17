@@ -8,6 +8,7 @@ import {
 import type { Pool, PoolClient } from "pg";
 
 import { recordEvent, type Actor } from "../audit/writer.js";
+import { strictSod } from "../config.js";
 import { redactValue, resolveRedactionHook } from "../llm/redaction.js";
 import { firePendingWebhooks, type PendingWebhook } from "../webhooks/dispatcher.js";
 import type { ExecutionBackend, TaskHandler } from "./backend.js";
@@ -570,9 +571,14 @@ async function applyDecision(
 }
 
 /**
- * Identity rules for gates that define an approvals object — FAIL CLOSED.
- * Returns the error to surface after the denial audit event commits, or null
- * when the decision may proceed. Gates without the object enforce nothing.
+ * Identity rules for a gate — FAIL CLOSED. Returns the error to surface after
+ * the denial audit event commits, or null when the decision may proceed.
+ *
+ * In strict mode (MAKERCHECKER_REQUIRE_IDENTITY_GATES=1) every gate is bound by
+ * forbid_requester regardless of how it was authored — a legacy gate, or one
+ * that set forbid_requester:false before strict mode was enabled — so a
+ * pre-strict, immutable flow version still fails closed: an authenticated
+ * decision is required and the run's own requester (admin included) is denied.
  */
 async function checkDecisionIdentity(
   client: PoolClient,
@@ -580,12 +586,13 @@ async function checkDecisionIdentity(
   gateApprovals: ApprovalGateApprovalsDef | undefined,
   input: { decision: string; decidedBy: Actor; userId?: string; userEmail?: string },
 ): Promise<ApprovalDecisionError | null> {
-  if (!gateApprovals) return null;
+  const strict = strictSod();
+  if (!gateApprovals && !strict) return null;
 
-  const forbidRequester = gateApprovals.forbid_requester ?? true; // default ON in identity mode
-  const approverEmails = gateApprovals.approver_emails;
+  const forbidRequester = strict ? true : (gateApprovals?.forbid_requester ?? true);
+  const approverEmails = gateApprovals?.approver_emails;
   const needsIdentity =
-    approval.required_approvals > 1 || approverEmails !== undefined || forbidRequester;
+    strict || approval.required_approvals > 1 || approverEmails !== undefined || forbidRequester;
 
   const deny = async (code: string, message: string): Promise<ApprovalDecisionError> => {
     await recordEvent(client, {
