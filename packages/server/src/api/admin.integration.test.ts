@@ -130,6 +130,12 @@ describe("auth hook", () => {
     expect(res.statusCode).toBe(200);
   });
 
+  it("leaves /readyz open and ready against a live DB", async () => {
+    const res = await app.inject({ method: "GET", url: "/readyz" });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ status: "ok", schemaVersion: 1 });
+  });
+
   it("skips auth entirely in MAKERCHECKER_AUTH_DISABLED=1 mode; actor falls back to 'api'", async () => {
     process.env.MAKERCHECKER_AUTH_DISABLED = "1";
     try {

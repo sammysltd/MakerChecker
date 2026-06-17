@@ -12,6 +12,7 @@ import { actorOf, authDisabled, registerAdminRoutes, requireAdmin } from "./api/
 import { registerProxyRoutes } from "./api/proxy-routes.js";
 import { authenticateApiKey, type AuthUser } from "./auth/api-keys.js";
 import { verifyChain } from "./audit/verify.js";
+import { isShuttingDown } from "./boot/lifecycle.js";
 import { loggerOptions } from "./boot/logger.js";
 import { strictSod } from "./config.js";
 import {
@@ -199,7 +200,7 @@ export async function buildApp(
       timeWindow: "1 minute",
       allowList: (req) => {
         const path = (req.url ?? "").split("?")[0];
-        return path === "/healthz" || path === "/metrics";
+        return path === "/healthz" || path === "/readyz" || path === "/metrics";
       },
     });
     app.addHook("onRequest", app.rateLimit());
@@ -220,6 +221,26 @@ export async function buildApp(
   if (webDist) await registerWebStatic(app, webDist);
 
   if (!ctx) return app;
+
+  // Readiness, distinct from /healthz liveness: 503 while draining (so a rolling
+  // deploy pulls this pod before it stops accepting) or when a bounded SELECT 1
+  // fails. Open like /healthz (root scope, allow-listed). Liveness stays green
+  // when the DB is down so the orchestrator does not restart a healthy process.
+  app.get(
+    "/readyz",
+    { schema: { operationId: "ready", tags: ["meta"] } },
+    async (_req, reply) => {
+      if (isShuttingDown()) {
+        return reply.status(503).send({ status: "shutting_down" });
+      }
+      try {
+        await ctx.pool.query("SELECT 1");
+      } catch {
+        return reply.status(503).send({ status: "db_unreachable" });
+      }
+      return reply.status(200).send({ status: "ok", schemaVersion: SCHEMA_VERSION });
+    },
+  );
 
   // Prometheus exposition at the root (outside /api, no auth) — scrapers live
   // inside the deployment perimeter, so exposing it is an explicit operator

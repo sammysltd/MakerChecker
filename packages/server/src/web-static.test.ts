@@ -36,6 +36,7 @@ describe("isApiPath", () => {
     expect(isApiPath("/api/audit/verify")).toBe(true);
     expect(isApiPath("/api/openapi.json")).toBe(true);
     expect(isApiPath("/healthz")).toBe(true);
+    expect(isApiPath("/readyz")).toBe(true);
     expect(isApiPath("/api/approvals?x=1")).toBe(true);
   });
 

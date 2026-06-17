@@ -17,7 +17,7 @@ import type { FastifyInstance } from "fastify";
  * Every API route lives under /api (see app.ts), so SPA routes like
  * /runs/:id can never collide with it.
  */
-const API_PREFIXES = ["/api", "/healthz"];
+const API_PREFIXES = ["/api", "/healthz", "/readyz"];
 
 /** True when the path belongs to the API surface (exact prefix or a subpath). */
 export function isApiPath(path: string): boolean {

@@ -1,6 +1,7 @@
 import { buildApp } from "./app.js";
 import { assertAuthBindSafe } from "./boot/bind-guard.js";
 import { createCronTriggerHandler, loadCronItems, TASK_CRON_TRIGGER } from "./boot/cron.js";
+import { gracefulShutdown } from "./boot/lifecycle.js";
 import { workerLogger } from "./boot/logger.js";
 import { emitRedactionDisabledWarning } from "./boot/redaction-warning.js";
 import { migrate } from "./db/migrate.js";
@@ -96,7 +97,7 @@ async function main(): Promise<void> {
   // Watchdog: recover steps orphaned by crashed workers and flag approvals
   // pending past the overdue threshold. A sweep failure is logged, never
   // fatal — the next tick tries again.
-  setInterval(() => {
+  const watchdog = setInterval(() => {
     void sweepStuckSteps(ctx).catch((err: Error) =>
       workerLogger.error({ err: { message: err.message } }, "watchdog: stuck-step sweep failed"),
     );
@@ -106,7 +107,8 @@ async function main(): Promise<void> {
         "watchdog: overdue-approval sweep failed",
       ),
     );
-  }, WATCHDOG_INTERVAL_MS).unref();
+  }, WATCHDOG_INTERVAL_MS);
+  watchdog.unref();
 
   const app = await buildApp(ctx);
   const host = "0.0.0.0";
@@ -114,6 +116,14 @@ async function main(): Promise<void> {
   await app.listen({ port, host });
   workerLogger.info({ port, host, executor: mode }, "makerchecker server listening");
   await emitRedactionDisabledWarning(pool, workerLogger);
+
+  for (const signal of ["SIGTERM", "SIGINT"] as const) {
+    process.on(signal, () => {
+      void gracefulShutdown({ app, backend, pool, watchdog, logger: workerLogger }).then(() =>
+        process.exit(0),
+      );
+    });
+  }
 }
 
 main().catch((err: Error) => {

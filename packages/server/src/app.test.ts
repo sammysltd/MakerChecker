@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { buildApp } from "./app.js";
 import { loggerOptions } from "./boot/logger.js";
+import { beginShutdown, resetShutdownState } from "./boot/lifecycle.js";
 import type { EngineContext } from "./engine/orchestrator.js";
 
 /**
@@ -43,6 +44,67 @@ describe("GET /healthz", () => {
     const app = await buildApp();
     const res = await app.inject({ method: "GET", url: "/nope" });
     expect(res.statusCode).toBe(404);
+    await app.close();
+  });
+});
+
+describe("GET /readyz", () => {
+  const okCtx = {
+    pool: { query: async () => ({ rows: [{ "?column?": 1 }] }) },
+  } as unknown as EngineContext;
+
+  afterEach(() => {
+    resetShutdownState();
+  });
+
+  it("returns 200 with the schema version when ready and the DB answers", async () => {
+    const app = await buildApp(okCtx);
+    const res = await app.inject({ method: "GET", url: "/readyz" });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ status: "ok", schemaVersion: 1 });
+    await app.close();
+  });
+
+  it("returns 503 while shutting down, before pinging the DB", async () => {
+    const queried = { hit: false };
+    const drainingCtx = {
+      pool: {
+        query: async () => {
+          queried.hit = true;
+          return { rows: [] };
+        },
+      },
+    } as unknown as EngineContext;
+    const app = await buildApp(drainingCtx);
+    beginShutdown();
+    const res = await app.inject({ method: "GET", url: "/readyz" });
+    expect(res.statusCode).toBe(503);
+    expect(res.json()).toEqual({ status: "shutting_down" });
+    expect(queried.hit).toBe(false);
+    await app.close();
+  });
+
+  it("returns 503 when the DB ping throws", async () => {
+    const downCtx = {
+      pool: {
+        query: async () => {
+          throw new Error("connect ECONNREFUSED 10.0.3.5:5432");
+        },
+      },
+    } as unknown as EngineContext;
+    const app = await buildApp(downCtx);
+    const res = await app.inject({ method: "GET", url: "/readyz" });
+    expect(res.statusCode).toBe(503);
+    expect(res.json()).toEqual({ status: "db_unreachable" });
+    // The infra detail in the thrown error never reaches the client body.
+    expect(res.body).not.toContain("ECONNREFUSED");
+    await app.close();
+  });
+
+  it("stays open under the /api auth hook (no key required)", async () => {
+    const app = await buildApp(okCtx);
+    const res = await app.inject({ method: "GET", url: "/readyz" });
+    expect(res.statusCode).toBe(200);
     await app.close();
   });
 });
