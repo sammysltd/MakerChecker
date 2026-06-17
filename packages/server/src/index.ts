@@ -2,6 +2,7 @@ import { buildApp } from "./app.js";
 import { assertAuthBindSafe } from "./boot/bind-guard.js";
 import { createCronTriggerHandler, loadCronItems, TASK_CRON_TRIGGER } from "./boot/cron.js";
 import { workerLogger } from "./boot/logger.js";
+import { emitRedactionDisabledWarning } from "./boot/redaction-warning.js";
 import { migrate } from "./db/migrate.js";
 import { createPool } from "./db/pool.js";
 import { demoLocalRegistry } from "./demo/skills.js";
@@ -112,6 +113,7 @@ async function main(): Promise<void> {
   assertAuthBindSafe(host, process.env.MAKERCHECKER_AUTH_DISABLED === "1");
   await app.listen({ port, host });
   workerLogger.info({ port, host, executor: mode }, "makerchecker server listening");
+  await emitRedactionDisabledWarning(pool, workerLogger);
 }
 
 main().catch((err: Error) => {

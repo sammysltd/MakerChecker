@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { AnthropicProvider } from "./anthropic.js";
 import { OpenAICompatibleProvider } from "./openai-compatible.js";
 import type { LLMRequest } from "./provider.js";
-import { exampleRegexRedactor, noRedaction } from "./redaction.js";
+import { exampleRegexRedactor, noRedaction, standardRedactor } from "./redaction.js";
 
 const REQ: LLMRequest = {
   model: "claude-opus-4-8",
@@ -290,5 +290,44 @@ describe("redaction hooks", () => {
       nested: { list: ["[REDACTED:email]", 42, null, { deep: "[REDACTED:number]" }] },
       short: "12345",
     });
+  });
+
+  it("standardRedactor masks valid IBANs, separator cards, emails, and long runs", () => {
+    const result = standardRedactor({
+      iban: "send to GB29 NWBK 6016 1331 9268 19 today",
+      ibanCompact: "DE89370400440532013000",
+      cardSpaced: "card 4012 8888 8888 1881 on file",
+      cardHyphen: "4012-8888-8888-1881",
+      email: "alice@bank.example",
+      longRun: "123456789012",
+    });
+    expect(result).toEqual({
+      iban: "send to [REDACTED:iban] today",
+      ibanCompact: "[REDACTED:iban]",
+      cardSpaced: "card [REDACTED:card] on file",
+      cardHyphen: "[REDACTED:card]",
+      email: "[REDACTED:email]",
+      longRun: "[REDACTED:number]",
+    });
+  });
+
+  // Over-masking permanently corrupts an immutable chain, so a candidate is
+  // masked only when its checksum validates. Shape-only look-alikes must survive.
+  it("standardRedactor leaves non-PII and checksum-failing look-alikes untouched", () => {
+    const untouched = {
+      zip: "12345",
+      smallInt: 42,
+      word: "reconciliation",
+      uuid: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      nullish: null,
+      prose: "Note AB12 must wait here",
+      swift: "SWIFT MT99 FREE TEXT MSG",
+      opaqueRef: "AB12cdEFghIJklMNopQR",
+      phone: "call 555-12-3456 today",
+      range: "range 100-50-2000",
+      badIban: "GB00 NWBK 6016 1331 9268 19",
+      badCard: "4012 8888 8888 1882",
+    };
+    expect(standardRedactor({ ...untouched })).toEqual(untouched);
   });
 });

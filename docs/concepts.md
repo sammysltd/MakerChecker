@@ -97,12 +97,12 @@ Full verification rules, including signed export bundles: [docs/audit-spec.md](a
 
 ### Redaction
 
-One configurable hook (`MAKERCHECKER_REDACTION`: `example` selects the built-in regex redactor that masks emails and long digit runs; unset means none) governs sensitive-data exposure at two seams:
+One configurable hook (`MAKERCHECKER_REDACTION`: `example` masks emails and long digit runs; `standard` adds checksum-validated IBANs and card numbers; unset means none) governs sensitive-data exposure at two seams:
 
 - **Write path:** `llm.call` and `skill.invoked` audit payloads pass through the hook *before* they are hashed into the chain, so the chain stores what the hook returns.
 - **Read path:** `GET /api/runs/:id` applies the hook to the run input, step input/output/error, and audit payloads in the response, and the evidence-pack HTML reports use the same hook, so the reports never expose more than the API does.
 
-**At-rest rows are raw.** `flow_runs.input` and `step_runs.input/output/error` are stored unredacted; encrypting the database is a deployment concern. The hook governs exposure, not storage. Deployments with real PII obligations should supply their own hook in place of the example redactor.
+**At-rest rows are raw.** `flow_runs.input` and `step_runs.input/output/error` are stored unredacted; encrypting the database is a deployment concern. The hook governs exposure, not storage. The built-ins are an anchored regex baseline (precision over recall, so a zip, UUID, or small integer is left intact), not a compliance guarantee. Deployments with real PII obligations should supply their own hook. When the hook resolves to none on a non-demo boot, the server logs a WARN and writes one `instance.redaction_disabled` event so the gap is on the record.
 
 ## Enforcement
 
