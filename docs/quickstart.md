@@ -74,6 +74,30 @@ corepack pnpm --filter @makerchecker/web dev   # Vite on :5173, proxies API to :
 
 `corepack pnpm --filter @makerchecker/server dev` runs the built server under `node --watch`.
 
+## First admin on a fresh deployment
+
+A default (non-demo) boot seeds nothing — no users, no API keys. Mint the first admin and its key with one operator command after migrations have run:
+
+```bash
+cd packages/server
+DATABASE_URL=postgres://... node dist/cli.js bootstrap-admin \
+  --email admin@your-org.example --name 'Platform Admin'
+# mk_<32 hex>      <- the admin's API key, printed once; only its hash is stored
+```
+
+`bootstrap-admin` creates an admin user and issues its API key in a single step, printing the plaintext key exactly once (copy it now). The `user.created` and `api_key.created` events are both written to the audit chain. Re-running it for the same email fails (exit 1) rather than minting a second admin, so it is safe to script idempotently behind a guard. It is never run automatically at boot — a production image must never auto-create an admin.
+
+To create additional, non-admin identities (for example a second approver for identity-mode gates), use `create-user` and then `create-api-key`:
+
+```bash
+node dist/cli.js create-user --email officer@your-org.example --name 'Approving Officer'
+# <new user id>
+node dist/cli.js create-api-key --email officer@your-org.example --name officer-key
+# mk_<32 hex>
+```
+
+`create-user --admin` makes the new user an admin without issuing a key.
+
 ## API key auth
 
 All API routes live under `/api` and require `authorization: Bearer mk_...`; `/healthz`, static web assets, and the SPA's own routes stay open. Keys look like `mk_<32 hex>`; the server stores only their SHA-256 hash plus an 8-character prefix for identification. The seeded admin and officer keys are printed once at first boot.
@@ -87,6 +111,12 @@ The CLI ships in the server package (run it from `packages/server` after a build
 ```bash
 node dist/cli.js migrate
 # applied: 0001_init.sql, 0002_webhooks.sql, ...      (or: up to date)
+
+node dist/cli.js bootstrap-admin --email admin@your-org.example --name 'Platform Admin'
+# mk_<32 hex>      <- first admin + its API key, printed once (see "First admin" above)
+
+node dist/cli.js create-user --email officer@your-org.example --name 'Approving Officer' [--admin]
+# <new user id>    <- creates a user (no key); --admin makes it an admin
 
 node dist/cli.js audit verify
 # {

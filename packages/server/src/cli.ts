@@ -5,6 +5,7 @@ import { SCHEMA_VERSION, sha256Hex } from "@makerchecker/shared";
 import type { Pool } from "pg";
 
 import { generateApiKey } from "./auth/api-keys.js";
+import { bootstrapAdmin, createUser, UserExistsError } from "./auth/users.js";
 import { exportBundle, verifyBundle, type AuditBundle } from "./audit/export.js";
 import { ensureInstanceKeys } from "./audit/keys.js";
 import { verifyChain } from "./audit/verify.js";
@@ -18,6 +19,13 @@ const USAGE = `makerchecker <command>
 
 Commands:
   migrate                         apply pending database migrations
+  bootstrap-admin --email <email> --name <display name>
+                                  create the first admin user AND issue its API
+                                  key in one step (key plaintext prints once);
+                                  the first step on a fresh, non-demo deployment
+  create-user --email <email> --name <display name> [--admin]
+                                  create a user (no API key); --admin makes it
+                                  an admin. Prints the new user id
   create-api-key --email <email> [--name <label>]
                                   issue a new API key for an existing user
                                   (recovery path: key plaintexts print once)
@@ -114,6 +122,67 @@ export async function main(argv: string[], injectedPool?: Pool): Promise<number>
       await migrateGraphileWorkerSchema(pool);
       console.log(applied.length ? `applied: ${applied.join(", ")}` : "up to date");
       return 0;
+    }
+    if (command === "create-user") {
+      const { values } = parseArgs({
+        args: argv.slice(1),
+        options: {
+          email: { type: "string" },
+          name: { type: "string" },
+          admin: { type: "boolean" },
+        },
+      });
+      if (!values.email) {
+        console.error("create-user requires --email <user email>");
+        return 2;
+      }
+      if (!values.name) {
+        console.error("create-user requires --name <display name>");
+        return 2;
+      }
+      try {
+        const user = await createUser(pool, {
+          email: values.email,
+          displayName: values.name,
+          isAdmin: values.admin ?? false,
+        });
+        console.log(user.id);
+        return 0;
+      } catch (err) {
+        if (err instanceof UserExistsError) {
+          console.error(err.message);
+          return 1;
+        }
+        throw err;
+      }
+    }
+    if (command === "bootstrap-admin") {
+      const { values } = parseArgs({
+        args: argv.slice(1),
+        options: { email: { type: "string" }, name: { type: "string" } },
+      });
+      if (!values.email) {
+        console.error("bootstrap-admin requires --email <user email>");
+        return 2;
+      }
+      if (!values.name) {
+        console.error("bootstrap-admin requires --name <display name>");
+        return 2;
+      }
+      try {
+        const { apiKey } = await bootstrapAdmin(pool, {
+          email: values.email,
+          displayName: values.name,
+        });
+        console.log(apiKey.plaintext);
+        return 0;
+      } catch (err) {
+        if (err instanceof UserExistsError) {
+          console.error(err.message);
+          return 1;
+        }
+        throw err;
+      }
     }
     if (command === "create-api-key") {
       const { values } = parseArgs({

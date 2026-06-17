@@ -43,6 +43,8 @@ docker compose up
 
 Postgres and the server come up on port 3000. First boot seeds the demo and prints an admin key and an officer key — copy them from the logs.
 
+On a production (non-demo) deployment nothing is seeded; mint the first admin and its API key explicitly with `node dist/cli.js bootstrap-admin --email <e> --name <n>` (printed once). See [First admin on a fresh deployment](docs/quickstart.md#first-admin-on-a-fresh-deployment).
+
 A cash-reconciliation flow with a maker-checker constraint is seeded and ready:
 
 ```bash
