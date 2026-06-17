@@ -8,7 +8,7 @@ An agent is an identity, its role defines what it may do, and nothing is permitt
 
 An identity that executes flow steps.
 
-**Key fields:** `name` (unique), `description`, `role_id` (required, exactly one role), `model_config` (LLM provider/model, optional), `status` (`active` | `suspended` | `retired`).
+**Key fields:** `name` (unique), `description`, `role_id` (required, exactly one role), `model_config` (LLM provider/model, optional; frozen into each step at scheduling, see Snapshot semantics), `status` (`active` | `suspended` | `retired`).
 
 **Invariants:**
 - An agent holds exactly one role. Permissions are never attached to agents directly.
@@ -83,7 +83,7 @@ The v0 grammar (`packages/shared/src/flow-definition.ts`) is frozen: **sequentia
 
 A run is one execution of a flow version. `flow_runs` tracks status (`pending`, `running`, `waiting_approval`, `completed`, `failed`, `cancelled`, `timed_out`), `triggered_by`, `input`, and `failure_reason`. `step_runs` tracks each attempt, with inputs, outputs, and errors.
 
-**Snapshot semantics:** when a step starts, the agent's current role is frozen into `step_runs.role_id_snapshot`. SoD is evaluated against these snapshots, so reassigning an agent's role later cannot rewrite who acted as what in a past run.
+**Snapshot semantics:** when a step is scheduled, the same transaction freezes the agent's current role into `step_runs.role_id_snapshot`, the role's enforced limits into `step_runs.limits_snapshot`, and the agent's `model_config` into `step_runs.model_config_snapshot`. SoD is evaluated against the frozen role, the limit checks read the frozen limits, and the LLM executor runs the frozen model. So reassigning an agent's role, editing `roles.limits`, or changing `agents.model_config` mid-run cannot rewrite who acted as what, widen the ceilings, or swap the model of an already-scheduled step. `limits_snapshot` is frozen once per (run, role) and `model_config_snapshot` once per (run, agent), each carried forward across retries; pre-migration rows with a null snapshot fall back to the live value.
 
 **The audit chain** (`audit_events`) is append-only and hash-chained:
 

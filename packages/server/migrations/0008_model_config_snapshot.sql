@@ -1,0 +1,18 @@
+-- Frozen agent model_config per step attempt.
+--
+-- agents.model_config is mutable working config: an admin can change a step's
+-- provider/model at any time. Reading it LIVE at execution means an admin who
+-- edits model_config between scheduling and execution silently swaps which
+-- model runs an already-scheduled step — the as-run model stops being the
+-- as-approved one, and the audit record (the llm.call payload) no longer
+-- proves which model actually executed.
+--
+-- step_runs.model_config_snapshot freezes the agent's model_config at
+-- scheduling time, alongside role_id_snapshot and limits_snapshot, once per
+-- step attempt (keyed by the agent, since model_config is an agent property).
+-- loadStepForExecution reads this frozen copy and the LLM executor records it,
+-- so a later edit to agents.model_config cannot change which model an in-flight
+-- run uses. Nullable for backward compatibility with step_runs scheduled before
+-- this migration; the loader falls back to live agents.model_config only when
+-- the snapshot is null, never silently changing an in-flight run.
+ALTER TABLE step_runs ADD COLUMN model_config_snapshot jsonb;

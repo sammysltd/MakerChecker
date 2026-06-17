@@ -259,10 +259,25 @@ export async function advanceRun(ctx: EngineContext, runId: string): Promise<voi
     const limitsSnapshot =
       frozen.rows[0]?.limits_snapshot ?? (await getRoleLimits(client, enforced.roleId));
 
+    // Freeze the agent's model_config ONCE per (run, agent), carried forward
+    // across retries and later steps on the same agent. model_config is an
+    // agent property, so a retry re-uses the original frozen model rather than
+    // re-reading whatever agents.model_config is NOW — an admin editing the
+    // agent mid-run cannot swap the model of an already-scheduled step. Read
+    // live (enforced.modelConfig) only on the agent's first appearance.
+    const frozenModel = await client.query<{ model_config_snapshot: Json }>(
+      `SELECT model_config_snapshot FROM step_runs
+        WHERE run_id = $1 AND agent_id = $2 AND model_config_snapshot IS NOT NULL
+        ORDER BY started_at ASC NULLS FIRST, attempt ASC, id ASC LIMIT 1`,
+      [runId, enforced.agentId],
+    );
+    const modelConfigSnapshot =
+      frozenModel.rows[0]?.model_config_snapshot ?? enforced.modelConfig;
+
     const stepRun = await client.query<{ id: string }>(
       `INSERT INTO step_runs
-         (run_id, step_index, step_key, agent_id, role_id_snapshot, limits_snapshot, status, attempt, input, started_at)
-       VALUES ($1, $2, $3, $4, $5, $6, 'running', $7, $8, now()) RETURNING id`,
+         (run_id, step_index, step_key, agent_id, role_id_snapshot, limits_snapshot, model_config_snapshot, status, attempt, input, started_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'running', $8, $9, now()) RETURNING id`,
       [
         runId,
         nextIndex,
@@ -270,6 +285,7 @@ export async function advanceRun(ctx: EngineContext, runId: string): Promise<voi
         enforced.agentId,
         enforced.roleId,
         JSON.stringify(limitsSnapshot),
+        JSON.stringify(modelConfigSnapshot),
         attempt,
         JSON.stringify(stepInput),
       ],
@@ -864,14 +880,18 @@ async function loadStepForExecution(
     StepRunRow & {
       agent_id: string;
       role_id_snapshot: string;
+      model_config_snapshot: Json | null;
       flow_version_id: string;
       agent_name: string;
       model_config: Json;
     }
   >(
+    // Read the FROZEN model_config taken at scheduling; fall back to the live
+    // a.model_config only when the snapshot is null (step_runs scheduled before
+    // migration 0008), never silently swapping the model of an in-flight run.
     `SELECT sr.id, sr.run_id, sr.step_index, sr.step_key, sr.status, sr.attempt, sr.input,
-            sr.agent_id, sr.role_id_snapshot, fr.flow_version_id, a.name AS agent_name,
-            a.model_config
+            sr.agent_id, sr.role_id_snapshot, sr.model_config_snapshot,
+            fr.flow_version_id, a.name AS agent_name, a.model_config
        FROM step_runs sr
        JOIN flow_runs fr ON fr.id = sr.run_id
        JOIN agents a ON a.id = sr.agent_id
@@ -901,7 +921,7 @@ async function loadStepForExecution(
       agentId: stepRun.agent_id,
       agentName: stepRun.agent_name,
       roleId: stepRun.role_id_snapshot,
-      modelConfig: stepRun.model_config,
+      modelConfig: stepRun.model_config_snapshot ?? stepRun.model_config,
     },
   };
 }

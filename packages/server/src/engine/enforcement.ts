@@ -1,5 +1,7 @@
 import type { PoolClient } from "pg";
 
+import type { Json } from "./executor.js";
+
 /**
  * Pre-execution authorization. Called at BOTH decision time (flow.advance)
  * and invocation time (step.execute) — deny by default, twice.
@@ -36,6 +38,8 @@ export interface EnforcedAgent {
   agentId: string;
   agentName: string;
   roleId: string;
+  /** The agent's live model_config, frozen into the step_run at scheduling. */
+  modelConfig: Json;
   skillIds: Record<string, string>; // "name@version" -> skill id
 }
 
@@ -103,8 +107,13 @@ export async function checkSodConflict(
 }
 
 export async function enforce(client: PoolClient, input: EnforceInput): Promise<EnforcedAgent> {
-  const agents = await client.query<{ id: string; role_id: string; status: string }>(
-    "SELECT id, role_id, status FROM agents WHERE name = $1",
+  const agents = await client.query<{
+    id: string;
+    role_id: string;
+    status: string;
+    model_config: Json;
+  }>(
+    "SELECT id, role_id, status, model_config FROM agents WHERE name = $1",
     [input.agentName],
   );
   const agent = agents.rows[0];
@@ -174,6 +183,7 @@ export async function enforce(client: PoolClient, input: EnforceInput): Promise<
     agentId: agent.id,
     agentName: input.agentName,
     roleId: agent.role_id,
+    modelConfig: agent.model_config,
     skillIds,
   };
 }
