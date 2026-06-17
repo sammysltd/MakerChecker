@@ -130,6 +130,8 @@ node dist/cli.js audit verify-bundle --in bundle.json --key instance.pub  # pin 
 
 Bundles are Ed25519-signed and carry the manifest needed to recompute the chain. The format is specified in [docs/audit-spec.md](docs/audit-spec.md) for reimplementation in any language. `audit report --run <id>` builds a self-contained HTML run report; `audit access-review` renders the role/grant/SoD review (also at `/api/reports/access-review`).
 
+The chain is the system of record, so back it up like one: [docs/backup-restore.md](docs/backup-restore.md) covers database backup, PITR, escrowing the write-once signing key separately, and a restore drill that ends in `audit verify`.
+
 ## Status
 
 MakerChecker 1.0. The server, web, shared, integration, and verification paths are covered by unit and integration tests against Postgres in CI.
