@@ -28,22 +28,22 @@ a network egress filter on the user side never sees it.
 The `shadowleak-inbox-reader` role is scoped to a single read task. It is
 granted `shadowleak-gmail-read@1` (its in-scope mailbox read) and nothing else
 by way of cross-connector reach: `shadowleak-drive-read@1` is published but
-**never granted** to this role, so the cross-connector read the injection asks
-for is refused by deny-by-default before any data is read.
+**never granted** to this role, so
+the cross-connector read the injection asks for is refused by deny-by-default
+before any data is read.
 
 Outbound fetch (`shadowleak-net-fetch@1`) is published with `riskTier: "high"`.
-In this demo it carries a grant to the role to show the next line of defense:
-even granted, a high-risk skill is categorically refused on the proxy with
-`high_risk_requires_gate`. It cannot fire on a direct call — it must run inside
-a governed flow with a preceding approval gate, where a different named approver
-clears any outbound fetch before it executes. So the exfiltration the agent was
-told to perform never runs on its own attempt.
+This demo grants it to the role to show the next line of defense: even granted,
+a high-risk skill is categorically refused on the proxy with
+`high_risk_requires_gate`. It runs only inside a governed flow with a preceding
+approval gate, where a different named approver clears the outbound fetch before
+it executes.
 
-If you need URL egress restricted to an allowlist rather than a blanket gate,
-that is a distinct high-risk skill (for example `net-fetch-allowlisted@1`) whose
+To restrict URL egress to an allowlist rather than a blanket gate, write a
+distinct high-risk skill (for example `net-fetch-allowlisted@1`) whose
 implementation enforces the allowed destinations. MakerChecker enforces grants
 by skill name and version, not by argument values, so a per-destination limit
-lives inside the skill, not in a generic egress rule.
+lives inside the skill.
 
 ## Run it
 
@@ -75,17 +75,17 @@ audit trail:
 audit chain: ok=true events=345
 ```
 
-The legitimate mailbox read is allowed; the cross-connector read is refused by
+The mailbox read is allowed; the cross-connector read is refused by
 deny-by-default; the exfiltration fetch is refused because it is high-risk and
-must run behind an approval gate. Every attempt and every decision is written to
-the hash-chained, Ed25519-signed audit. The record exists even though the
-network egress itself would have been invisible to local defenses.
+must run behind an approval gate. Every attempt and decision is written to the
+hash-chained, Ed25519-signed audit, even though the network egress itself would
+have been invisible to local defenses.
 
 ## What this does not prevent
 
 This does not stop the agent from believing the email, and it does not reach
 inside OpenAI's infrastructure or any vendor runtime you do not control. The
 ShadowLeak fetch happened in OpenAI's cloud, outside any control plane the
-victim ran. The mapping here applies to agents you build on MakerChecker, where
-the connector reads and the outbound fetch are skills MakerChecker authorizes
-before they execute.
+victim ran. The mapping applies to agents you build on MakerChecker, where the
+connector reads and the outbound fetch are skills MakerChecker authorizes before
+they execute.

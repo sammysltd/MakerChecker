@@ -1,8 +1,8 @@
 # Concepts
 
-MakerChecker models AI agents the way a bank models employees: an agent is an identity, its role defines what it may do, and nothing is permitted unless explicitly granted. Everything below maps directly to the schema in `packages/server/migrations/`.
+An agent is an identity, its role defines what it may do, and nothing is permitted unless explicitly granted. Everything below maps directly to the schema in `packages/server/migrations/`.
 
-A design rule applies throughout: **governed entities are never edited in place.** Skills and flow versions are immutable once published; grants and SoD constraints are revoked, never deleted; roles are kept forever. Run-state tables (`flow_runs`, `step_runs`, `approvals`) are mutable working state, but every transition emits an audit event in the same database transaction, so the audit chain is the canonical record.
+**Governed entities are never edited in place.** Skills and flow versions are immutable once published; grants and SoD constraints are revoked, never deleted; roles are kept forever. Run-state tables (`flow_runs`, `step_runs`, `approvals`) are mutable working state, but every transition emits an audit event in the same database transaction, so the audit chain is the canonical record.
 
 ## Agent
 
@@ -45,9 +45,9 @@ The permission boundary. Grants and SoD constraints attach to roles, not agents.
 ```
 
 - **Counting is conservative.** Per-skill and run-level invocation counts come from the audit chain's `skill.invoked` events for the run: ALL attempts, including ones that errored. Token usage sums the `llm.call` usage payloads. In proxy sessions the per-skill count comes from the session's *allowed* `proxy_actions` (a denied check never acted).
-- **Amounts FAIL CLOSED.** If `maxAmountPerInvocation` is set and the input's amount field (`amountField`, default `"amount"`) is missing or non-numeric, the call is DENIED with `limit_amount_unreadable`. An unparseable limit value likewise denies everything it governs. Ambiguity is never a pass.
+- **Amounts FAIL CLOSED.** If `maxAmountPerInvocation` is set and the input's amount field (`amountField`, default `"amount"`) is missing or non-numeric, the call is DENIED with `limit_amount_unreadable`. An unparseable limit value likewise denies everything it governs.
 - **Token budgets trip before the spend.** The budget is checked before each provider call, so an exhausted budget fails the step without another model invocation.
-- Every violation lands in the audit chain as `enforcement.limit_violation` (with `via: "proxy"` for proxy denials) and fails the step and run; a violation is never fed back to the model to negotiate with.
+- Every violation lands in the audit chain as `enforcement.limit_violation` (with `via: "proxy"` for proxy denials) and fails the step and run.
 
 ## Skill
 
@@ -58,24 +58,24 @@ A versioned, schema-typed capability.
 **Invariants:**
 - Published skills are immutable. A database trigger rejects any update except `published → deprecated` with every other column unchanged; the API returns 405 on PATCH. Changed behaviour means a new version.
 - Deprecated skills no longer execute, even where grants still exist.
-- `high` risk tier has a structural consequence: a high-risk skill can only run in a step preceded by an approval gate in the flow definition (enforcement check 4 below).
+- A `high` risk tier skill can only run in a step preceded by an approval gate in the flow definition (enforcement check 4 below).
 
 ## Trigger
 
 What starts a flow. Stored in `flow_triggers`: `flow_id`, `type` (`cron` | `event` | `manual`), `config`, `enabled`.
 
-**Cron triggers are scheduled at boot** (`packages/server/src/boot/cron.ts`): enabled `cron` triggers are parsed from `config.schedule` (standard 5-field crontab) into graphile-worker cron items, and each firing starts a run of the trigger's **latest published** flow version as `{type: "system", name: "cron"}`. A missing or unparseable schedule is skipped with a logged error, so a broken schedule never fires, and never stops the instance from booting. The trigger is re-checked at fire time, so disabling one after boot quietly stops new runs without a restart; a flow with no published version refuses loudly. Manual runs are started via `POST /api/flows/:name/runs`.
+**Cron triggers are scheduled at boot** (`packages/server/src/boot/cron.ts`): enabled `cron` triggers are parsed from `config.schedule` (standard 5-field crontab) into graphile-worker cron items, and each firing starts a run of the trigger's **latest published** flow version as `{type: "system", name: "cron"}`. A missing or unparseable schedule is skipped with a logged error and never fires or blocks boot. The trigger is re-checked at fire time, so disabling one after boot stops new runs without a restart; a flow with no published version refuses loudly. Manual runs are started via `POST /api/flows/:name/runs`.
 
 ## Flow
 
 A versioned definition of work. `flows` holds the name; `flow_versions` holds `version`, `definition` (JSON), and `status` (`draft` | `published` | `archived`).
 
-The v0 grammar (`packages/shared/src/flow-definition.ts`) is deliberately frozen: **sequential steps only**, no branching, no parallelism, no expressions. Two step kinds:
+The v0 grammar (`packages/shared/src/flow-definition.ts`) is frozen: **sequential steps only**, no branching, no parallelism, no expressions. Two step kinds:
 
 - **Agent step:** `key`, `agent`, `skills` (list of `name@version` refs), optional `instructions`, `retries` (`max_attempts` 1–10, `backoff` `none` | `exponential`), `timeout_ms` (1s–1h).
 - **Approval gate:** `key`, `type: approval_gate`, `title`, optional `approvals`. Parks the run as `waiting_approval` until resolved; rejection fails the run.
 
-**n-of-m named approvals.** A gate may define an `approvals` object: `min_approvals` (quorum, default 1), `approver_emails` (named approver list), `forbid_requester` (default **true** whenever the object is present; explicit `false` allowed). Defining the object switches the gate into identity mode, which FAILS CLOSED: decisions must come from authenticated users; users outside `approver_emails` are denied (403, audited as `approval.decision_denied`); the run's triggering user cannot decide; the same user can never decide twice (409). Each decision is a row in `approval_decisions` and an `approval.decided` audit event carrying the running tally; any single rejection resolves the gate immediately, and it approves when the approved count reaches `required_approvals` (frozen onto the approvals row at gate creation). Resolution is audited as `approval.resolved`. Gates without the object behave exactly as before: one decision, no identity requirement. Publish-time validation rejects `min_approvals` greater than the named approver list.
+**n-of-m named approvals.** A gate may define an `approvals` object: `min_approvals` (quorum, default 1), `approver_emails` (named approver list), `forbid_requester` (default **true** whenever the object is present; explicit `false` allowed). Defining the object switches the gate into identity mode, which FAILS CLOSED: decisions must come from authenticated users; users outside `approver_emails` are denied (403, audited as `approval.decision_denied`); the run's triggering user cannot decide; the same user can never decide twice (409). Each decision is a row in `approval_decisions` and an `approval.decided` audit event carrying the running tally; any single rejection resolves the gate immediately, and it approves when the approved count reaches `required_approvals` (frozen onto the approvals row at gate creation). Resolution is audited as `approval.resolved`. Gates without the object take one decision with no identity requirement. Publish-time validation rejects `min_approvals` greater than the named approver list.
 
 **Invariants:** definitions are validated at publish time, never at run time; step keys are unique; at least one agent step; no consecutive gates; published versions are immutable (DB trigger) except `published → archived`; drafts are freely editable.
 
@@ -102,7 +102,7 @@ One configurable hook (`MAKERCHECKER_REDACTION`: `example` selects the built-in 
 - **Write path:** `llm.call` and `skill.invoked` audit payloads pass through the hook *before* they are hashed into the chain, so the chain stores what the hook returns.
 - **Read path:** `GET /api/runs/:id` applies the hook to the run input, step input/output/error, and audit payloads in the response, and the evidence-pack HTML reports use the same hook, so the reports never expose more than the API does.
 
-**At-rest rows are raw.** `flow_runs.input` and `step_runs.input/output/error` are stored unredacted; encrypting the database is a deployment concern, not the hook's job. The hook governs *exposure*, not storage. Deployments with real PII obligations should supply their own hook in place of the example redactor.
+**At-rest rows are raw.** `flow_runs.input` and `step_runs.input/output/error` are stored unredacted; encrypting the database is a deployment concern. The hook governs exposure, not storage. Deployments with real PII obligations should supply their own hook in place of the example redactor.
 
 ## Enforcement
 
@@ -118,8 +118,8 @@ Before an agent step executes, `enforce()` (`packages/server/src/engine/enforcem
 
 ## Proxy sessions (governance middleware)
 
-For agents that live in an external framework (LangChain, the Claude Agent SDK, or any framework): the framework keeps executing the tools; MakerChecker is the authorization checkpoint and the evidentiary record. **Wrap, don't migrate.**
+For agents that live in an external framework (LangChain, the Claude Agent SDK, or any framework): the framework keeps executing the tools; MakerChecker is the authorization checkpoint and the evidentiary record.
 
-A **proxy session** (`proxy_sessions`) groups the checks of one external run. Before each tool call, `POST /api/proxy/sessions/:id/check` runs the same checks as `enforce()` (agent active, skill published, unrevoked grant) and evaluates SoD against the distinct role snapshots that already *acted* (decision `allowed`) in the session; denied attempts never enter the actor set. Every check, allowed or denied, lands in `proxy_actions` with a frozen `role_id_snapshot`, plus an audit event (`proxy.check.allowed`, or `enforcement.blocked` / `enforcement.sod_violation` with `via: "proxy"`) in the same transaction. High-risk skills are categorically denied in proxy mode (`high_risk_requires_gate`): there is no approval gate in someone else's loop, so they must run through a governed flow that has one. Tool outcomes are appended with `/record` (`proxy.result.recorded`); `/close` ends the session, and checks against a closed session are refused.
+A **proxy session** (`proxy_sessions`) groups the checks of one external run. Before each tool call, `POST /api/proxy/sessions/:id/check` runs the same checks as `enforce()` (agent active, skill published, unrevoked grant) and evaluates SoD against the distinct role snapshots that already *acted* (decision `allowed`) in the session; denied attempts never enter the actor set. Every check, allowed or denied, lands in `proxy_actions` with a frozen `role_id_snapshot`, plus an audit event (`proxy.check.allowed`, or `enforcement.blocked` / `enforcement.sod_violation` with `via: "proxy"`) in the same transaction. High-risk skills are categorically denied in proxy mode (`high_risk_requires_gate`); they must run through a governed flow with an approval gate. Tool outcomes are appended with `/record` (`proxy.result.recorded`); `/close` ends the session, and checks against a closed session are refused.
 
 The SDK's `governedTool(client, sessionId, agentName, skillRef, fn)` packages the check → execute → record cycle around any tool function; denials throw `GovernanceDeniedError` before `fn` runs. See [examples/middleware](../examples/middleware/README.md).

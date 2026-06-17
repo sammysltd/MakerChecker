@@ -13,30 +13,27 @@ Full analysis: https://makerchecker.ai/insights/google-antigravity-wiped-entire-
 
 The agent had filesystem access wide enough to reach the drive root. A request
 to clear a cache folder resolved to a recursive, silent delete of an entire
-partition. The consequential action is the irreversible recursive delete run
-against a target outside the project the agent was supposed to be working in,
-executed with no checkpoint between the model's path resolution and the
-destruction of the data.
+partition outside the project, with no checkpoint between the model's path
+resolution and the destruction of the data.
 
 ## The MakerChecker configuration
 
-Filesystem work is split by both blast radius and scope. Reversible reads and
-writes confined to the project directory are low-risk skills the coding role
-holds and runs before any gate. The destructive variant is modeled as a
-separate skill rather than a flag, and the configuration demonstrates three
-controls in one session, each catching the incident at a different layer:
+Filesystem work is split by blast radius and scope. Reversible reads and writes
+confined to the project directory are low-risk skills the coding role holds and
+runs before any gate. The destructive variant is a separate skill, not a flag.
+Three controls fire in one session:
 
 - `gant-fs-read@1`, `gant-fs-write@1` (low risk). Read, list and write under the
   project root. Granted to the coding role; reversible, so they run pre-gate.
 - `gant-fs-rmdir-recursive@1` (**high risk**). Recursively delete a directory
   tree. Not granted to the coding role, so deny-by-default refuses it
-  (`skill_not_granted`). Even if it were granted, the proxy categorically
-  refuses a high-risk skill outside a governed flow with a preceding approval
-  gate (`high_risk_requires_gate`) — the missing checkpoint, enforced.
+  (`skill_not_granted`). Even if granted, the proxy categorically refuses a
+  high-risk skill outside a governed flow with a preceding approval gate
+  (`high_risk_requires_gate`).
 - `gant-fs-clean-cache@1` (low risk). The scoped cleanup that is a real duty,
   granted to the coding role with a path scope pinned to the project root. A
   cache subtree inside the project is allowed; a drive-root target is rejected
-  fail-closed (`limit_path`). The drive root is out of reach by construction.
+  fail-closed (`limit_path`).
 
 Role and grants (deny by default; only listed grants exist):
 
@@ -91,18 +88,16 @@ audit chain: ok=true events=276
 ```
 
 The reversible reads and writes run. The recursive delete of the drive root is
-refused first because the role never held the skill, then — once granted to
-prove the second layer — because a high-risk skill cannot run on the proxy
-without a preceding approval gate. The scoped cleanup runs inside the project
-but is refused fail-closed against the drive root. Every attempt, allowed and
-denied, with the skill requested, the target path, the role and the denial
-reason, is written to the hash-chained, Ed25519-signed audit log.
+refused first because the role never held the skill, then, once granted, because
+a high-risk skill cannot run on the proxy without a preceding approval gate. The
+scoped cleanup runs inside the project but is refused fail-closed against the
+drive root. Every attempt, allowed and denied, lands in the hash-chained,
+Ed25519-signed audit log with the skill, target path, role and denial reason.
 
 ## What this does not prevent
 
 This does not stop the model mis-resolving the cache path or intending the wrong
-target. Its guarantee is narrower and concrete: the recursive delete is
-ungranted and refused, a high-risk delete is held for a governed flow with a
-preceding human gate rather than running silently, and a scoped cleanup that is
-granted is confined to the project root so the drive root is out of reach by
-construction.
+target. The recursive delete is ungranted and refused, a high-risk delete is
+held for a governed flow with a preceding human gate rather than running
+silently, and a granted cleanup is confined to the project root so the drive
+root is out of reach by construction.

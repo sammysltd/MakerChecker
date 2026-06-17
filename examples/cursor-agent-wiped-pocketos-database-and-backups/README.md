@@ -1,9 +1,9 @@
 # Nine Seconds Over a Scoped Token Let a Coding Agent Wipe a DB and Backups
 
 On 25 April 2026 a Cursor agent working on a PocketOS staging task found a root
-Railway token that was scoped for domain work but carried blanket rights. It ran
-a single `volumeDelete`, destroying the production database and the co-located
-backups in about nine seconds. The outage ran roughly 30 hours. Sources:
+Railway token that was scoped for domain work but carried blanket rights. A single
+`volumeDelete` destroyed the production database and the co-located backups in about
+nine seconds. The outage ran roughly 30 hours. Sources:
 [The Register](https://www.theregister.com/2026/04/27/cursoropus_agent_snuffs_out_pocketos/),
 [Hackread](https://hackread.com/cursor-ai-agent-wipes-pocketos-database-backups/),
 [Cybersecurity News](https://cybersecuritynews.com/ai-coding-agent-deletes-data/).
@@ -11,28 +11,27 @@ Full analysis: https://makerchecker.ai/insights/cursor-agent-wiped-pocketos-data
 
 ## The risk
 
-The agent held a credential that the platform treated as proof of authority. One
-call deleted the production volume and its backups, an irreversible action, with
-no checkpoint between the model's decision and the destruction of the data.
+The platform treated the credential as proof of authority. One call deleted the
+production volume and its backups, irreversibly, with no checkpoint between the
+model's decision and the destruction of the data.
 
 ## The MakerChecker configuration
 
 MakerChecker authorizes the action, not the credential. The
-`pocketos-staging-deploy-role` is granted only the safe, reversible skills it
-needs and holds no deletion grant. The demo proves three layers:
+`pocketos-staging-deploy-role` is granted only the safe, reversible skills it needs
+and holds no deletion grant. Three layers fire:
 
 - **Deny by default.** Irreversible deletion is a separate skill,
-  `pocketos-infra-volume-delete@1`, that the staging role does not hold. The
-  attempt is refused with `skill_not_granted` even while the agent is holding the
-  token, because authorization is on the action, not the credential.
+  `pocketos-infra-volume-delete@1`, that the staging role does not hold. The attempt
+  is refused with `skill_not_granted` while the agent is still holding the token.
 - **High-risk needs a gate.** Deletion is published `riskTier: high`. The
   `pocketos-infra-owner-role` does hold the grant, but the proxy refuses any
   high-risk skill categorically (`high_risk_requires_gate`): it must run inside a
-  governed flow behind an approval gate, the checkpoint the incident lacked.
+  governed flow behind an approval gate.
 - **Argument-scoped variant.** The dangerous variant is modeled as its own skill,
-  `pocketos-staging-volume-delete@1`, carrying a `pathScope` limit that confines
-  it to `/env/staging`. A staging path is allowed; a production path is refused
-  with `limit_path`, fail closed.
+  `pocketos-staging-volume-delete@1`, carrying a `pathScope` limit that confines it
+  to `/env/staging`. A staging path is allowed; a production path is refused with
+  `limit_path`, fail closed.
 
 Skills, with versions and risk tiers:
 
@@ -61,8 +60,7 @@ role: pocketos-infra-owner-role
 
 Argument-level limits, such as restricting deletion to a named non-production
 volume, are not flags on the dangerous skill. They are modeled as the distinct
-`pocketos-staging-volume-delete@1` skill whose role limit carries the path scope,
-so the scoped variant fails closed before it can touch production.
+`pocketos-staging-volume-delete@1` skill whose role limit carries the path scope.
 
 ## Run it
 
@@ -102,17 +100,15 @@ audit trail:
 audit chain: ok=true events=134
 ```
 
-The production wipe is the actual PocketOS call. It is refused by deny-by-default;
-the over-broad token never enters the decision. The owner attempt shows that even
-where deletion is a real duty, the high tier forces an approval gate. Every
-attempt — allowed, ungranted, high-risk, and out-of-scope — is written to the
-hash-chained, Ed25519-signed audit with the skill requested, the role, and the
-reason.
+The production wipe is the actual PocketOS call, refused by deny-by-default before
+the over-broad token enters the decision. The owner attempt shows that even where
+deletion is a real duty, the high tier forces an approval gate. Every attempt —
+allowed, ungranted, high-risk, and out-of-scope — commits to the hash-chained,
+Ed25519-signed audit.
 
 ## What this does not prevent
 
-This does not stop the model going off task, and it does not fix the
-over-privileged token. It makes the token unusable for an action the role was
-never granted. The credential stays too broad at the Railway layer; MakerChecker
-ensures that breadth cannot translate into an ungranted deletion. A deletion path
-that calls the platform outside the control plane is outside its reach.
+This does not stop the model going off task, and it does not fix the over-privileged
+token. The credential stays too broad at the Railway layer; MakerChecker makes that
+breadth unusable for an action the role was never granted. A deletion path that calls
+the platform outside the control plane is outside its reach.

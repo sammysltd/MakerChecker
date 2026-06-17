@@ -13,14 +13,13 @@ Full analysis: https://makerchecker.ai/insights/chevrolet-watsonville-1-dollar-t
 
 ## The risk
 
-The actual harm here was reputational: the bot emitted text, it could not turn
-that text into a contract. The forward risk is the one to govern. As dealer and
-retail bots get wired into pricing, quoting, and order systems, a customer-facing
+The harm here was reputational: the bot emitted text, it could not turn that
+text into a contract. The risk to govern is the next one. As dealer and retail
+bots get wired into pricing, quoting, and order systems, a customer-facing
 assistant that holds a "commit a price" or "create an order" capability lets a
-single injected instruction become a binding commitment. The consequential
-action is the price commitment or offer: a step that obligates the business at a
-stated number. Answering a question about a vehicle is reversible. Committing the
-business to sell at 1 dollar is not.
+single injected instruction become a binding commitment. Answering a question
+about a vehicle is reversible. Committing the business to sell at 1 dollar is
+not.
 
 ## The MakerChecker configuration
 
@@ -31,13 +30,13 @@ so three controls sit between the bot and a binding offer:
 
 - **Deny-by-default on the arbitrary offer.** `tahoe-offer-open@1` commits an
   arbitrary binding price. It exists in the catalog but is granted to no role,
-  so when the injected bot tries to bind the business directly the proxy refuses
-  with `skill_not_granted`. The 1-dollar instruction never becomes a commitment.
+  so the proxy refuses the injected bot's attempt to bind the business with
+  `skill_not_granted`.
 - **High-risk requires a gate.** `tahoe-offer-bounded@1` is the legitimate price
   commit. It is published `riskTier: high`, so even the sales desk that holds the
-  grant cannot run it directly on the proxy — the proxy refuses with
-  `high_risk_requires_gate`. A binding price must run through a governed flow
-  with a preceding approval gate, not be self-cleared inside a chat turn.
+  grant cannot run it on the proxy — the proxy refuses with
+  `high_risk_requires_gate`. A binding price runs through a governed flow with a
+  preceding approval gate.
 - **A discount cap that fails closed.** The quote the bot _can_ draft,
   `tahoe-quote-draft@1`, carries a per-invocation `maxAmountPerInvocation` on its
   `discount` argument (here $8,000 against an $81,000 list price). A $1 Tahoe is
@@ -105,15 +104,12 @@ The bot can answer and draft a quote, and it may still emit "1 dollar" as text.
 But the $1 quote is over the discount cap, the arbitrary binding offer is
 ungranted, and the bounded commit is high-risk and held for a governed flow.
 Every attempt — allowed, over-cap, deny-by-default, and high-risk — is written
-to the hash-chained, Ed25519-signed audit, so the record shows what the bot
-tried and exactly why each binding action was refused.
+to the audit chain.
 
 ## What this does not prevent
 
 It does not prevent the injection or stop the model emitting text, including the
-words "1 dollar" or "this is binding." The bot can still be tricked into saying
-anything. The value is narrower and concrete: it removes the authority to turn
-that text into a binding action. The arbitrary offer is ungranted, the bounded
-offer is discount-capped and held behind a gate, and a price commitment cannot
-be self-cleared inside a chat turn. It governs the action, not what the model
-says.
+words "1 dollar" or "this is binding." It removes the authority to turn that text
+into a binding action: the arbitrary offer is ungranted, the bounded offer is
+discount-capped and held behind a gate, and a price commitment cannot be
+self-cleared inside a chat turn. It governs the action, not what the model says.

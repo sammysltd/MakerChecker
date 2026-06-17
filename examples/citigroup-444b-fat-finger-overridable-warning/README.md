@@ -17,17 +17,17 @@ Full analysis: https://makerchecker.ai/insights/citigroup-444b-fat-finger-overri
 ## The risk
 
 An execution agent submits a basket order whose notional is orders of magnitude
-larger than intended. The releasing identity sees warnings but can clear them
-the same way the trader cleared 711 pop-ups: by clicking through. There is no
-notional ceiling the role cannot exceed on its own, and no second person whose
-sign-off the order cannot proceed without.
+larger than intended. The releasing identity sees warnings but clears them the
+same way the trader cleared 711 pop-ups: by clicking through. No notional ceiling
+the role cannot exceed on its own, and no second person whose sign-off the order
+cannot proceed without.
 
 ## The MakerChecker configuration
 
 The action splits by notional, and notional is what the skill grant governs.
-Building, pricing, and validating the basket is the safe, reversible direction:
-a staged order is neither in the market nor irreversible, so the agent does that
-pre-gate with no approval.
+Building, pricing, and validating the basket is reversible: a staged order is
+neither in the market nor irreversible, so the agent does that pre-gate with no
+approval.
 
 - `citi-basket-stage@1` is reversible staging. The `citi-execution-agent` role
   holds it and runs it before any gate to assemble and validate the order.
@@ -35,19 +35,12 @@ pre-gate with no approval.
   per-invocation notional ceiling expressed as the role's skill limit
   (`maxAmountPerInvocation` on the `notional` field). Submitting at or below the
   ceiling is allowed; a $444B basket is over the ceiling and is refused outright
-  by the proxy with `limit_amount`. There is no pop-up to dismiss and no override
-  on the agent side. The cap is a hard number, not a prompt.
-- `citi-trade-submit-uncapped@1` is `risk_tier: high` and is the only path that
-  can release an over-cap basket. Because it is high risk the proxy refuses it
-  categorically (`high_risk_requires_gate`) — even when the role holds the grant,
-  it cannot run through the proxy and must instead run in a governed flow with a
-  preceding approval gate. The warning the trader dismissed 711 times becomes a
-  gate that cannot be clicked away.
-
-The role cap is the argument bound on `citi-trade-submit-capped@2`; a notional
-above it is not a smaller skill the role can stretch to cover, it is a call the
-proxy fails closed. The over-cap release is a high-risk skill that cannot run on
-the agent's own authority, reachable only past a human gate.
+  by the proxy with `limit_amount`. No pop-up to dismiss, no override on the
+  agent side. The cap is a hard number, not a prompt.
+- `citi-trade-submit-uncapped@1` is `risk_tier: high` and the only path that can
+  release an over-cap basket. The proxy refuses high-risk skills categorically
+  (`high_risk_requires_gate`): even with the grant, the role cannot run it through
+  the proxy and must run it in a governed flow behind an approval gate.
 
 ## Run it
 
@@ -83,15 +76,13 @@ audit chain: ok=true events=401
 ```
 
 Every attempt — allowed staging, the in-ceiling submit, the over-ceiling
-fat-finger, and the over-cap release — is written to the hash-chained,
-Ed25519-signed audit log, so the record shows exactly which orders were
-submitted and which were refused, and why.
+fat-finger, and the over-cap release — commits to the hash-chained,
+Ed25519-signed audit log.
 
 ## What this does not prevent
 
-This does not stop the wrong number being entered and it does not validate the
-economics of the trade. If a number is fat-fingered, it is still fat-fingered.
-What changes is that the order cannot be released on the agent's own authority
-once it crosses the ceiling, and the warning that the trader dismissed 711 times
-becomes a non-bypassable gate requiring another person's sign-off. The missing
-hard block is supplied; the typo is not caught.
+This does not stop the wrong number being entered or validate the economics of
+the trade. A fat-fingered number is still fat-fingered. What changes is that the
+order cannot be released on the agent's own authority once it crosses the ceiling,
+and the warning the trader dismissed 711 times becomes a gate requiring another
+person's sign-off. The missing hard block is supplied; the typo is not caught.

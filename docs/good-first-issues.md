@@ -1,7 +1,7 @@
 # Good first issues
 
-Scoped starter tasks for new contributors. Each has clear context and a
-testable definition of done. Claim one by opening an issue referencing it.
+Scoped starter tasks for new contributors. Each has context and a testable
+definition of done. Claim one by opening an issue referencing it.
 
 1. **API-key management endpoints.** Keys are only created by the seed or
    `generateApiKey`. Add `POST /api/api-keys` (returns plaintext once),
@@ -21,8 +21,8 @@ testable definition of done. Claim one by opening an issue referencing it.
    event immediately before the export window.
 
 5. **pg-boss ExecutionBackend.** A second `ExecutionBackend` implementation
-   proving the seam. Done when: the engine integration suite passes against
-   it behind an env switch.
+   proving the seam. Done when: the engine integration suite passes against it
+   behind an env switch.
 
 6. **Web accessibility pass.** Keyboard navigation and ARIA labels for the
    approvals inbox and run viewer (decision buttons, expandable JSON).
@@ -43,7 +43,6 @@ testable definition of done. Claim one by opening an issue referencing it.
 
 10. **Per-API-key rate limiting on approval decisions.** A global per-IP
     limiter already guards `/api` (`@fastify/rate-limit`, 100 req/min). Add a
-    tighter *per-key* token bucket specifically on
-    `POST /api/approvals/:id/decision` so a single credential cannot brute-force
-    decisions behind a shared IP. Done when: 429 behavior is tested and the
-    per-key limit is configurable.
+    tighter *per-key* token bucket on `POST /api/approvals/:id/decision` so a
+    single credential cannot brute-force decisions behind a shared IP. Done
+    when: 429 behavior is tested and the per-key limit is configurable.

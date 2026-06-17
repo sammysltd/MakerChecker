@@ -13,29 +13,25 @@ Full analysis: https://makerchecker.ai/insights/unitedhealth-nhpredict-ai-medica
 
 ## The risk
 
-A coverage-decision system can commit a denial of post-acute care, terminating
-the member's benefit, with no named clinician signing the decision and no record
-of who approved it or on what basis. The consequential action is the committed
-denial. There is no separation between the system that proposes a denial and the
-act of finalizing it, and the harm runs at scale because the committed denial is
-treated as final unless the member appeals.
+A coverage-decision system commits a denial of post-acute care, terminating the
+member's benefit, with no named clinician signing the decision and no record of
+who approved it or on what basis. Nothing separates the system that proposes a
+denial from the act of finalizing it, and a committed denial stands as final
+unless the member appeals.
 
 ## The MakerChecker configuration
 
 The action is split by reversibility. Producing a recommendation and assembling
 the case file are reversible, so the `uhc-coverage-assessor` role is granted
 `uhc-coverage-assess@1` and `uhc-case-file-build@1` only. It holds **no commit
-grant**, so an attempt to finalize a denial is refused by deny-by-default — the
-denial never reaches a tool body, and the proposing system cannot finalize its
-own recommendation.
+grant**, so an attempt to finalize a denial is refused by deny-by-default before
+it reaches a tool body.
 
-Committing the denial is the irreversible, consequential step, so
-`uhc-coverage-deny-commit@1` is published at `riskTier: high`. A high-risk skill
-is categorically refused on the proxy: it must run through a governed flow with a
-preceding approval gate, where a named clinician signs each denial before it
-executes. The `uhc-clinician-reviewer` role holds the commit grant, but even it
-cannot commit through the bare proxy — the high risk tier holds the denial until
-a human signs.
+Committing the denial is irreversible, so `uhc-coverage-deny-commit@1` is
+published at `riskTier: high` and refused on the proxy. It runs only through a
+governed flow with a preceding approval gate, where a named clinician signs each
+denial before it executes. The `uhc-clinician-reviewer` role holds the commit
+grant, but cannot commit through the bare proxy either.
 
 Skills:
 
@@ -80,18 +76,16 @@ audit trail:
 audit chain: ok=true events=363
 ```
 
-The assessor recommends and assembles the case file pre-gate because both skills
-are reversible and granted. Its attempt to finalize the denial is refused by
-deny-by-default. The committed denial, being high-risk, is refused on the proxy
-even for the reviewer that holds the grant — it has to run inside a governed flow
-with a preceding approval gate where a named clinician signs. Every attempt —
-allowed, ungranted-commit, and high-risk-refused — is written to the
-hash-chained, Ed25519-signed audit. That per-decision record is exactly the
-evidence the plaintiffs had to fight discovery to obtain.
+The assessor recommends and builds the case file pre-gate because both skills are
+reversible and granted. Its attempt to finalize the denial is refused by
+deny-by-default; the high-risk commit is refused on the proxy even for the
+reviewer that holds the grant. Every attempt commits to the hash-chained,
+Ed25519-signed audit — the per-decision record the plaintiffs had to fight
+discovery to obtain.
 
 ## What this does not prevent
 
-It does not fix the alleged 90 percent error rate. If a clinician signs off on a
-wrong denial, the harm still occurs. MakerChecker forces a named human to commit
+It does not fix the alleged 90 percent error rate. A clinician who signs off on a
+wrong denial still causes the harm. MakerChecker forces a named human to commit
 each denial and records who approved it on what basis; it does not judge whether
-the denial is clinically correct. It ensures accountability, not accuracy.
+the denial is clinically correct. Accountability, not accuracy.

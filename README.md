@@ -4,22 +4,32 @@
 [![Release](https://img.shields.io/github/v/release/sammysltd/makerchecker?label=release)](https://github.com/sammysltd/makerchecker/releases/latest)
 [![License](https://img.shields.io/badge/license-AGPL--3.0%20core%20%2B%20Apache--2.0%20SDK-informational)](LICENSING.md)
 
-Self-hosted software that governs AI agents. Each agent gets one role, deny-by-default skill grants pinned to an exact version, segregation-of-duties constraints, n-of-m human approval gates, per-skill limits, and a hash-chained Ed25519-signed audit log that an external party verifies offline. Agents keep running in their existing framework. MakerChecker is the authorization checkpoint and the record.
+MakerChecker is self-hosted software that governs AI agents. An agent acts only through a **role**, runs only the skills its role was **granted** (deny by default, pinned to an exact version), and cannot approve its own work. Every action commits to a hash-chained, Ed25519-signed **audit log** that anyone verifies offline — change one row and verification breaks at it.
 
-The application is a Fastify server on Postgres. Agents connect as a flow (MakerChecker orchestrates sequential steps and gates) or as a proxy session (MakerChecker authorizes and records tool calls another framework executes). Both write the same audit chain.
+Your agents keep running in their existing framework. MakerChecker is the checkpoint in front of them and the record behind them: a Fastify server on Postgres. Agents connect as a **flow** (MakerChecker runs the steps and gates) or a **proxy session** (MakerChecker authorizes and records tool calls your framework executes). Both write the same audit chain.
+
+**New here?** Operator → [Quickstart](#quickstart). Integrator → [Integration](#integration). Security reviewer → [docs/security-model.md](docs/security-model.md). Examiner → [docs/audit-spec.md](docs/audit-spec.md).
 
 [Live demo](https://makerchecker.ai/demo/): an agent is blocked from approving its own work, a human signs off, and the run's audit chain comes back verified. No signup.
 
 ![Run viewer](docs/assets/demo.gif)
 
-## Overview
+## How it works
 
-The gateway intercepts agent actions at the boundary. Agents do not execute high-risk operations directly; they invoke tools or skills through MakerChecker API sessions or flows.
+- **Grant.** Bind a role to exact skill versions. Nothing else runs.
+- **Check.** Every tool call hits the gate first. No grant, over a limit, or against an SoD constraint, and it is denied before the tool body runs.
+- **Gate.** High-risk steps wait for named human approval. The requester cannot approve their own.
+- **Record.** State changes and tool calls commit to the audit chain in the same transaction, each event chained to the last by hash.
 
-1. **Policy declaration**: Roles are assigned to agents, and unrevocable grants bind roles to exact skill versions.
-2. **Boundary check**: Every tool call is intercepted. The gateway checks if the agent's role possesses an unrevoked grant for that skill version and verifies that configured limits are respected.
-3. **Approval gating**: High-risk steps are held at human approval gates. The flow halts until the specified approvers decide the request.
-4. **Append-only log**: State changes and tool calls write to a hash-chained database ledger. Each event contains the cryptographic signature of the preceding event, securing the execution history.
+Every refusal is named and audited:
+
+| Control | Refusal |
+|---|---|
+| Skill not granted to the role | `skill_not_granted` |
+| Over a per-invocation amount or count limit (fails closed) | `limit_amount`, `limit_invocations` |
+| A conflicting role already acted in the run (segregation of duties) | `enforcement.sod_violation` |
+| High-risk skill with no preceding gate | `high_risk_requires_gate` |
+| Any altered audit row | `audit verify` → `{ ok: false, failedSeq }` |
 
 ## Quickstart
 
@@ -27,14 +37,14 @@ The gateway intercepts agent actions at the boundary. Agents do not execute high
 docker compose up
 ```
 
-This starts Postgres and binds the server to port 3000. On first boot, the database seeds demo configurations and prints two API keys: an admin key and an officer key. Copy these keys from the startup logs.
+Postgres and the server come up on port 3000. First boot seeds the demo and prints an admin key and an officer key — copy them from the logs.
 
-The seed includes a pre-configured cash reconciliation flow with a maker-checker constraint. To trigger the flow:
+A cash-reconciliation flow with a maker-checker constraint is seeded and ready:
 
 ```bash
-export H='authorization: Bearer mk_...'   # replace with the admin key from logs
+export H='authorization: Bearer mk_...'   # admin key from the logs
 
-# Trigger the demo flow
+# Trigger the flow
 curl -X POST localhost:3000/api/flows/daily-cash-reconciliation/runs -H "$H" -H 'content-type: application/json' -d '{}'
 
 # Inspect the pending approval gate
@@ -44,17 +54,17 @@ curl localhost:3000/api/approvals -H "$H"
 curl -X POST localhost:3000/api/approvals/<id>/decision -H "$H" -H 'content-type: application/json' \
   -d '{"decision":"approved","reason":"Exceptions resolved"}'
 
-# Verify the audit chain integrity
+# Verify the audit chain
 curl localhost:3000/api/audit/verify -H "$H"
 ```
 
-For the step-by-step local setup or to run with models, see [docs/quickstart.md](docs/quickstart.md).
+Full local setup, and running with real models, is in [docs/quickstart.md](docs/quickstart.md).
 
 The quickstart connects as the Postgres owner, which disables the append-only audit triggers. For tamper-resistance against a compromised app credential, run the server as a non-owner role with [`docker-compose.hardened.yml`](docker-compose.hardened.yml) ([walkthrough](docs/security-model.md#database-hardening-walkthrough)).
 
 ## Packages
 
-pnpm workspaces with Turborepo. The server code is AGPL-3.0. The SDKs and connectors (Apache-2.0) carry no copyleft obligation, so they are safe to embed directly.
+pnpm workspaces with Turborepo. The server is AGPL-3.0; the SDKs and connectors are Apache-2.0, so you can embed them in closed-source code.
 
 | Package | License | What it is |
 |---|---|---|
@@ -66,11 +76,11 @@ pnpm workspaces with Turborepo. The server code is AGPL-3.0. The SDKs and connec
 | [`packages/connector-langchain`](packages/connector-langchain) | Apache-2.0 | `governLangChainTool` / `governToolkit` for LangChain `StructuredTool`s. |
 | [`packages/connector-claude-agent`](packages/connector-claude-agent) | Apache-2.0 | `governClaudeTool` for Claude Agent SDK custom tools. |
 
-The governed primitives are Agent, Role, Skill, Trigger, Flow, Run/Audit, all Postgres-backed and versioned. See [docs/concepts.md](docs/concepts.md).
+The governed primitives — Agent, Role, Skill, Trigger, Flow, Run/Audit — are Postgres-backed and versioned. See [docs/concepts.md](docs/concepts.md).
 
 ## Integration
 
-Open a proxy session, then wrap each tool. Every invocation calls `proxy.check` (a deny throws `GovernanceDeniedError` before the tool runs), runs the tool, and calls `proxy.record` with the output. High-risk skills are refused on the proxy path; they require a flow gate.
+Open a proxy session, then wrap each tool. Every call runs `proxy.check` (a deny throws `GovernanceDeniedError` before the tool runs), executes the tool, then records the output. High-risk skills are refused on the proxy path; they need a flow gate.
 
 ```ts
 import { createClient, governedTool, GovernanceDeniedError } from "@makerchecker/sdk";
@@ -90,13 +100,17 @@ await match({ statement, ledger }); // throws GovernanceDeniedError if denied
 await client.proxy.closeSession(session.id);
 ```
 
-LangChain: `governLangChainTool` returns a `DynamicStructuredTool` with the same `name`, `description`, and `schema`. See [examples/connectors/langchain](examples/connectors/langchain/README.md). Claude Agent SDK: `governClaudeTool` returns an `SdkMcpToolDefinition` for `createSdkMcpServer`; see [packages/connector-claude-agent/README.md](packages/connector-claude-agent/README.md). Python: `create_client` then `governed_tool`, works with CrewAI, LangChain, LlamaIndex, AutoGen; `pip install makerchecker`, see [packages/sdk-python/README.md](packages/sdk-python/README.md).
+Connectors keep your tool's name, description, and schema:
+
+- **LangChain** — `governLangChainTool` returns a `DynamicStructuredTool`. See [examples/connectors/langchain](examples/connectors/langchain/README.md).
+- **Claude Agent SDK** — `governClaudeTool` returns an `SdkMcpToolDefinition` for `createSdkMcpServer`. See [packages/connector-claude-agent](packages/connector-claude-agent/README.md).
+- **Python** (CrewAI, LangChain, LlamaIndex, AutoGen) — `create_client` then `governed_tool`; `pip install makerchecker`. See [packages/sdk-python](packages/sdk-python/README.md).
 
 ## Audit and verification
 
-Every state transition emits an audit event in the same database transaction as the state write. Each event hash is `SHA-256` over the RFC 8785 canonical JSON of the event (the `seq` column excluded), chained through `prev_hash`, rooted in a genesis event derived from the instance UUID. Tampering with any row breaks recomputation at that row.
+Every state transition emits an audit event in the same transaction as the state write. Each event's hash is SHA-256 over the RFC 8785 canonical JSON of the event (excluding `seq`), chained through `prev_hash` from a genesis event tied to the instance. Change any row and recomputation breaks at it.
 
-`GET /api/audit/verify` walks the chain and returns `{ ok, count, headHash }`, or `{ ok: false, failedSeq, reason }` on a break. The server CLI verifies the live chain and signed bundles offline:
+`GET /api/audit/verify` walks the chain and returns `{ ok, count, headHash }`, or `{ ok: false, failedSeq, reason }` on a break. The CLI verifies the live chain and signed bundles offline:
 
 ```bash
 # verify against the running database
@@ -108,16 +122,16 @@ node dist/cli.js audit verify-bundle --in bundle.json
 node dist/cli.js audit verify-bundle --in bundle.json --key instance.pub  # pin the key
 ```
 
-Bundles are Ed25519-signed and carry the manifest to recompute the chain independently. The format is specified in [docs/audit-spec.md](docs/audit-spec.md) for reimplementation in any language. `audit report --run <id>` produces a self-contained HTML run report with chain verification; `audit access-review` renders the role/grant/SoD review (also at `/api/reports/access-review`).
+Bundles are Ed25519-signed and carry the manifest needed to recompute the chain. The format is specified in [docs/audit-spec.md](docs/audit-spec.md) for reimplementation in any language. `audit report --run <id>` builds a self-contained HTML run report; `audit access-review` renders the role/grant/SoD review (also at `/api/reports/access-review`).
 
 ## Status
 
-This is MakerChecker 1.0. The server, web, shared, integration, and verification paths are covered by unit and integration tests running against Postgres in CI.
+MakerChecker 1.0. The server, web, shared, integration, and verification paths are covered by unit and integration tests against Postgres in CI.
 
-1.0 does not include a drag-and-drop flow builder, SSO/SAML, or multi-tenancy. Flow definitions are authored as typed JSON/YAML; SSO/SAML and multi-tenancy are planned commercial add-ons ([LICENSING.md](LICENSING.md)).
+1.0 has no drag-and-drop flow builder, SSO/SAML, or multi-tenancy. Flow definitions are typed JSON/YAML; SSO/SAML and multi-tenancy are planned commercial add-ons ([LICENSING.md](LICENSING.md)).
 
 ## License
 
-The server, web, and shared packages are AGPL-3.0 ([LICENSE](LICENSE)). The SDKs, connectors, and examples are Apache-2.0. Code embedded in your own systems does not carry AGPL obligations; the boundary is the network API. A commercial license without copyleft obligation is available for organizations whose policies preclude AGPL-3.0: hello@makerchecker.ai. Rationale: [LICENSING.md](LICENSING.md).
+Server, web, and shared are AGPL-3.0 ([LICENSE](LICENSE)). The SDKs, connectors, and examples are Apache-2.0 — import and ship them in closed-source products without copyleft. A commercial license is available for organizations that cannot use AGPL-3.0: hello@makerchecker.ai. Details: [LICENSING.md](LICENSING.md).
 
 Contributing: [CONTRIBUTING.md](CONTRIBUTING.md) · Security: [SECURITY.md](SECURITY.md) · Code of Conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) · Changelog: [CHANGELOG.md](CHANGELOG.md)

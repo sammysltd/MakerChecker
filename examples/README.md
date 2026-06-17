@@ -6,7 +6,7 @@ Every demo expects a MakerChecker server on `http://localhost:3000` with the see
 
 ## Seeded scenario flows
 
-Each directory holds the input CSVs for one governed workflow; `daily-cash-reconciliation/` also ships a reference `flow.yaml`. The canonical flow definitions are seeded from the demo seed (`packages/server/src/demo/seed.ts`). Each flow binds the requester and approver roles so the proposing agent never approves its own action.
+Each directory holds the input CSVs for one governed workflow; `daily-cash-reconciliation/` also ships a reference `flow.yaml`. The canonical flow definitions are seeded from `packages/server/src/demo/seed.ts`, and each binds the requester and approver roles so the proposing agent never approves its own action.
 
 - `daily-cash-reconciliation/`: A preparer agent matches the bank statement against the ledger and flags exceptions. A human gate reviews the exceptions, then a reporter agent renders and delivers the summary over MCP. The `self-approval-attempt` flow blocks a self-approval and writes the violation to the audit chain.
 - `aml-alert-triage/`: An L1 analyst triages the day's AML alerts (`alerts.csv` plants a structuring pattern and a sanctions near-match). The run parks at a SAR-filing gate for the BSA officer; the analyst who worked an alert cannot approve its disposition.
@@ -27,13 +27,13 @@ node examples/sdk-demo.mjs
 
 ### `middleware/governed-tool-demo.mjs`
 
-Wraps plain functions (standing in for LangGraph or CrewAI tools) with `governedTool` and runs them in a proxy session. The framework executes the tool. MakerChecker runs the grant check and enforces segregation of duties across the session, recording each decision to the audit trail. Shows an allowed call and a deny-by-default denial, then an SoD denial after a conflicting role acted.
+Wraps plain functions (standing in for LangGraph or CrewAI tools) with `governedTool` and runs them in a proxy session. The framework executes the tool; MakerChecker runs the grant check, enforces segregation of duties across the session, and records each decision. Shows an allowed call, a deny-by-default denial, then an SoD denial after a conflicting role acted.
 
 ```bash
 node examples/middleware/governed-tool-demo.mjs
 ```
 
-`governedTool(client, sessionId, agentName, skillRef, fn)` returns an async function. Each call runs `client.proxy.check` first; a deny throws `GovernanceDeniedError` before `fn` runs. On allow it runs `fn` and records the output or rethrown error, then returns the result.
+`governedTool(client, sessionId, agentName, skillRef, fn)` returns an async function. Each call runs `client.proxy.check` first; a deny throws `GovernanceDeniedError` before `fn` runs. On allow it runs `fn`, records the output or rethrown error, and returns the result.
 
 ```js
 import { createClient, governedTool, GovernanceDeniedError } from "../../packages/sdk/dist/index.js";
@@ -48,7 +48,7 @@ See [`middleware/README.md`](middleware/README.md) for LangGraph and CrewAI sket
 
 ### `connectors/langchain/`
 
-Governs real `@langchain/core` tools with [`@makerchecker/connector-langchain`](../packages/connector-langchain). `governLangChainTool(client, { sessionId, agentName, skillRef }, tool)` takes a `StructuredTool` and returns a tool that preserves the original `name`/`description`/`schema`. Its `invoke()` runs the grant check, then on allow runs the original tool and records the output or rethrown error. A deny throws `GovernanceDeniedError` before the tool body runs. `governToolkit(...)` maps the wrapper over an array of tools, one `skillRef` per tool, and fails closed on any unmapped tool.
+Governs real `@langchain/core` tools with [`@makerchecker/connector-langchain`](../packages/connector-langchain). `governLangChainTool(client, { sessionId, agentName, skillRef }, tool)` takes a `StructuredTool` and returns a tool that preserves the original `name`/`description`/`schema`. Its `invoke()` runs the grant check; on allow it runs the original tool and records the output or rethrown error, and a deny throws `GovernanceDeniedError` before the tool body runs. `governToolkit(...)` maps the wrapper over an array of tools, one `skillRef` per tool, and fails closed on any unmapped tool.
 
 ```bash
 pnpm --filter @makerchecker/sdk --filter @makerchecker/connector-langchain build
@@ -70,7 +70,7 @@ See [`connectors/langchain/README.md`](connectors/langchain/README.md) for the w
 
 ## Incident scenarios (runnable)
 
-Twenty real incidents where an AI or automated system took a consequential action it should not have. Each directory is a self-contained, runnable scenario: its `demo.mjs` configures the roles, skills, grants, and limits, drives a governed agent through the proxy, shows the control denying or gating the action, then verifies the audit chain. Each `README.md` keeps the incident's sources and explains the mapping.
+Twenty real incidents where an AI or automated system took a consequential action it should not have. Each directory is a self-contained, runnable scenario: its `demo.mjs` configures the roles, skills, grants, and limits, drives a governed agent through the proxy, shows the control denying or gating the action, then verifies the audit chain. Each `README.md` keeps the incident's sources and the mapping.
 
 ```bash
 node examples/knight-capital-440m-runaway-trading/demo.mjs   # server on :3000, auth disabled or admin key

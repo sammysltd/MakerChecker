@@ -14,28 +14,25 @@ Full analysis: https://makerchecker.ai/insights/mypillow-ai-brief-fake-citations
 
 Drafting a brief is reversible. Filing it with the court is not: once a motion is
 on the docket, the fabricated citations are in the record, and the sanction
-follows the filing, not the draft. The consequential action is the act of
-submission. The repeat offense is the part to govern directly. A control that
-fires once and is then trusted is worthless here, because the second filing came
-after the first sanction. The gate has to fire on every submission, including the
-next version of the same brief.
+follows the filing. The second filing came after the first sanction, so a gate
+that fires once and is then trusted does nothing. The gate has to fire on every
+submission, including the next version of the same brief.
 
 ## The MakerChecker configuration
 
 Split the work by reversibility. Drafting the brief and running citation
 verification are reversible, so the `mypillow-brief-author` role holds those
-skills and runs them freely. Submitting to the court is the irreversible,
-consequential step, so it is modeled as a high-risk skill. The proxy refuses any
-high-risk skill categorically: it must run through a governed flow with a
-preceding approval gate, never on an agent's own self-issued authority.
+skills and runs them freely. Submitting to the court is the irreversible step,
+modeled as a high-risk skill. The proxy refuses any high-risk skill
+categorically: it must run through a governed flow with a preceding approval
+gate.
 
 The author role never holds a submission skill. An unbounded "file anything"
 skill exists in the catalog and is granted to no role, so a self-issued
 instruction to file is refused by deny-by-default. The bounded submission skill
 is held only by the supervising-attorney role, and because it is published
 high-risk, a direct call through the proxy is refused with
-`high_risk_requires_gate` — the named-attorney sign-off the second filing rode
-past is not optional, and it cannot be bypassed by calling the skill directly.
+`high_risk_requires_gate`.
 
 Skills (`name@version`, `risk_tier`):
 
@@ -91,19 +88,19 @@ audit chain: ok=true events=317
 The author drafts and verifies freely; verification surfaces the 30 fabricated
 citations but does not stop the draft from existing. The self-file attempt is
 refused by deny-by-default before it reaches a tool body, and the direct
-submission is refused because the skill is high-risk and the proxy forces it
-through a flow with an approval gate. Every attempt — allowed, deny-by-default,
-and gate-required — is written to the hash-chained, Ed25519-signed audit log.
+submission is refused because the skill is high-risk. Every attempt — allowed,
+deny-by-default, and gate-required — is written to the hash-chained,
+Ed25519-signed audit log.
 
 ## What this does not prevent
 
 It does not stop the AI tool from producing fabricated citations. MakerChecker
 constrains and records the filing action, not the content of the draft. The
-proxy demonstrates the two enforcement primitives — filing is ungranted to the
-author, and submission is categorically gated as high-risk — but the actual
-human sign-off, the per-version re-triggering, and the `forbid_requester`
-identity check live in the governed flow that wraps the high-risk step. If a
-supervising attorney signs off in that flow without reading the verification
-record, a brief with bad citations can still reach the docket. The value is
+proxy demonstrates two enforcement primitives — filing is ungranted to the
+author, and submission is categorically gated as high-risk. The actual human
+sign-off, the per-version re-triggering, and the `forbid_requester` identity
+check live in the governed flow that wraps the high-risk step. A supervising
+attorney who signs off in that flow without reading the verification record can
+still put a brief with bad citations on the docket. What the proxy guarantees is
 narrower: filing cannot happen on an agent's own authority, every submission is
 forced to a human gate, and who attempted what is recorded.

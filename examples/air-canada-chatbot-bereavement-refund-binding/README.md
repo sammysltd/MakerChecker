@@ -17,17 +17,15 @@ Full analysis: https://makerchecker.ai/insights/air-canada-chatbot-bereavement-r
 
 ## The risk
 
-The chatbot did two different things, and only one of them is the problem. It
-answered a customer question, which is its job, and it bound the airline to a
-financial obligation it invented. The consequential action is the binding
-commitment: a refund promise the company is later held to in law. A wrong answer
-is a content problem; a wrong commitment is a liability. The line MakerChecker
-draws is between the bot answering and the bot binding the company, and only the
-latter needs gating.
+The chatbot did two things. It answered a customer question, and it bound the
+airline to a financial obligation it invented. Only the second is the problem: a
+refund promise the company is later held to in law. MakerChecker draws the line
+between the bot answering and the bot binding the company, and gates only the
+latter.
 
 ## The MakerChecker configuration
 
-The customer-service work is split into separate skills by consequence.
+Customer-service work is split into separate skills by consequence.
 
 - `aircanada-support-answer@1` (`risk_tier: low`). Answer customer questions and
   quote published policy. Produces text, binds nothing. Granted to the
@@ -39,17 +37,17 @@ The customer-service work is split into separate skills by consequence.
   `[flight-delay, cancellation, baggage]`. Both are checked at the proxy before
   every call and fail closed.
 - `aircanada-refund-commit@1` (`risk_tier: high`). Commit a refund of any amount
-  or on a non-standard basis. Because it is published high-risk, the proxy
-  refuses it categorically with `high_risk_requires_gate`: it must run through a
-  governed flow with a preceding approval gate, decided by a named officer who is
-  not the requester.
+  or on a non-standard basis. Published high-risk, so the proxy refuses it
+  categorically with `high_risk_requires_gate`: it must run through a governed
+  flow with a preceding approval gate, decided by a named officer who is not the
+  requester.
 
 The support role holds **no commit grant of any kind**, so the bot attempting to
 commit the invented refund is refused by deny-by-default before any obligation is
-recorded. Argument-level limits matter here: a blanket commit grant would let an
-agent bind the company to any amount on any invented basis, which is exactly what
-happened. The capped commitment is therefore a distinct skill scoped to the
-threshold and the published-policy set, not a flag on the answer skill.
+recorded. Argument-level limits matter: a blanket commit grant would let an agent
+bind the company to any amount on any invented basis. The capped commitment is a
+distinct skill scoped to the threshold and the published-policy set, not a flag
+on the answer skill.
 
 ## Run it
 
@@ -88,22 +86,18 @@ audit trail:
 audit chain: ok=true events=91
 ```
 
-The bot answers the customer, including the fabricated bereavement claim — that
-text binds nothing. When it reaches for a refund commitment, deny-by-default
-refuses it before any obligation attaches to the airline. A standard-policy
-refund within the threshold and on an allowed basis issues without a gate; an
-invented basis is caught by the allowlist, an amount over the threshold by the
-ceiling, and an open-amount commit is categorically refused as high-risk. Every
-attempt — allowed, deny-by-default, off-allowlist, over-ceiling, and high-risk —
-is written to the hash-chained, Ed25519-signed audit log, so the record shows
-what was promised, what was refused, and why.
+The bot answers the customer, fabricated bereavement claim included; that text
+binds nothing. When it reaches for a refund commitment, deny-by-default refuses
+it before any obligation attaches to the airline. A standard-policy refund within
+the threshold and on an allowed basis issues without a gate. An invented basis is
+caught by the allowlist, an amount over the threshold by the ceiling, and an
+open-amount commit is categorically refused as high-risk. Every attempt is
+written to the hash-chained, Ed25519-signed audit log.
 
 ## What this does not prevent
 
 This does not stop the chatbot hallucinating a policy or make its answers
-correct. The bot will still tell a customer the wrong thing; content control is a
-separate concern. What it prevents is an unreviewed statement turning into a
-binding commitment: the consequential action is the commitment, not the sentence.
-The threshold-bounded skill still issues small standard-policy refunds without a
-gate, so a misconfigured cap or an in-scope-but-wrong refund inside the threshold
-would not be held.
+correct. Content control is a separate concern. What it prevents is an unreviewed
+statement turning into a binding commitment. The threshold-bounded skill still
+issues small standard-policy refunds without a gate, so a misconfigured cap or an
+in-scope-but-wrong refund inside the threshold would not be held.

@@ -6,7 +6,7 @@ labels: bug
 
 **What happened**
 
-A clear description of the bug.
+Describe the bug.
 
 **Expected behaviour**
 
@@ -27,7 +27,7 @@ What should have happened instead.
 
 **Evidence**
 
-Relevant logs, the run's audit events (`GET /runs/:id`), or `audit verify` output. Redact secrets and API keys.
+Logs, the run's audit events (`GET /runs/:id`), or `audit verify` output. Redact secrets and API keys.
 
 **Severity note**
 

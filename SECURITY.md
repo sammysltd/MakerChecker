@@ -8,13 +8,13 @@ Security fixes land on the latest 1.x release and the `main` branch.
 
 Use [GitHub private vulnerability reporting](https://docs.github.com/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability) (the **Report a vulnerability** button under the Security tab), or email **hello@makerchecker.ai**.
 
-Please include a reproduction or proof of concept where possible. You should receive an acknowledgement within 72 hours.
+Include a reproduction or proof of concept where possible. You should receive an acknowledgement within 72 hours.
 
-We follow **90-day coordinated disclosure**: we ask that you give us 90 days from your report before public disclosure; we will credit you (unless you prefer otherwise) and aim to ship fixes well inside that window. Good-faith research under this policy will not be met with legal action.
+We follow **90-day coordinated disclosure**: give us 90 days from your report before public disclosure. We will credit you unless you prefer otherwise, and aim to ship fixes well inside that window. Good-faith research under this policy will not be met with legal action.
 
 ## In scope
 
-Reports in these areas are especially valuable: they attack the product's core claims:
+These areas attack the product's core claims:
 
 - **Audit chain tamper-evidence.** Any way to modify, remove, insert, or reorder audit events without detection by `audit verify` or bundle verification; any way to forge a bundle that verifies under a key you do not hold; canonicalization ambiguities that let two different events produce the same hash.
 - **Enforcement bypasses.** Executing a skill without an active grant, evading a segregation-of-duties constraint, running a high-risk skill without a preceding approval gate, or acting as a suspended or retired agent (either at decision time or invocation time).
@@ -30,7 +30,7 @@ Also in scope: SQL injection, SSRF via skill implementations or webhooks, and se
 
 ## Security model
 
-MakerChecker is built for regulated, adversarial-insider environments. The production hardening guidance below keeps the audit and enforcement guarantees intact even against a compromised application credential or a privileged insider. The full walkthrough and the rationale for each control are in [docs/security-model.md](docs/security-model.md).
+MakerChecker is built for regulated, adversarial-insider environments. The hardening guidance below keeps the audit and enforcement guarantees intact against a compromised application credential or a privileged insider. The full walkthrough is in [docs/security-model.md](docs/security-model.md).
 
 - **Run as a non-owner database role.** `REVOKE` `UPDATE`/`DELETE`/`TRUNCATE` on `audit_events` and `instance` so a compromised app credential can append audit rows but never mutate, delete, or disable the append-only guards. Provisioned by [`ops/harden-db.sql`](ops/harden-db.sql); two-role stack in [`docker-compose.hardened.yml`](docker-compose.hardened.yml).
 - **Retain signed export bundles off-box.** Ed25519-signed bundles carry the event count and head hash; keeping them where the database role cannot reach them anchors the chain height, so truncation or rollback is detectable.
@@ -42,4 +42,4 @@ MakerChecker is built for regulated, adversarial-insider environments. The produ
 
 ## Auditing the audit chain
 
-The audit chain's verification is fully specified in the [audit spec](docs/audit-spec.md) and designed to be reproduced offline, in any language, by anyone, with no access to our systems required. Attacks on its tamper-evidence are the most valuable reports we can receive: that open, reproducible spec is the review. Findings against the chain, the canonicalization, or the signed export bundles are explicitly in scope above.
+The audit chain's verification is fully specified in the [audit spec](docs/audit-spec.md), reproducible offline in any language with no access to our systems. Findings against the chain, the canonicalization, or the signed export bundles are in scope above.

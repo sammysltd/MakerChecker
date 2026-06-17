@@ -1,6 +1,6 @@
 # @makerchecker/sdk
 
-Typed TypeScript client for the MakerChecker API. It wraps the HTTP API of [`packages/server`](../server) and exports `governedTool`, a wrapper that routes any tool function through a proxy session so each call is authorized and recorded. The package is an ES module targeting the host `fetch`, so it runs on Node 18+ and in browsers.
+Typed TypeScript client for the MakerChecker API, wrapping the HTTP API of [`packages/server`](../server). Exports `governedTool`, which routes a tool function through a proxy session so each call is authorized and recorded. ES module on the host `fetch`; runs on Node 18+ and in browsers.
 
 ## Install
 

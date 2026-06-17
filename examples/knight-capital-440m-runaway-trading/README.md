@@ -10,9 +10,9 @@ the Market Access Rule, and imposed a $12 million penalty. Sources:
 [SEC order](https://www.sec.gov/Archives/edgar/data/0001060749/000119312512338098/d392396dex991.htm),
 [WilmerHale client alert](https://www.wilmerhale.com/en/insights/client-alerts/knight-capital-settles-rule-15c3-5-violations-with-sec-agrees-to-pay-12-million).
 
-Knight was deterministic software, not an LLM. The case is included because the
-control shape is identical to a rogue agent: an irreversible action stream with
-no human gate, no version pinning, and no ceiling on what a single actor could do.
+Knight was deterministic software, not an LLM. The control shape is the one a
+rogue agent presents: an irreversible action stream with no human gate, no
+version pinning, and no ceiling on what a single actor can do.
 
 ## The risk
 
@@ -57,13 +57,11 @@ audit chain: ok=true events=24
 ```
 
 Every attempt — allowed, deny-by-default, over-ceiling, and past-the-cap — is
-written to the hash-chained, Ed25519-signed audit log, so the record shows
-exactly which orders were placed and which were refused, and why.
+written to the hash-chained, Ed25519-signed audit log.
 
 ## What this does not prevent
 
-Knight was deterministic, not an LLM, and MakerChecker is not a trading risk
-engine or a CI/CD verifier. It does not detect a deployment mismatch between
-servers or dead code left on a host. It governs the actions an agent takes
-through granted skills; an order path that calls the market outside the control
-plane is outside its reach.
+MakerChecker is not a trading risk engine or a CI/CD verifier. It does not detect
+a deployment mismatch between servers or dead code left on a host. It governs the
+actions an agent takes through granted skills; an order path that calls the market
+outside the control plane is outside its reach.

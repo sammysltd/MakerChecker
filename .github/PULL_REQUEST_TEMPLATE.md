@@ -1,6 +1,6 @@
 ## What and why
 
-Describe the change and the reason for it. Link the issue if one exists.
+Describe the change and why. Link the issue if one exists.
 
 ## Checklist
 
@@ -13,4 +13,4 @@ Describe the change and the reason for it. Link the issue if one exists.
 
 ## Notes for reviewers
 
-Anything needing extra attention: migration ordering, locking, invariants, follow-ups.
+Migration ordering, locking, invariants, follow-ups — anything needing extra attention.

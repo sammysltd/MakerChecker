@@ -1,6 +1,6 @@
 # @makerchecker/connector-claude-agent
 
-Governs a [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-typescript) custom tool with MakerChecker. `governClaudeTool` returns an `SdkMcpToolDefinition` with the same name, description, and input schema. Every invocation runs a deny-by-default check before the handler and records a hash-chained, Ed25519-signed result after it.
+Governs a [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk-typescript) custom tool with MakerChecker. `governClaudeTool` returns an `SdkMcpToolDefinition` with the same name, description, and input schema, wrapped in a deny-by-default check before the handler and a hash-chained, Ed25519-signed record after it.
 
 ## Install
 
@@ -33,7 +33,7 @@ const ingest = governClaudeTool(
 const server = createSdkMcpServer({ name: "governed-tools", tools: [ingest] });
 ```
 
-A deny throws `GovernanceDeniedError` (re-exported from [@makerchecker/sdk](../sdk)) carrying `code` and `reason`, and the handler never runs. On allow, the handler runs and its output is recorded. If the handler throws, the error is recorded and rethrown.
+A deny throws `GovernanceDeniedError` (re-exported from [@makerchecker/sdk](../sdk)) carrying `code` and `reason`, and the handler never runs. On allow, the handler runs and its output is recorded. A throwing handler is recorded and rethrown.
 
 ## API
 

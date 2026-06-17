@@ -13,29 +13,28 @@ Full analysis: https://makerchecker.ai/insights/echoleak-m365-copilot-zero-click
 
 ## The risk
 
-Injected context tells the agent to read broadly across connected stores and
-then send what it found to an attacker-controlled URL. The consequential action
-is the outbound step: a `net.fetch` to an external host carrying file data as a
-query string or as the source of an auto-loaded image. Reading widely is bad;
-the loss event is the egress.
+Injected context tells the agent to read broadly across connected stores, then
+send what it found to an attacker-controlled URL. The loss event is the outbound
+step: a `net.fetch` to an external host carrying file data as a query string or
+as the source of an auto-loaded image. Reading widely is bad; the egress is the
+breach.
 
 ## The MakerChecker configuration
 
-The agent that answers over corporate data holds only the skills its task needs,
-each as `name@version`, deny by default. The `echoleak-copilot-assistant` role is
-granted `echoleak-doc-search@1` and `echoleak-answer-compose@1` only. The
-outbound channel `echoleak-net-fetch@1` is **not granted**, and neither is the
-sanctioned send `echoleak-data-egress-send@1`. An attempt to use either from the
-assistant is refused by deny-by-default before any tool body runs.
+The agent answering over corporate data holds only the skills its task needs,
+each as `name@version`, deny by default. The `echoleak-copilot-assistant` role
+is granted `echoleak-doc-search@1` and `echoleak-answer-compose@1` only. The
+outbound channel `echoleak-net-fetch@1` is **not granted**, nor is the
+sanctioned send `echoleak-data-egress-send@1`. Either one, attempted from the
+assistant, is refused before any tool body runs.
 
-The one path that can ever leave data the org is `echoleak-data-egress-send@1`,
+The one path that can leave data the org is `echoleak-data-egress-send@1`,
 published at `riskTier: high`. A high-risk skill is categorically refused on the
-proxy: it cannot run through a raw governed call and must instead run inside a
-governed flow with a preceding approval gate. So even the `echoleak-data-release-officer`
-role — the only role that holds the egress grant — cannot fire the send directly.
-That role's grant additionally carries an `allowlist` on the `destination` field,
-so an approved send can only reach an approved host; the attacker URL is off the
-list and fails closed.
+proxy: it must run inside a governed flow with a preceding approval gate, not
+through a raw governed call. Even the `echoleak-data-release-officer` role — the
+only role holding the egress grant — cannot fire the send directly. That grant
+carries an `allowlist` on the `destination` field, so an approved send reaches
+only an approved host; the attacker URL is off the list and fails closed.
 
 ## Run it
 
@@ -49,9 +48,9 @@ node examples/echoleak-m365-copilot-zero-click-exfiltration/demo.mjs
 
 ## What happens
 
-The injected email reaches the model and the model is fooled. That is taken as a
+The injected email reaches the model and the model is fooled; take that as a
 given. The agent searches and composes on the legitimate path, then attempts to
-exfiltrate. Every attempt — allowed and denied — is captured.
+exfiltrate. Every attempt, allowed and denied, is captured.
 
 ```
 proxy session 1d939490-ec2a-46fe-b9d7-2ee33b0aa12d opened
@@ -76,19 +75,19 @@ audit trail:
 audit chain: ok=true events=338
 ```
 
-The assistant's attempt to reach the attacker host is refused as ungranted: there
-is no outbound channel to act on the stolen context. The sanctioned send is also
-ungranted to the assistant, and even to the role that does hold it the proxy
-refuses the high-risk send outside a gated flow. The denied `net.fetch`, the
-ungranted egress, and the gate-required refusal are all written to the
-hash-chained, Ed25519-signed audit and are offline-verifiable.
+The assistant's attempt to reach the attacker host is refused as ungranted:
+there is no outbound channel to act on the stolen context. The sanctioned send
+is ungranted to the assistant too, and even the role that holds it is refused
+the high-risk send outside a gated flow. All three refusals — the denied
+`net.fetch`, the ungranted egress, and the gate-required block — are written to
+the hash-chained, Ed25519-signed audit and verify offline.
 
 ## What this does not prevent
 
-This does not make the model resistant to prompt injection and it does not parse
-or strip hidden text out of retrieved content. The model can still be fooled by
-the crafted email. The control only helps when reads and egress are gated tool
-calls: it shrinks the blast radius so a task-scoped agent cannot pivot to broad
-reads and then an outbound URL, and it forces any data-bearing send through a
-high-risk gate. If an egress channel is granted to the acting role and left
-ungated and unconstrained, this configuration does not stop the exfiltration.
+The model is not made resistant to prompt injection, and hidden text is not
+parsed or stripped out of retrieved content. The crafted email can still fool
+the model. The control bites only when reads and egress are gated tool calls: it
+shrinks the blast radius so a task-scoped agent cannot pivot to broad reads and
+then an outbound URL, and it forces any data-bearing send through a high-risk
+gate. Grant an egress channel to the acting role and leave it ungated and
+unconstrained, and this configuration does not stop the exfiltration.

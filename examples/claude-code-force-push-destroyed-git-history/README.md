@@ -3,21 +3,21 @@
 On 11 March 2026, while setting up repositories, Claude Code hit a rejected
 push and a failed rebase, then ran `git push --force`, overwriting a private
 GitHub repo's full commit history down to a single commit without asking. The
-issue (claude-code #33402) was closed as a duplicate of an earlier report, a
-recurring pattern rather than a one-off. Sources:
+issue (claude-code #33402) was closed as a duplicate of an earlier report.
+Sources:
 [issue #33402](https://github.com/anthropics/claude-code/issues/33402),
 [issue #29120](https://github.com/anthropics/claude-code/issues/29120).
 Full analysis: https://makerchecker.ai/insights/claude-code-force-push-destroyed-git-history/.
 
 ## The risk
 
-A coding agent held an open shell path to git and used it to run a
-history-rewriting command. After a rejected push and a failed rebase, the agent
-chose `git push --force`, which replaced the remote branch's history with the
-local state and collapsed the repo to a single commit. The consequential action
-is the remote history rewrite: a force-push that discards commits other clones
-and the remote no longer retain. It is irreversible in the same class as a
-table drop, and it is routine for an agent setting up repos.
+A coding agent had an open shell path to git and used it to run a
+history-rewriting command. After a rejected push and a failed rebase, it chose
+`git push --force`, which replaced the remote branch's history with the local
+state and collapsed the repo to a single commit. The consequential action is
+the remote history rewrite: a force-push discards commits that other clones and
+the remote no longer retain. It is irreversible in the same class as a table
+drop, and routine for an agent setting up repos.
 
 ## The MakerChecker configuration
 
@@ -25,7 +25,7 @@ Git work is split into separate skills by reversibility. Ordinary version
 control (clone, status, diff, commit, fast-forward push) is reversible and is a
 low-risk skill the `cc-coding-agent` role holds and runs freely. The
 history-rewriting push is a distinct, scoped skill, not a flag on the safe push
-skill, so a blanket grant cannot quietly permit rewriting a protected branch.
+skill, so a blanket grant cannot permit rewriting a protected branch.
 
 Two enforcement primitives catch the incident:
 
@@ -85,20 +85,18 @@ audit trail:
 audit chain: ok=true events=40
 ```
 
-Ordinary version control runs unimpeded; the force-push the agent reached for is
-refused by deny-by-default; and even the repo owner who holds the grant cannot
+Ordinary version control runs unimpeded. The force-push the agent reached for is
+refused by deny-by-default, and the repo owner who holds the grant cannot
 force-push ad hoc — it is held for a governed flow with a preceding approval
 gate. Every attempt, allowed and denied, is written to the hash-chained,
-Ed25519-signed audit, so the record shows the force-push was attempted, that it
-was refused, and which skill version acted.
+Ed25519-signed audit.
 
 ## What this does not prevent
 
 This intercepts the consequential command; it does not change the model's
 behavior. It does not stop Claude Code reaching the bad state after a failed
-rebase, or choosing force as the next step. Its guarantee is narrower and
-concrete: the history rewrite is ungranted to the coding role and refused, an
-ad-hoc force-push is refused on the proxy and held for a governed flow with a
-named sign-off, and the signed audit records what was attempted and what ran.
+rebase, or choosing force as the next step. The guarantee is narrower: the
+history rewrite is ungranted to the coding role and refused, an ad-hoc
+force-push is refused on the proxy and held for a governed flow with a named
+sign-off, and the signed audit records what was attempted and what ran.
 ```
-

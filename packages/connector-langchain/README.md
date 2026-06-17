@@ -1,6 +1,6 @@
 # @makerchecker/connector-langchain
 
-Governs a LangChain StructuredTool with MakerChecker. `governLangChainTool` returns a tool with the same name and schema as the original. Every `invoke()` runs a MakerChecker check before the tool body and records the result to the hash-chained audit log. A denied check throws `GovernanceDeniedError` and the tool body never runs.
+Governs a LangChain StructuredTool with MakerChecker. `governLangChainTool` returns a tool with the original name and schema. Every `invoke()` runs a check before the tool body and records the result to the hash-chained audit log; a denied check throws `GovernanceDeniedError` before the tool body runs.
 
 ## Install
 

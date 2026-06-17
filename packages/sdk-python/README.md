@@ -1,6 +1,6 @@
 # makerchecker (Python SDK)
 
-A typed HTTP client for a running MakerChecker server, plus the `governed_tool` wrapper. The server enforces deny-by-default skill grants, segregation of duties, approval gates, and a hash-chained, Ed25519-signed audit. This SDK opens a proxy session and routes a Python agent's tool calls through it. The API mirrors the TypeScript SDK at [../sdk](../sdk).
+A typed HTTP client for a running MakerChecker server, plus the `governed_tool` wrapper. It opens a proxy session and routes a Python agent's tool calls through the server's deny-by-default grants, segregation of duties, approval gates, and a hash-chained, Ed25519-signed audit. The API mirrors the TypeScript SDK at [../sdk](../sdk).
 
 ## Install
 

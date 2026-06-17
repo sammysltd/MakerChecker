@@ -17,30 +17,29 @@ Full analysis: https://makerchecker.ai/insights/everbright-securities-runaway-or
 
 ## The risk
 
-Two distinct consequential actions, one after the other. First, an arbitrage
-agent placed a stream of live buy orders whose aggregate notional was orders of
-magnitude beyond intent, with no ceiling it could not exceed on its own and no
-gate between it and the market. Second, the same desk executed large hedging
-trades on information the public did not yet have, with nobody independent
-standing between the decision to hedge and its execution.
+Two consequential actions, one after the other. An arbitrage agent placed a
+stream of live buy orders whose aggregate notional ran orders of magnitude beyond
+intent, with no ceiling it could not exceed on its own and no gate between it and
+the market. Then the same desk executed large hedging trades on information the
+public did not yet have, with nobody independent between the decision to hedge and
+its execution.
 
 ## The MakerChecker configuration
 
-The two failures map to three enforcement primitives the proxy checks before any
-tool body runs.
+Three enforcement primitives, checked before any tool body runs.
 
-For the runaway orders, order placement splits by reversibility, and notional is
-what the skill grant governs:
+For the runaway orders, order placement splits by reversibility and the skill
+grant governs notional:
 
 - `ebsec-arb-stage@1` assembles and validates the batch. It is reversible, the
   arbitrage role holds the grant, and it runs with no gate.
 - `ebsec-arb-submit-capped@1` is granted to the arbitrage role with a role limit:
   `maxAmountPerInvocation` of 1,000,000,000 against the `notional` argument. A
   submit within the cap is allowed; the 23.4 billion yuan stream exceeds it and
-  is refused with `limit_amount`. The check fails closed — there is no override.
+  is refused with `limit_amount`. The check fails closed, with no override.
 - `ebsec-arb-submit-uncapped@1` is the only path to release an over-cap stream,
   and it is **not granted** to the arbitrage role. The attempt is refused with
-  `skill_not_granted` by deny-by-default. In a governed flow that skill would sit
+  `skill_not_granted` by deny-by-default. In a governed flow that skill sits
   behind an approval gate a named desk head must sign.
 
 For the cover trade, the hedge is the consequential one-way door:
@@ -48,11 +47,10 @@ For the cover trade, the hedge is the consequential one-way door:
 - `ebsec-hedge-draft@1` drafts a proposed hedge. It is reversible, granted, and
   runs pre-gate.
 - `ebsec-hedge-submit@1` effects the hedge. It is published `riskTier: "high"`,
-  which the proxy refuses categorically with `high_risk_requires_gate`: a
-  high-risk action cannot run on the agent's own authority through the proxy and
-  must execute inside a governed flow with a preceding approval gate. The desk
-  that holds the undisclosed error cannot effect the hedge unreviewed; the cover
-  trade can only travel as a gated request an independent approver must release.
+  which the proxy refuses categorically with `high_risk_requires_gate`. A
+  high-risk action cannot run on the agent's own authority through the proxy; it
+  must execute inside a governed flow with a preceding approval gate. The cover
+  trade can only travel as a gated request an independent approver releases.
 
 ## Run it
 
@@ -93,17 +91,15 @@ audit chain: ok=true events=208
 ```
 
 The over-cap stream, the ungranted escape hatch, and the high-risk hedge are each
-refused with a distinct code, and every attempt — allowed, over-ceiling,
-deny-by-default, and high-risk — is written to the hash-chained, Ed25519-signed
-audit log, so the record shows exactly what was attempted and why each call was
-allowed or refused.
+refused with a distinct code, and every attempt is written to the hash-chained,
+Ed25519-signed audit log.
 
 ## What this does not prevent
 
 It does not fix the software defect that generated the erroneous orders, and it
 does not judge whether trading on the undisclosed error is lawful. If an approver
 signs off a hedge on material non-public information, the legal question stays
-with the humans who decided. What changes is that the order stream cannot be
-released on the agent's own authority once it crosses the cap, and the hedge
-cannot be effected through the proxy without a governed flow and an independent
-approval — and a record being written either way.
+with the humans who decided. What changes: the order stream cannot be released on
+the agent's own authority once it crosses the cap, the hedge cannot be effected
+through the proxy without a governed flow and an independent approval, and a
+record is written either way.

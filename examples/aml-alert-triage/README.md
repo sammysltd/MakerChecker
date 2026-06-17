@@ -1,14 +1,14 @@
-# AML Alert Triage — the financial-crime demo
+# AML Alert Triage
 
-Financial-crime operations are the banking workflow where "maker-checker" is
-not a metaphor: the Wolfsberg Group's guidance names maker-checker/four-eye
-review as the control standard, the SAR filing decision is a mandated human
-gate, and NYDFS Part 504 requires an annual personal certification of the
-monitoring program. This flow runs that exact shape: an L1 analyst agent
-ingests and triages the day's alerts, the run parks at the "SAR filing
-decision" gate for the BSA officer, and only then are the SAR narratives
-drafted and delivered. An SoD constraint binds the two roles: the analyst who
-works an alert may not approve its disposition.
+An L1 analyst agent triages the day's alerts; the run parks at the SAR filing
+decision gate for the BSA officer; only then are the SAR narratives drafted and
+delivered. An SoD constraint binds the two roles: the analyst who works an alert
+may not approve its disposition.
+
+This is the four-eye shape that regulation mandates here. The Wolfsberg Group's
+guidance names maker-checker/four-eye review as the control standard, the SAR
+filing decision is a mandated human gate, and NYDFS Part 504 requires an annual
+personal certification of the monitoring program.
 
 Triage is rule-based — `risk_score >= 80` or a sanctions near-match escalates.
 The data plants exactly two escalations among ten alerts:
@@ -35,13 +35,13 @@ curl localhost:3000/api/runs/<runId> -H "$H"
 curl localhost:3000/api/audit/verify -H "$H"
 ```
 
-The gate is identity-mode (`forbid_requester`): the admin who triggered the run
-gets a 403 deciding it (that 403 is the four-eye control firing), and
-unauthenticated decisions are refused outright (fail closed). The DEMO OFFICER
-API KEY is the eligible approver, a different user than the one that triggered.
+The gate is identity-mode (`forbid_requester`). The admin who triggered the run
+gets a 403 deciding it — the four-eye control firing — and unauthenticated
+decisions are refused outright (fail closed). The DEMO OFFICER API KEY is the
+eligible approver, a different user than the one that triggered.
 
 For the Part 504 certification file, export the signed, offline-verifiable
-evidence for the run — no database access required to verify it:
+evidence for the run. No database access is required to verify it:
 
 ```bash
 docker compose exec server node dist/cli.js audit export --run <runId> --out sar-evidence.json

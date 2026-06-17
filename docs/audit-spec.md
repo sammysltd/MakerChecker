@@ -1,12 +1,12 @@
 # Audit chain and export bundle specification
 
-This document specifies MakerChecker's audit chain and signed export bundles precisely enough for an external party (an auditor, a regulator's examiner, a counterparty) to reimplement verification from scratch, in any language, with no access to MakerChecker code or systems. That is the point: the evidence stands on its own.
+This document specifies MakerChecker's audit chain and signed export bundles precisely enough for an external party (an auditor, a regulator's examiner, a counterparty) to reimplement verification from scratch, in any language, with no access to MakerChecker code or systems.
 
-Status: schema version **1** (`schemaVersion` in bundle manifests). This spec is published precisely so anyone can verify the chain independently and report weaknesses; see [SECURITY.md](../SECURITY.md).
+Status: schema version **1** (`schemaVersion` in bundle manifests). Report weaknesses via [SECURITY.md](../SECURITY.md).
 
 ## 1. Canonicalization
 
-All hashing and signing operates on **RFC 8785 (JSON Canonicalization Scheme)** serializations, UTF-8 encoded. MakerChecker vendors its own serializer (`packages/shared/src/canonical-json.ts`) rather than depending on a library, because these exact rules are part of the public contract and must not drift:
+All hashing and signing operates on **RFC 8785 (JSON Canonicalization Scheme)** serializations, UTF-8 encoded. MakerChecker vendors its own serializer (`packages/shared/src/canonical-json.ts`) rather than depending on a library; these exact rules are part of the public contract:
 
 - No insignificant whitespace.
 - Object keys sorted by UTF-16 code units (plain lexicographic sort of code units).
@@ -34,8 +34,8 @@ hash = SHA-256( canonicalJson({
 Notes:
 
 - Key names in the hashed object are exactly as above (camelCase). After canonical key sorting the serialized member order is: `actor`, `entityId`, `entityType`, `eventType`, `id`, `occurredAt`, `payload`, `prevHash`, `runId`.
-- `occurredAt` is stored in the database as **text** (ISO 8601 UTC, e.g. `2026-06-12T09:30:00.123Z`) and hashed byte-for-byte as stored. It is deliberately not a `timestamptz`: timestamp types reformat on round-trip, which would break exact recomputation. Fixed-format UTC ISO strings sort lexicographically in chronological order.
-- **`seq` is excluded from the hash.** `seq` is a database identity column that exists only as storage order; identity columns leave gaps when transactions abort, so `seq` values carry no integrity meaning. Chain order is defined solely by `prevHash` linkage. A verifier must not assume `seq` values are contiguous.
+- `occurredAt` is stored in the database as **text** (ISO 8601 UTC, e.g. `2026-06-12T09:30:00.123Z`) and hashed byte-for-byte as stored. It is not a `timestamptz`: timestamp types reformat on round-trip, breaking exact recomputation. Fixed-format UTC ISO strings sort lexicographically in chronological order.
+- **`seq` is excluded from the hash.** `seq` is a database identity column that records only storage order; identity columns leave gaps when transactions abort, so `seq` values carry no integrity meaning. Chain order is defined solely by `prevHash` linkage. A verifier must not assume `seq` values are contiguous.
 
 ## 3. Genesis and chain rule
 
@@ -82,7 +82,7 @@ The signature is Ed25519 over the UTF-8 bytes of the **canonical signing string*
 
 `publicKeyPem` and `signature` itself are excluded from the signing string. The signature is encoded as base64. The signing key is the instance's Ed25519 keypair; the private key never leaves the deployment (`MAKERCHECKER_DATA_DIR/instance_key.pem`, mode 0600), and the public key ships inside every bundle and is recorded in the `instance` table.
 
-Key authenticity is established out of band: a relying party should obtain the instance's public key through a trusted channel once and pin it. The bundle proves integrity and origin under that key; it cannot prove which key is the legitimate one.
+Key authenticity is established out of band: a relying party obtains the instance's public key through a trusted channel once and pins it. The bundle proves integrity and origin under that key; it cannot prove which key is the legitimate one.
 
 ## 5. Bundle verification
 

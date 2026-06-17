@@ -19,40 +19,37 @@ The consequential action is provisioning paid cloud infrastructure on the
 agent's own authority, repeated without a checkpoint. A scan task needed a small
 amount of compute. The agent provisioned five large instances plus load
 balancers and Lambda, then redeployed duplicates because nothing stopped the
-loop. Each provision call was a real spend with no per-action ceiling the role
-could not exceed and no second person whose sign-off the deploy could not
-proceed without. The operator's blanket "continue" authorized every iteration.
+loop. Each provision call was a real spend with no per-action ceiling and no
+required second sign-off. The operator's blanket "continue" authorized every
+iteration.
 
 ## The MakerChecker configuration
 
 The action splits by reversibility and by tier. Inspecting the environment and
-tearing resources down are the safe directions: the scan role runs them pre-gate
-with no approval. Provisioning paid compute is the one-way door for the bill,
-and it is split into two distinct skills by size — argument-level bounds such as
-instance class and count are expressed as separate skills, not flags on one
-call.
+tearing resources down are the safe directions, so the scan role runs them
+pre-gate with no approval. Provisioning paid compute is the one-way door for the
+bill, split into two skills by size: instance class and count are argument-level
+bounds expressed as separate skills, not flags on one call.
 
 - `dn42-cloud-inspect@1` is `riskTier: low`. The `dn42-scan-agent` role holds it
   and runs it pre-gate to list resources, regions, and current spend. The role
   caps it at `maxInvocationsPerRun: 20`.
-- `dn42-cloud-teardown@1` is `riskTier: low`. Releasing resources the agent
-  created — the reversible direction toward zero cost; runs pre-gate.
+- `dn42-cloud-teardown@1` is `riskTier: low`. It releases resources the agent
+  created, the reversible direction toward zero cost, and runs pre-gate.
 - `dn42-cloud-provision-small@1` is `riskTier: high` and granted to the scan
-  role. Because it is high-risk, the proxy refuses it categorically: it cannot
-  run on the agent's own authority and must travel through a governed flow with
-  a preceding per-deploy approval gate (`high_risk_requires_gate`).
+  role. Being high-risk, the proxy refuses it categorically: it must travel
+  through a governed flow with a preceding per-deploy approval gate
+  (`high_risk_requires_gate`).
 - `dn42-cloud-provision-large@1` is `riskTier: high` and is **not granted** to
   the scan role at all — only to `dn42-infra-owner`, where large provisioning is
-  a real duty. Five large instances is over the granted tier, so the request can
-  only travel as this skill, which deny-by-default refuses
-  (`skill_not_granted`).
+  a real duty. Five large instances can only travel as this skill, which
+  deny-by-default refuses (`skill_not_granted`).
 
-The tier is the argument bound: five large instances is not a bigger version of
-the same call the role can stretch to cover, it is a call to
-`dn42-cloud-provision-large@1`, which the role does not hold. And the within-tier
-deploy is not something the agent can fire unattended — being high-risk, it
-routes to an approval gate, so the redeploy loop meets a fresh sign-off every
-iteration instead of running on a single blanket "continue."
+The tier is the argument bound. Five large instances is not a bigger version of
+a call the role can stretch to cover; it is a call to
+`dn42-cloud-provision-large@1`, which the role does not hold. The within-tier
+deploy routes to an approval gate, so the redeploy loop meets a fresh sign-off
+every iteration instead of running on a single blanket "continue."
 
 ## Run it
 
@@ -87,21 +84,18 @@ audit trail:
 audit chain: ok=true events=184
 ```
 
-Inspection and teardown run pre-gate; the over-tier batch is refused by
-deny-by-default before any resource is created; the within-tier deploy is
-refused on the proxy because it must clear an approval gate first. Every
-attempt — allowed, deny-by-default, and gate-required — is written to the
-hash-chained, Ed25519-signed audit log, so the record shows exactly what was
-attempted, what ran, and why each refusal happened. That record is what a cost
-dispute with the provider would rest on.
+Inspection and teardown run pre-gate. The over-tier batch is refused by
+deny-by-default before any resource is created. The within-tier deploy is
+refused on the proxy because it must clear an approval gate first. Every attempt
+is written to the hash-chained, Ed25519-signed audit log. That record is what a
+cost dispute with the provider would rest on.
 
 ## What this does not prevent
 
-This is not a billing meter and not a hard dollar cap. It does not count spend
-or stop the agent once a budget number is hit. A blanket "continue" from the
-operator still authorizes whatever the role is granted, so the defense is the
-per-action tier split and the per-deploy gate, not the standing instruction. If
-a within-tier deploy is approved repeatedly through the gate, cost still
-accrues; what changes is that over-tier provisioning is refused outright and
-every paid deploy needs a named sign-off instead of running on the agent's own
-authority.
+This is not a billing meter or a hard dollar cap. It does not count spend or stop
+the agent once a budget number is hit. A blanket "continue" still authorizes
+whatever the role is granted, so the defense is the per-action tier split and the
+per-deploy gate, not the standing instruction. If a within-tier deploy is
+approved repeatedly through the gate, cost still accrues; what changes is that
+over-tier provisioning is refused outright and every paid deploy needs a named
+sign-off.

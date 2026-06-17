@@ -1,18 +1,16 @@
 # Governance middleware: wrap, don't migrate
 
-You already have agents — LangGraph graphs, CrewAI crews, Claude Agent SDK
-loops. Rewriting them into another orchestrator to get governance is a
-non-starter. Proxy sessions invert that: **your framework keeps executing the
+Proxy sessions govern agents that already run in LangGraph, CrewAI, or the
+Claude Agent SDK, without rewriting them. Your framework keeps executing the
 tools; MakerChecker becomes the authorization checkpoint and the evidentiary
-record.** Open a session, wrap each tool with `governedTool`, and every call
-gets deny-by-default grant checks, segregation-of-duties enforcement across
-the session, and a hash-chained audit trail — without touching your agent
-logic. High-risk skills are refused in proxy mode entirely; those belong in a
-governed flow with a human approval gate.
+record. Open a session, wrap each tool with `governedTool`, and every call gets
+deny-by-default grant checks, segregation-of-duties enforcement across the
+session, and a hash-chained audit trail. High-risk skills are refused in proxy
+mode; those belong in a governed flow with a human approval gate.
 
-The wrapper does three things per call: `check` (denied calls throw
-`GovernanceDeniedError` before your tool runs), execute your function, then
-`record` the output — or the error, which is rethrown.
+Each call runs `check` (a deny throws `GovernanceDeniedError` before your tool
+runs), executes your function, then runs `record` on the output — or the error,
+which is rethrown.
 
 ```js
 import { createClient, governedTool } from "@makerchecker/sdk";

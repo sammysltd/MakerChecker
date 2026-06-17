@@ -10,7 +10,7 @@ Requires Docker. From the repo root:
 docker compose up
 ```
 
-This starts `postgres:17-alpine` and builds/starts the server. The compose file sets `MAKERCHECKER_SEED_DEMO=1` and `DEMO_DATA_DIR` for you (seeding is opt-in by default), so on first boot the server applies migrations, seeds the demos, and prints:
+This starts `postgres:17-alpine` and builds/starts the server. The compose file sets `MAKERCHECKER_SEED_DEMO=1` and `DEMO_DATA_DIR` for you, so on first boot the server applies migrations, seeds the demos, and prints:
 
 ```
 [makerchecker] DEMO ADMIN API KEY (shown once - copy it now): mk_<32 hex>
@@ -19,7 +19,7 @@ This starts `postgres:17-alpine` and builds/starts the server. The compose file 
 makerchecker server listening on :3000 (executor: scripted)
 ```
 
-Copy both keys; each is shown exactly once (only their hashes are stored). The admin key triggers runs and approves the cash-reconciliation gate below; the officer key is the eligible approver for the AML flow's identity-mode gate (the requester cannot approve their own run). The web UI is served at `http://localhost:3000`.
+Copy both keys; each is shown once (only the hashes are stored). The admin key triggers runs and approves the cash-reconciliation gate below; the officer key is the eligible approver for the AML flow's identity-mode gate. The requester cannot approve their own run. The web UI is served at `http://localhost:3000`.
 
 `executor: scripted` means no model API key was found, so agent steps execute deterministically (fully air-gapped). Set `GEMINI_API_KEY` or `ANTHROPIC_API_KEY` on the host before `docker compose up` to run agents on a real model (`executor: llm (...)`).
 
@@ -66,7 +66,7 @@ DATABASE_URL=postgres://makerchecker:makerchecker@localhost:5432/makerchecker \
   node packages/server/dist/index.js
 ```
 
-Migrations run at boot. Demo seeding is **opt-in**: set `MAKERCHECKER_SEED_DEMO=1` to seed the demo agents, flows, and admin account (a default boot seeds nothing). The demo ingest skills read only within the configured `DEMO_DATA_DIR` tree. For the web UI with hot reload, in a second terminal:
+Migrations run at boot. Demo seeding is **opt-in**: set `MAKERCHECKER_SEED_DEMO=1` to seed the demo agents, flows, and admin account; a default boot seeds nothing. The demo ingest skills read only within the configured `DEMO_DATA_DIR` tree. For the web UI with hot reload, in a second terminal:
 
 ```bash
 corepack pnpm --filter @makerchecker/web dev   # Vite on :5173, proxies API to :3000
@@ -78,7 +78,7 @@ corepack pnpm --filter @makerchecker/web dev   # Vite on :5173, proxies API to :
 
 All API routes live under `/api` and require `authorization: Bearer mk_...`; `/healthz`, static web assets, and the SPA's own routes stay open. Keys look like `mk_<32 hex>`; the server stores only their SHA-256 hash plus an 8-character prefix for identification. The seeded admin and officer keys are printed once at first boot.
 
-For local demos you can disable auth entirely with `MAKERCHECKER_AUTH_DISABLED=1` on the server. Never do this on a reachable deployment.
+For local demos, disable auth entirely with `MAKERCHECKER_AUTH_DISABLED=1` on the server. Never do this on a reachable deployment.
 
 ## CLI
 
@@ -112,7 +112,7 @@ Under compose: `docker compose exec server node dist/cli.js audit verify`.
 
 ## Live smoke test (real model)
 
-Proves a real LLM driving a governed step end to end, local skill plus MCP skill, every call audited:
+A real LLM driving a governed step end to end, local skill plus MCP skill, every call audited:
 
 ```bash
 cd packages/server
