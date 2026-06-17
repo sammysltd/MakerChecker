@@ -8,7 +8,7 @@ A typed HTTP client for a running MakerChecker server, plus the `governed_tool` 
 pip install makerchecker
 ```
 
-Python 3.9+. Runtime dependency: `httpx`.
+Python 3.10+. Runtime dependency: `httpx`.
 
 ## Use
 
