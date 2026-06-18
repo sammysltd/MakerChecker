@@ -1,9 +1,15 @@
 name: release
 
 # Publishes the public npm packages (@makerchecker/sdk and the connectors) when a
-# version tag is pushed. The release flow:
-#   1. bump the version in each package.json you want to ship
-#   2. commit, then:  git tag v1.2.3 && git push origin v1.2.3
+# version tag is pushed. The release flow is just:
+#
+#     git tag v1.2.3 && git push origin v1.2.3
+#
+# The job sets every package's version FROM THE TAG before publishing, so you
+# never hand-edit package.json. Without this, a tag silently no-ops: package.json
+# stays at its old version, which is already on the registry, so pnpm skips it and
+# the run goes green having published nothing (this is what made v1.0.1..v1.0.3
+# ship nothing while package.json sat at 1.0.0).
 #
 # Auth: add an npm "Automation" access token as the repository secret NPM_TOKEN
 # (Settings -> Secrets and variables -> Actions -> New repository secret).
@@ -35,6 +41,12 @@ jobs:
 
       - name: Install
         run: corepack pnpm install --frozen-lockfile
+
+      - name: Set every package version from the tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "Releasing version $VERSION"
+          corepack pnpm -r exec -- npm pkg set version="$VERSION"
 
       - name: Build publishable packages
         run: >
