@@ -2,7 +2,14 @@ import type { Pool, PoolClient } from "pg";
 
 import { recordEvent, type Actor } from "../audit/writer.js";
 import { checkSodConflict, parseSkillRef } from "../engine/enforcement.js";
-import { assertSkillLimits, getRoleLimits, LimitViolationError } from "../engine/limits.js";
+import {
+  assertQuota,
+  assertSkillLimits,
+  getRoleLimits,
+  LimitViolationError,
+  quotaContribution,
+  type Quota,
+} from "../engine/limits.js";
 import { resolveRedactionHook, type RedactionHook } from "../llm/redaction.js";
 
 /**
@@ -41,7 +48,9 @@ export type ProxyDenialCode =
   | "limit_allowlist"
   | "limit_allowlist_unreadable"
   | "limit_path"
-  | "limit_path_unreadable";
+  | "limit_path_unreadable"
+  | "limit_quota"
+  | "limit_quota_unreadable";
 
 export type ProxyCheckResult =
   | { allowed: true; checkId: string }
@@ -70,6 +79,55 @@ export interface ProxySessionRow {
 
 const SESSION_COLUMNS =
   "id, label, external_ref, status, created_by_user_id, created_at, closed_at";
+
+// Fixed lookup from the validated window enum to a Postgres date_trunc unit.
+// The raw window value is NEVER interpolated into SQL: only these literal
+// constants reach the query string, so a quota window cannot inject. "session"
+// and "lifetime" use no time predicate (session id filter / no filter), so they
+// have no trunc unit here.
+const QUOTA_WINDOW_TRUNC: Record<Quota["window"], "day" | "week" | "month" | null> = {
+  session: null,
+  day: "day",
+  week: "week",
+  month: "month",
+  lifetime: null,
+};
+
+/**
+ * The total already accrued toward a quota in its window, summed from
+ * quota_usage over (agent, skill_ref, quota_key) plus the window predicate:
+ * "session" filters to this session; "day"/"week"/"month" filter to
+ * occurred_at >= date_trunc(<unit>, now()); "lifetime" applies no time filter.
+ * The trunc unit comes from a fixed lookup, never from the raw enum value.
+ */
+async function quotaPriorUsed(
+  client: PoolClient,
+  args: { agentId: string; sessionId: string; skillRef: string; quota: Quota },
+): Promise<number> {
+  const { agentId, sessionId, skillRef, quota } = args;
+  const base =
+    "SELECT coalesce(sum(amount), 0) AS used FROM quota_usage " +
+    "WHERE agent_id = $1 AND skill_ref = $2 AND quota_key = $3";
+  let rows: { used: string }[];
+  if (quota.window === "session") {
+    ({ rows } = await client.query<{ used: string }>(`${base} AND session_id = $4`, [
+      agentId,
+      skillRef,
+      quota.key,
+      sessionId,
+    ]));
+  } else if (quota.window === "lifetime") {
+    ({ rows } = await client.query<{ used: string }>(base, [agentId, skillRef, quota.key]));
+  } else {
+    // Only a literal trunc unit from the fixed lookup is interpolated.
+    const unit = QUOTA_WINDOW_TRUNC[quota.window]!;
+    ({ rows } = await client.query<{ used: string }>(
+      `${base} AND occurred_at >= date_trunc('${unit}', now())`,
+      [agentId, skillRef, quota.key],
+    ));
+  }
+  return Number(rows[0]!.used);
+}
 
 async function inTx<T>(pool: Pool, fn: (client: PoolClient) => Promise<T>): Promise<T> {
   const client = await pool.connect();
@@ -258,6 +316,24 @@ export async function checkAndAuthorize(
       );
       try {
         assertSkillLimits(skillLimits, prior.rows[0]!.n, input.input ?? {}, input.skillRef);
+        // Windowed quotas: per quota, this call's contribution (fails closed on
+        // missing/non-numeric/negative input) plus the total already accrued in
+        // its window must not exceed the ceiling. The accrual SUM counts only
+        // prior ALLOWED actions (denied attempts never wrote a quota_usage row),
+        // so a denial here cannot itself raise the running total. The matching
+        // INSERTs happen only on allow, below, in this same transaction.
+        if (skillLimits.quotas) {
+          for (const quota of skillLimits.quotas) {
+            const contribution = quotaContribution(quota, input.input ?? {}, input.skillRef);
+            const priorUsed = await quotaPriorUsed(client, {
+              agentId: agent.id,
+              sessionId: input.sessionId,
+              skillRef: input.skillRef,
+              quota,
+            });
+            assertQuota(quota, priorUsed, contribution, input.skillRef);
+          }
+        }
       } catch (err) {
         if (err instanceof LimitViolationError) {
           return deny(err.code, err.message, agent, skill.id);
@@ -273,6 +349,22 @@ export async function checkAndAuthorize(
       [input.sessionId, agent.id, agent.role_id, skill.id, input.skillRef],
     );
     const checkId = action.rows[0]!.id;
+    // Accrue each quota's contribution against this ALLOWED action, in the same
+    // transaction as the proxy_actions row. Only on allow, only for configured
+    // quotas: a denial returned before this point wrote no quota_usage row, so
+    // denied attempts never count toward any running total. Re-derives the
+    // contribution with the same fail-closed guards used in the check above.
+    if (skillLimits?.quotas) {
+      for (const quota of skillLimits.quotas) {
+        const contribution = quotaContribution(quota, input.input ?? {}, input.skillRef);
+        await client.query(
+          `INSERT INTO quota_usage
+             (proxy_action_id, agent_id, session_id, skill_ref, quota_key, amount, occurred_at)
+           VALUES ($1, $2, $3, $4, $5, $6, now())`,
+          [checkId, agent.id, input.sessionId, input.skillRef, quota.key, contribution],
+        );
+      }
+    }
     await recordEvent(client, {
       eventType: "proxy.check.allowed",
       actor: input.actor,

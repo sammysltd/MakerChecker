@@ -36,7 +36,9 @@ export type LimitViolationCode =
   | "limit_allowlist"
   | "limit_allowlist_unreadable"
   | "limit_path"
-  | "limit_path_unreadable";
+  | "limit_path_unreadable"
+  | "limit_quota"
+  | "limit_quota_unreadable";
 
 export class LimitViolationError extends Error {
   override name = "LimitViolationError";
@@ -64,6 +66,29 @@ export interface SkillLimitConfig {
    * is denied (fail closed). Models "may only touch files under the project dir".
    */
   pathScope?: { field: string; prefix: string };
+  /**
+   * Windowed quotas: each accumulates a quantity across this skill's ALLOWED
+   * invocations within a time window that spans sessions/runs, denying when the
+   * running total plus this call's contribution would exceed `max`. `field`
+   * names the input field summed (missing/non-numeric/negative fails closed);
+   * omitted, each call contributes 1 (a pure count). The window unit fixes the
+   * accrual scope. Models "at most N per day/week/month/session/ever".
+   */
+  quotas?: Quota[];
+}
+
+/**
+ * One windowed quota. `key` names the running total in storage (the accrual
+ * bucket); `field` is the input field summed into it, or a count when omitted;
+ * `max` is the inclusive ceiling; `window` fixes the time/session scope the sum
+ * is taken over. A monthly spend cap is just {field:"amount", window:"month"};
+ * the same shape expresses tokens/day, rows/session, or a pure count per week.
+ */
+export interface Quota {
+  key: string;
+  field?: string;
+  max: number;
+  window: "session" | "day" | "week" | "month" | "lifetime";
 }
 
 /**
@@ -271,6 +296,58 @@ export function assertSkillLimits(
           `prefix "${prefix}" — denied`,
       );
     }
+  }
+}
+
+/**
+ * This call's contribution to a quota's running total. With `field` set, reads
+ * the named input field (mirroring the amount cap's guards exactly): missing,
+ * non-number, or non-finite fails closed as unreadable; negative is rejected so
+ * a "-1,000,000" can never count DOWN a running total and slip under a ceiling.
+ * Without `field`, the call counts as 1 (a pure invocation count).
+ */
+export function quotaContribution(
+  quota: Quota,
+  input: Record<string, unknown>,
+  skillRef: string,
+): number {
+  if (quota.field === undefined) return 1;
+  const value = input[quota.field];
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new LimitViolationError(
+      "limit_quota_unreadable",
+      `skill "${skillRef}" has quota "${quota.key}" on "${quota.field}" but the input ` +
+        `field is missing or non-numeric — denied (fail closed)`,
+    );
+  }
+  if (value < 0) {
+    throw new LimitViolationError(
+      "limit_quota",
+      `skill "${skillRef}" quota "${quota.key}" contribution ${value} is negative — ` +
+        `denied (fail closed)`,
+    );
+  }
+  return value;
+}
+
+/**
+ * Decides whether one more contribution fits under a quota's ceiling, given the
+ * total ALREADY accrued in its window. Inclusive: priorUsed + contribution ==
+ * max is allowed; strictly over denies. The caller supplies priorUsed as the
+ * windowed SUM of prior allowed contributions (denied attempts never accrued).
+ */
+export function assertQuota(
+  quota: Quota,
+  priorUsed: number,
+  contribution: number,
+  skillRef: string,
+): void {
+  if (priorUsed + contribution > quota.max) {
+    throw new LimitViolationError(
+      "limit_quota",
+      `skill "${skillRef}" quota "${quota.key}" (${quota.window}) would exceed its limit: ` +
+        `used ${priorUsed} + ${contribution} > ${quota.max}`,
+    );
   }
 }
 
