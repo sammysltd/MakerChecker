@@ -758,3 +758,279 @@ describe("proxy sessions honour per-skill argument grant policy (allowlist / pat
     expect(allowed.rows).toHaveLength(0);
   });
 });
+
+// ------------------------------------------------------------ windowed quotas
+
+/**
+ * Windowed quotas accrue across a skill's ALLOWED proxy invocations within a
+ * time/session window that spans runs, denying fail-closed when the running
+ * total plus this call's contribution would exceed the ceiling. Every
+ * guarantee is attacked: the ceiling itself, denied attempts NEVER accruing,
+ * a count quota with no field, and cross-session accrual within one window.
+ */
+describe("proxy sessions enforce windowed quotas (accrual across sessions/runs)", () => {
+  const ACTOR = { type: "user" as const, name: "quota-tester" };
+
+  async function quotaUsageRows(agentName: string, quotaKey: string): Promise<number> {
+    const { rows } = await db.pool.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM quota_usage q
+         JOIN agents a ON a.id = q.agent_id
+        WHERE a.name = $1 AND q.quota_key = $2`,
+      [agentName, quotaKey],
+    );
+    return rows[0]!.n;
+  }
+
+  it("a monthly amount quota denies once the running total would exceed max, and DENIED attempts never accrue", async () => {
+    // {field:"amount", window:"month", max:1000}: the canonical "spend cap" as a
+    // generic windowed quota. 300+300+300 (=900) all allowed; the next 300 would
+    // make 1200 > 1000 and is DENIED. A denied 5000 must NOT raise the total, so
+    // a later legitimate 100 (900+100=1000, inclusive) is still allowed.
+    const roleId = await seedRole("px-quota-amt-role", {
+      skills: {
+        "px-quota-amt@1": {
+          quotas: [{ key: "monthly_amount", field: "amount", window: "month", max: 1000 }],
+        },
+      },
+    });
+    await seedAgent("px-quota-amt-agent", roleId);
+    await seedSkill("px-quota-amt@1", async (i) => i);
+    await grant("px-quota-amt-agent", "px-quota-amt@1");
+    const session = await openSession(db.pool, { label: "quota-amt-session", actor: ACTOR });
+
+    const check = (amount: number) =>
+      checkAndAuthorize(db.pool, {
+        sessionId: session.id,
+        agentName: "px-quota-amt-agent",
+        skillRef: "px-quota-amt@1",
+        actor: ACTOR,
+        input: { amount },
+      });
+
+    expect(await check(300)).toMatchObject({ allowed: true }); // running 300
+    expect(await check(300)).toMatchObject({ allowed: true }); // running 600
+    expect(await check(300)).toMatchObject({ allowed: true }); // running 900
+
+    // 900 + 300 = 1200 > 1000 → DENIED.
+    expect(await check(300)).toMatchObject({ allowed: false, code: "limit_quota" });
+    // A huge denied attempt must not accrue toward the total.
+    expect(await check(5000)).toMatchObject({ allowed: false, code: "limit_quota" });
+
+    // The two denials accrued NOTHING: the total is still 900, so 900+100=1000
+    // (inclusive boundary) is allowed.
+    expect(await check(100)).toMatchObject({ allowed: true }); // running 1000
+    // …and now genuinely exhausted: 1000 + 1 = 1001 > 1000.
+    expect(await check(1)).toMatchObject({ allowed: false, code: "limit_quota" });
+
+    // Exactly four ALLOWED actions wrote a quota_usage row; no denial did.
+    expect(await quotaUsageRows("px-quota-amt-agent", "monthly_amount")).toBe(4);
+    const { rows } = await db.pool.query<{ used: string }>(
+      `SELECT coalesce(sum(q.amount),0) AS used FROM quota_usage q
+         JOIN agents a ON a.id = q.agent_id
+        WHERE a.name = 'px-quota-amt-agent' AND q.quota_key = 'monthly_amount'`,
+    );
+    expect(Number(rows[0]!.used)).toBe(1000);
+
+    // The denials were audited as limit violations via the proxy.
+    const viol = await db.pool.query<{ payload: Record<string, unknown> }>(
+      `SELECT payload FROM audit_events
+        WHERE event_type = 'enforcement.limit_violation'
+          AND entity_type = 'proxy_session' AND entity_id = $1
+        ORDER BY seq DESC LIMIT 1`,
+      [session.id],
+    );
+    expect(viol.rows[0]!.payload).toMatchObject({ via: "proxy", code: "limit_quota" });
+  });
+
+  it("an unreadable / negative quota input fails closed and does not accrue", async () => {
+    const roleId = await seedRole("px-quota-failclosed-role", {
+      skills: {
+        "px-quota-fc@1": {
+          quotas: [{ key: "fc_amount", field: "amount", window: "lifetime", max: 1000 }],
+        },
+      },
+    });
+    await seedAgent("px-quota-fc-agent", roleId);
+    await seedSkill("px-quota-fc@1", async (i) => i);
+    await grant("px-quota-fc-agent", "px-quota-fc@1");
+    const session = await openSession(db.pool, { label: "quota-fc-session", actor: ACTOR });
+
+    const check = (input?: Record<string, unknown>) =>
+      checkAndAuthorize(db.pool, {
+        sessionId: session.id,
+        agentName: "px-quota-fc-agent",
+        skillRef: "px-quota-fc@1",
+        actor: ACTOR,
+        ...(input !== undefined ? { input } : {}),
+      });
+
+    // Missing field → unreadable (fail closed).
+    expect(await check()).toMatchObject({ allowed: false, code: "limit_quota_unreadable" });
+    expect(await check({ note: "no amount" })).toMatchObject({
+      allowed: false,
+      code: "limit_quota_unreadable",
+    });
+    // Non-numeric → unreadable.
+    expect(await check({ amount: "1000" })).toMatchObject({
+      allowed: false,
+      code: "limit_quota_unreadable",
+    });
+    // Negative → denied (cannot count DOWN a running total).
+    expect(await check({ amount: -1_000_000 })).toMatchObject({
+      allowed: false,
+      code: "limit_quota",
+    });
+
+    // None of the fail-closed denials accrued anything.
+    expect(await quotaUsageRows("px-quota-fc-agent", "fc_amount")).toBe(0);
+    // A legitimate call still works and accrues exactly one row.
+    expect(await check({ amount: 250 })).toMatchObject({ allowed: true });
+    expect(await quotaUsageRows("px-quota-fc-agent", "fc_amount")).toBe(1);
+  });
+
+  it("a pure-count quota (no field) per day denies the 3rd call", async () => {
+    // {window:"day", max:2} with no field: each allowed call contributes 1.
+    const roleId = await seedRole("px-quota-count-role", {
+      skills: {
+        "px-quota-count@1": { quotas: [{ key: "daily_calls", window: "day", max: 2 }] },
+      },
+    });
+    await seedAgent("px-quota-count-agent", roleId);
+    await seedSkill("px-quota-count@1", async (i) => i);
+    await grant("px-quota-count-agent", "px-quota-count@1");
+    const session = await openSession(db.pool, { label: "quota-count-session", actor: ACTOR });
+
+    const check = () =>
+      checkAndAuthorize(db.pool, {
+        sessionId: session.id,
+        agentName: "px-quota-count-agent",
+        skillRef: "px-quota-count@1",
+        actor: ACTOR,
+        input: {}, // no field needed — a count quota ignores input
+      });
+
+    expect(await check()).toMatchObject({ allowed: true }); // 1 of 2
+    expect(await check()).toMatchObject({ allowed: true }); // 2 of 2
+    expect(await check()).toMatchObject({ allowed: false, code: "limit_quota" }); // 3rd denied
+
+    // Exactly two allowed rows, each amount 1 → total 2.
+    expect(await quotaUsageRows("px-quota-count-agent", "daily_calls")).toBe(2);
+  });
+
+  it("accrues ACROSS sessions within the same window (two sessions, same agent, sum together)", async () => {
+    // The month window spans sessions: the same agent's two sessions share one
+    // running total. max=1000; session A spends 600, session B then spends 500
+    // → 600+500=1100 > 1000 and B's 500 is denied; a 400 in B (600+400=1000) is
+    // allowed. Proves the SUM is NOT scoped to a single session for a month window.
+    const roleId = await seedRole("px-quota-xsess-role", {
+      skills: {
+        "px-quota-xsess@1": {
+          quotas: [{ key: "xsess_amount", field: "amount", window: "month", max: 1000 }],
+        },
+      },
+    });
+    await seedAgent("px-quota-xsess-agent", roleId);
+    await seedSkill("px-quota-xsess@1", async (i) => i);
+    await grant("px-quota-xsess-agent", "px-quota-xsess@1");
+
+    const sessionA = await openSession(db.pool, { label: "quota-xsessA", actor: ACTOR });
+    const sessionB = await openSession(db.pool, { label: "quota-xsessB", actor: ACTOR });
+    const check = (sessionId: string, amount: number) =>
+      checkAndAuthorize(db.pool, {
+        sessionId,
+        agentName: "px-quota-xsess-agent",
+        skillRef: "px-quota-xsess@1",
+        actor: ACTOR,
+        input: { amount },
+      });
+
+    expect(await check(sessionA.id, 600)).toMatchObject({ allowed: true }); // running 600
+    // Session B sees session A's accrual: 600 + 500 = 1100 > 1000 → denied.
+    expect(await check(sessionB.id, 500)).toMatchObject({ allowed: false, code: "limit_quota" });
+    // 600 + 400 = 1000 (inclusive) → allowed in session B.
+    expect(await check(sessionB.id, 400)).toMatchObject({ allowed: true }); // running 1000
+    // Exhausted across both sessions.
+    expect(await check(sessionA.id, 1)).toMatchObject({ allowed: false, code: "limit_quota" });
+
+    // Two allowed rows total (one per session), summing to 1000.
+    const { rows } = await db.pool.query<{ n: number; used: string }>(
+      `SELECT count(*)::int AS n, coalesce(sum(q.amount),0) AS used FROM quota_usage q
+         JOIN agents a ON a.id = q.agent_id
+        WHERE a.name = 'px-quota-xsess-agent' AND q.quota_key = 'xsess_amount'`,
+    );
+    expect(rows[0]!.n).toBe(2);
+    expect(Number(rows[0]!.used)).toBe(1000);
+  });
+
+  it("a SESSION-window quota does NOT bleed across sessions (the per-session counterpart)", async () => {
+    // Counterpart to the cross-session test: window:"session" scopes the SUM to
+    // session_id, so a second session starts fresh. max=2 rows/session.
+    const roleId = await seedRole("px-quota-sessonly-role", {
+      skills: {
+        "px-quota-sessonly@1": {
+          quotas: [{ key: "per_session", window: "session", max: 2 }],
+        },
+      },
+    });
+    await seedAgent("px-quota-sessonly-agent", roleId);
+    await seedSkill("px-quota-sessonly@1", async (i) => i);
+    await grant("px-quota-sessonly-agent", "px-quota-sessonly@1");
+
+    const sessionA = await openSession(db.pool, { label: "quota-sessonlyA", actor: ACTOR });
+    const sessionB = await openSession(db.pool, { label: "quota-sessonlyB", actor: ACTOR });
+    const check = (sessionId: string) =>
+      checkAndAuthorize(db.pool, {
+        sessionId,
+        agentName: "px-quota-sessonly-agent",
+        skillRef: "px-quota-sessonly@1",
+        actor: ACTOR,
+        input: {},
+      });
+
+    expect(await check(sessionA.id)).toMatchObject({ allowed: true }); // A: 1 of 2
+    expect(await check(sessionA.id)).toMatchObject({ allowed: true }); // A: 2 of 2
+    expect(await check(sessionA.id)).toMatchObject({ allowed: false, code: "limit_quota" }); // A exhausted
+    // Session B starts at zero — the session window does not see A's accrual.
+    expect(await check(sessionB.id)).toMatchObject({ allowed: true }); // B: 1 of 2
+    expect(await check(sessionB.id)).toMatchObject({ allowed: true }); // B: 2 of 2
+    expect(await check(sessionB.id)).toMatchObject({ allowed: false, code: "limit_quota" }); // B exhausted
+  });
+
+  it("a quota denial does NOT consume a co-configured per-skill invocation slot", async () => {
+    // A quota over its ceiling must deny WITHOUT burning the invocation cap (the
+    // denial returns before any proxy_actions row is written, exactly like the
+    // amount/allowlist denials). max invocations 2; quota count max 1.
+    const roleId = await seedRole("px-quota-combo-role", {
+      skills: {
+        "px-quota-combo@1": {
+          maxInvocationsPerRun: 2,
+          quotas: [{ key: "combo_calls", window: "lifetime", max: 1 }],
+        },
+      },
+    });
+    await seedAgent("px-quota-combo-agent", roleId);
+    await seedSkill("px-quota-combo@1", async (i) => i);
+    await grant("px-quota-combo-agent", "px-quota-combo@1");
+    const session = await openSession(db.pool, { label: "quota-combo-session", actor: ACTOR });
+    const check = () =>
+      checkAndAuthorize(db.pool, {
+        sessionId: session.id,
+        agentName: "px-quota-combo-agent",
+        skillRef: "px-quota-combo@1",
+        actor: ACTOR,
+        input: {},
+      });
+
+    expect(await check()).toMatchObject({ allowed: true }); // quota 1 of 1, invocation 1 of 2
+    // Quota exhausted → denied by limit_quota, NOT limit_invocations.
+    expect(await check()).toMatchObject({ allowed: false, code: "limit_quota" });
+    // The denial did not consume an invocation slot or accrue a quota row.
+    const actions = await db.pool.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM proxy_actions
+        WHERE session_id = $1 AND skill_ref = 'px-quota-combo@1' AND decision = 'allowed'`,
+      [session.id],
+    );
+    expect(actions.rows[0]!.n).toBe(1);
+    expect(await quotaUsageRows("px-quota-combo-agent", "combo_calls")).toBe(1);
+  });
+});

@@ -128,6 +128,66 @@
                                   "type": "string"
                                 }
                               }
+                            },
+                            "quotas": {
+                              "type": "array",
+                              "items": {
+                                "additionalProperties": false,
+                                "type": "object",
+                                "required": [
+                                  "key",
+                                  "max",
+                                  "window"
+                                ],
+                                "properties": {
+                                  "key": {
+                                    "minLength": 1,
+                                    "type": "string"
+                                  },
+                                  "field": {
+                                    "minLength": 1,
+                                    "type": "string"
+                                  },
+                                  "max": {
+                                    "minimum": 0,
+                                    "type": "number"
+                                  },
+                                  "window": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "session"
+                                        ]
+                                      },
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "day"
+                                        ]
+                                      },
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "week"
+                                        ]
+                                      },
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "month"
+                                        ]
+                                      },
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "lifetime"
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                }
+                              }
                             }
                           }
                         },

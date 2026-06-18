@@ -79,6 +79,29 @@ const SkillLimitConfig = Type.Object(
         { additionalProperties: false },
       ),
     ),
+    // Windowed quotas: a running total of `field` (or a count when omitted)
+    // accrued across this skill's allowed invocations within `window`, denied
+    // when it would exceed `max`. The window enum is fixed; the runtime maps it
+    // to a SQL truncation unit by lookup (never interpolating the raw value).
+    quotas: Type.Optional(
+      Type.Array(
+        Type.Object(
+          {
+            key: Type.String({ minLength: 1 }),
+            field: Type.Optional(Type.String({ minLength: 1 })),
+            max: Type.Number({ minimum: 0 }),
+            window: Type.Union([
+              Type.Literal("session"),
+              Type.Literal("day"),
+              Type.Literal("week"),
+              Type.Literal("month"),
+              Type.Literal("lifetime"),
+            ]),
+          },
+          { additionalProperties: false },
+        ),
+      ),
+    ),
   },
   { additionalProperties: false },
 );

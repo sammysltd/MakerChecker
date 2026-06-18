@@ -4,6 +4,7 @@ import { createTestDb, type TestDb } from "../../test/test-db.js";
 import type { LocalSkillFn } from "./executor.js";
 import { GraphileWorkerBackend } from "./graphile-backend.js";
 import {
+  assertQuota,
   assertSkillLimits,
   checkSkillLimit,
   checkTokenBudget,
@@ -11,6 +12,8 @@ import {
   isPathWithinPrefix,
   LimitViolationError,
   normalizePath,
+  quotaContribution,
+  type Quota,
   type SkillLimitConfig,
 } from "./limits.js";
 import { publishFlowVersion } from "./flows.js";
@@ -111,6 +114,97 @@ describe("assertSkillLimits — negative-amount fail-open is closed", () => {
         expect((err as LimitViolationError).code).toBe("limit_amount_unreadable");
       }
     }
+  });
+});
+
+// ----------------------------------------------------------- quotas (pure)
+
+describe("quotaContribution — fail closed mirroring the amount guards", () => {
+  it("returns 1 for a count quota (no field)", () => {
+    const q: Quota = { key: "calls", max: 5, window: "day" };
+    expect(quotaContribution(q, {}, "skill@1")).toBe(1);
+    // A count quota ignores any input entirely — even a hostile one.
+    expect(quotaContribution(q, { field: -999, amount: "junk" }, "skill@1")).toBe(1);
+  });
+
+  it("reads the named field for a quantity quota", () => {
+    const q: Quota = { key: "amount", field: "amount", max: 1000, window: "month" };
+    expect(quotaContribution(q, { amount: 250 }, "pay@1")).toBe(250);
+    expect(quotaContribution(q, { amount: 0 }, "pay@1")).toBe(0);
+    expect(quotaContribution(q, { amount: 999.99 }, "pay@1")).toBe(999.99);
+  });
+
+  it("FAILS CLOSED as limit_quota_unreadable on a missing field", () => {
+    const q: Quota = { key: "amount", field: "amount", max: 1000, window: "month" };
+    try {
+      quotaContribution(q, { note: "no amount" }, "pay@1");
+      throw new Error("expected a LimitViolationError");
+    } catch (err) {
+      expect(err).toBeInstanceOf(LimitViolationError);
+      expect((err as LimitViolationError).code).toBe("limit_quota_unreadable");
+    }
+  });
+
+  it("FAILS CLOSED as limit_quota_unreadable on a non-number / non-finite field", () => {
+    const q: Quota = { key: "amount", field: "amount", max: 1000, window: "month" };
+    // A number disguised as a string is non-numeric → unreadable, exactly like
+    // the amount cap (never coerced into a value that could slip under a ceiling).
+    for (const bad of ["250", null, true, ["250"], { v: 250 }, Number.NaN, Number.POSITIVE_INFINITY]) {
+      try {
+        quotaContribution(q, { amount: bad }, "pay@1");
+        throw new Error("expected a LimitViolationError");
+      } catch (err) {
+        expect((err as LimitViolationError).code).toBe("limit_quota_unreadable");
+      }
+    }
+  });
+
+  it("FAILS CLOSED as limit_quota on a negative field (cannot count DOWN a total)", () => {
+    const q: Quota = { key: "amount", field: "amount", max: 1000, window: "month" };
+    // A negative contribution would lower a running total and let a later call
+    // slip under the ceiling — denied, mirroring the amount guard exactly.
+    for (const bad of [-0.01, -1, -1_000_000]) {
+      try {
+        quotaContribution(q, { amount: bad }, "pay@1");
+        throw new Error("expected a LimitViolationError");
+      } catch (err) {
+        expect((err as LimitViolationError).code).toBe("limit_quota");
+        expect((err as LimitViolationError).message).toContain("negative");
+      }
+    }
+  });
+});
+
+describe("assertQuota — inclusive ceiling at the boundary", () => {
+  const q: Quota = { key: "amount", field: "amount", max: 1000, window: "month" };
+
+  it("allows priorUsed + contribution exactly AT max (inclusive)", () => {
+    expect(() => assertQuota(q, 700, 300, "pay@1")).not.toThrow();
+    expect(() => assertQuota(q, 1000, 0, "pay@1")).not.toThrow();
+    expect(() => assertQuota(q, 0, 1000, "pay@1")).not.toThrow();
+  });
+
+  it("denies one unit OVER max", () => {
+    try {
+      assertQuota(q, 700, 300.01, "pay@1");
+      throw new Error("expected a LimitViolationError");
+    } catch (err) {
+      expect(err).toBeInstanceOf(LimitViolationError);
+      expect((err as LimitViolationError).code).toBe("limit_quota");
+      expect((err as LimitViolationError).message).toContain("amount");
+    }
+  });
+
+  it("denies when the prior total ALONE already meets max and one more is added", () => {
+    expect(() => assertQuota(q, 1000, 1, "pay@1")).toThrowError(LimitViolationError);
+    expect(() => assertQuota(q, 1200, 0, "pay@1")).toThrowError(/exceed/);
+  });
+
+  it("a count quota (contribution 1) denies the call that would step over max", () => {
+    const count: Quota = { key: "calls", max: 2, window: "day" };
+    expect(() => assertQuota(count, 0, 1, "x@1")).not.toThrow(); // 1 of 2
+    expect(() => assertQuota(count, 1, 1, "x@1")).not.toThrow(); // 2 of 2
+    expect(() => assertQuota(count, 2, 1, "x@1")).toThrowError(/limit/); // 3rd denied
   });
 });
 

@@ -254,6 +254,83 @@ describe("roles", () => {
     expect(back.json().role.limits).toEqual(limits);
   });
 
+  it("saves per-skill windowed quotas verbatim (amount, count, every window)", async () => {
+    // Quotas persist exactly as written so the runtime windowed SUM enforces the
+    // operator's intent. Covers an amount quota, a count quota (no field), and
+    // each window literal in the fixed enum.
+    const limits = {
+      skills: {
+        "px-quota@1": {
+          quotas: [
+            { key: "monthly_amount", field: "amount", window: "month", max: 1000 },
+            { key: "daily_tokens", field: "tokens", window: "day", max: 100000 },
+            { key: "weekly_count", window: "week", max: 10 },
+            { key: "per_session_rows", field: "rows", window: "session", max: 5000 },
+            { key: "ever", window: "lifetime", max: 1 },
+          ],
+        },
+      },
+    };
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/roles",
+      headers: auth,
+      payload: { name: "quota-grant-role", limits },
+    });
+    expect(res.statusCode).toBe(201);
+    expect(res.json().role.limits).toEqual(limits);
+    const back = await app.inject({
+      method: "GET",
+      url: `/api/roles/${res.json().role.id}`,
+      headers: auth,
+    });
+    expect(back.json().role.limits).toEqual(limits);
+  });
+
+  it("400s every malformed quota shape before save", async () => {
+    // A malformed quota would either silently never enforce or install a bogus
+    // ceiling; the strict write schema must reject all of these BEFORE save.
+    const sk = (cfg: unknown) => ({ skills: { "pay@1": cfg } });
+    const malformed: Array<[string, unknown]> = [
+      // quotas must be an array of objects.
+      ["quotas is an object", sk({ quotas: { key: "k", max: 1, window: "day" } })],
+      ["quotas is a string", sk({ quotas: "k" })],
+      // key is required and non-empty.
+      ["quota missing key", sk({ quotas: [{ max: 1, window: "day" }] })],
+      ["quota empty key", sk({ quotas: [{ key: "", max: 1, window: "day" }] })],
+      // max is required, numeric, non-negative.
+      ["quota missing max", sk({ quotas: [{ key: "k", window: "day" }] })],
+      ["quota max is a string", sk({ quotas: [{ key: "k", max: "1", window: "day" }] })],
+      ["quota max is negative", sk({ quotas: [{ key: "k", max: -1, window: "day" }] })],
+      ["quota max is null", sk({ quotas: [{ key: "k", max: null, window: "day" }] })],
+      // window is required and must be one of the fixed enum literals.
+      ["quota missing window", sk({ quotas: [{ key: "k", max: 1 }] })],
+      ["quota window not in enum", sk({ quotas: [{ key: "k", max: 1, window: "year" }] })],
+      ["quota window is a number", sk({ quotas: [{ key: "k", max: 1, window: 1 }] })],
+      // field, when present, must be a non-empty string.
+      ["quota field is empty", sk({ quotas: [{ key: "k", field: "", max: 1, window: "day" }] })],
+      ["quota field is a number", sk({ quotas: [{ key: "k", field: 7, max: 1, window: "day" }] })],
+      // unknown nested key (additionalProperties: false).
+      [
+        "quota has an unknown nested key",
+        sk({ quotas: [{ key: "k", max: 1, window: "day", extra: 1 }] }),
+      ],
+    ];
+    for (const [label, limits] of malformed) {
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/roles",
+        headers: auth,
+        payload: { name: `quotabad-${label.replace(/[^a-z0-9]+/gi, "-")}`, limits },
+      });
+      expect(res.statusCode, `${label} should be rejected 400`).toBe(400);
+    }
+    const list = await app.inject({ method: "GET", url: "/api/roles", headers: auth });
+    expect(
+      list.json().roles.some((r: { name: string }) => r.name.startsWith("quotabad-")),
+    ).toBe(false);
+  });
+
   it("400s every malformed allowlist/pathScope shape before save", async () => {
     // Argument-grant analogue of the malformed-limits gate above: each case is an
     // allowlist or pathScope that the runtime would either deny silently at
@@ -357,6 +434,10 @@ describe("roles", () => {
       amountField: "amount_cents",
       allowlist: { field: "destination", values: ["0xSAFE", "0xTREASURY"] },
       pathScope: { field: "path", prefix: "/workspace/project" },
+      quotas: [
+        { key: "monthly_amount", field: "amount", window: "month", max: 1000 },
+        { key: "daily_calls", window: "day", max: 50 },
+      ],
     };
     const res = await app.inject({
       method: "POST",
