@@ -1,0 +1,9 @@
+criterion_id,type,field,rule,description
+INC-1,inclusion,tumor_type,tumor_type==NSCLC,Histologically confirmed advanced non-small-cell lung cancer
+INC-2,inclusion,mutation_status,mutation_status==EGFR,Documented activating EGFR mutation by central biomarker testing
+INC-3,inclusion,ecog,ecog<=1,ECOG performance status 0 or 1 at screening
+INC-4,inclusion,washout_days,washout_days>=21,At least 21 days washout since last systemic anti-cancer therapy
+INC-5,inclusion,progression_status,progression_status==confirmed_progression,Radiographically confirmed RECIST 1.1 progression on prior line
+EXC-1,exclusion,prior_lines,prior_lines>2,More than two prior lines of systemic therapy excludes
+EXC-2,exclusion,ecog,ecog>=3,ECOG performance status 3 or worse excludes
+EXC-3,exclusion,washout_days,washout_days<21,Washout shorter than 21 days excludes

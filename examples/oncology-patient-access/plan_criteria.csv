@@ -1,0 +1,9 @@
+criterion_id,plan_type,field,rule,description
+PC-001,commercial,copay_card,allowed,manufacturer copay cards permitted for commercially insured patients
+PC-002,medicare,copay_card,prohibited,manufacturer copay support barred for Medicare patients under the Anti-Kickback Statute
+PC-003,medicaid,copay_card,prohibited,manufacturer copay support barred for Medicaid patients under the Anti-Kickback Statute
+PC-004,uninsured,copay_card,not_applicable,uninsured patients route to manufacturer patient-assistance programs not copay cards
+PC-005,commercial,appeal,medical_necessity,first-level appeal requires NCCN-supported medical-necessity attestation
+PC-006,medicare,appeal,medical_necessity,Medicare redetermination requires documented prior-therapy failure
+PC-007,medicaid,appeal,prior_auth,state Medicaid prior-authorization with formulary-exception request
+PC-008,uninsured,appeal,not_applicable,no payer appeal; route to foundation and patient-assistance enrollment

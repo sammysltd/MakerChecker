@@ -1,0 +1,11 @@
+patient_id,tumor_type,mutation_status,ecog,prior_lines,washout_days,progression_status
+PT-7001,NSCLC,EGFR,1,1,28,confirmed_progression
+PT-7002,NSCLC,KRAS,1,1,30,confirmed_progression
+PT-7003,NSCLC,EGFR,3,2,25,confirmed_progression
+PT-7004,NSCLC,EGFR,1,3,40,confirmed_progression
+PT-7005,NSCLC,EGFR,1,1,28,ambiguous_progression
+PT-7006,NSCLC,EGFR,0,2,14,confirmed_progression
+PT-7007,CRC,EGFR,1,1,35,confirmed_progression
+PT-7008,NSCLC,EGFR,2,0,45,stable_disease
+PT-7009,NSCLC,EGFR,1,2,22,confirmed_progression
+PT-7010,NSCLC,EGFR,1,1,60,ambiguous_progression

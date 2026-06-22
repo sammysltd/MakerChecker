@@ -93,6 +93,7 @@ node examples/knight-capital-440m-runaway-trading/demo.mjs   # server on :3000, 
 - [`mata-v-avianca-fabricated-citations-filed`](mata-v-avianca-fabricated-citations-filed/) — Mata v Avianca: a hallucinated brief reached a federal court
 - [`meta-rogue-agent-sev1-data-exposure`](meta-rogue-agent-sev1-data-exposure/) — Meta Sev 1: an agent skipped the approval it was supposed to wait for
 - [`mypillow-ai-brief-fake-citations-repeat`](mypillow-ai-brief-fake-citations-repeat/) — The MyPillow brief: 30 fake AI citations, then a repeat offense
+- [`oncology-patient-access`](oncology-patient-access/) — Oncology patient access: who signs the enrollment and the appeal
 - [`replit-agent-deleted-production-database`](replit-agent-deleted-production-database/) — Replit agent deleted a production database during a code freeze
 - [`shadowleak-chatgpt-deep-research-gmail-exfiltration`](shadowleak-chatgpt-deep-research-gmail-exfiltration/) — ShadowLeak: zero-click Gmail exfiltration via the ChatGPT Deep Research agent
 - [`unitedhealth-nhpredict-ai-medicare-denials`](unitedhealth-nhpredict-ai-medicare-denials/) — nH Predict: an algorithm denying Medicare care with a 90% reversal rate

@@ -1,0 +1,9 @@
+source,type,window_status,max_award_usd,eligible_plan_types
+manufacturer_copay,copay_card,open,26000.00,commercial
+pan_foundation,charitable_foundation,open,15000.00,medicare;medicaid;commercial
+healthwell,charitable_foundation,open,12000.00,medicare;commercial
+lls_copay,charitable_foundation,closed,10000.00,medicare;medicaid;commercial;uninsured
+patient_advocate_fund,charitable_foundation,open,8000.00,uninsured;medicaid
+good_days,charitable_foundation,closed,7500.00,medicare;commercial
+manufacturer_pap,charitable_foundation,open,30000.00,uninsured
+cancercare_copay,charitable_foundation,open,9000.00,medicare;medicaid;commercial

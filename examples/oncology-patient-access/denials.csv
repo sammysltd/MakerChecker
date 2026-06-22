@@ -1,0 +1,11 @@
+patient_id,diagnosis,drug,plan_type,annual_cost_usd,denial_reason
+PT-7001,nsclc,Keytruda,commercial,235200.00,prior_authorization_required
+PT-7002,multiple_myeloma,Darzalex,commercial,198400.00,step_therapy_not_met
+PT-7003,colorectal,Avastin,medicaid,112800.00,non_formulary
+PT-7004,melanoma,Opdivo,medicare,189600.00,prior_authorization_required
+PT-7005,breast,Enhertu,commercial,165000.00,site_of_care
+PT-7006,cml,Tasigna,uninsured,142000.00,no_coverage
+PT-7007,renal_cell,Cabometyx,medicare,228000.00,step_therapy_not_met
+PT-7008,lymphoma,Polivy,commercial,204500.00,prior_authorization_required
+PT-7009,ovarian,Lynparza,medicaid,131400.00,non_formulary
+PT-7010,prostate,Xtandi,uninsured,156800.00,no_coverage
