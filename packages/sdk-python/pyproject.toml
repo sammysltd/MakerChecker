@@ -24,7 +24,7 @@ Repository = "https://github.com/sammysltd/makerchecker"
 "Bug Tracker" = "https://github.com/sammysltd/makerchecker/issues"
 
 [project.optional-dependencies]
-dev = ["pytest>=9.0.3", "ruff>=0.15.18", "mypy>=1.8"]
+dev = ["pytest>=9.1.1", "ruff>=0.15.18", "mypy>=1.8"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/makerchecker"]
