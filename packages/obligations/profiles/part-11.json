@@ -1,0 +1,74 @@
+{
+  "id": "part-11",
+  "framework": "21 CFR Part 11 (Electronic Records; Electronic Signatures)",
+  "version": 1,
+  "description": "Maps Part 11 clauses to the audit events that evidence them in a MakerChecker bundle. This is a control-to-clause crosswalk, not a certification; an assessor confirms posture against their own validated scope.",
+  "clauses": [
+    {
+      "id": "11.10(a)",
+      "title": "Validation of systems to ensure accuracy, reliability, and the ability to discern invalid or altered records",
+      "requirement": "The system must be able to discern invalid or altered records.",
+      "applicableWhen": "always",
+      "evidence": { "chainVerified": true },
+      "note": "Partial: the hash chain lets any altered record be discerned (verification fails at the altered seq). Full computerised-system validation is the operator's process."
+    },
+    {
+      "id": "11.10(d)",
+      "title": "Limiting system access to authorized individuals",
+      "requirement": "Only authorized roles may perform an action; unauthorized actions are refused.",
+      "applicableWhen": "always",
+      "evidence": { "anyOf": [
+        { "eventType": "enforcement.blocked", "payloadMatch": { "code": "skill_not_granted" } },
+        { "eventType": "grant.created" }
+      ] },
+      "note": "Deny-by-default grants; a refused unauthorized action records enforcement.blocked / skill_not_granted."
+    },
+    {
+      "id": "11.10(e)",
+      "title": "Secure, computer-generated, time-stamped audit trails recording operator entries and actions",
+      "requirement": "Record operator actions with secure, time-stamped, computer-generated entries that do not obscure prior records.",
+      "applicableWhen": "always",
+      "evidence": { "allOf": [
+        { "chainVerified": true },
+        { "eventType": "audit.genesis" },
+        { "anyOf": [ { "eventType": "skill.invoked" }, { "eventType": "llm.call" } ] }
+      ] },
+      "note": "Each event is time-stamped (occurredAt) and append-only; nothing overwrites a prior record."
+    },
+    {
+      "id": "11.10(f)",
+      "title": "Operational system checks to enforce permitted sequencing of steps and events",
+      "requirement": "High-risk steps may proceed only in the permitted sequence (e.g. after a required approval).",
+      "applicableWhen": { "eventType": "approval.requested" },
+      "evidence": { "anyOf": [
+        { "eventType": "enforcement.blocked", "payloadMatch": { "code": "high_risk_requires_gate" } },
+        { "eventType": "approval.decided" }
+      ] },
+      "note": "A high-risk skill cannot run before its gate; out-of-sequence attempts record high_risk_requires_gate."
+    },
+    {
+      "id": "11.10(g)",
+      "title": "Authority checks to ensure only authorized individuals can use the system and perform the operation at hand",
+      "requirement": "Only an authorized, identified individual may decide a gated action.",
+      "applicableWhen": { "eventType": "approval.requested" },
+      "evidence": { "eventType": "approval.decided" },
+      "note": "The decider's identity is recorded; the requester cannot self-approve (segregation enforced)."
+    },
+    {
+      "id": "11.50",
+      "title": "Signature manifestations — printed name of the signer, date and time, and meaning of the signature",
+      "requirement": "A signed record carries the signer, the time, and the meaning of the signature.",
+      "applicableWhen": { "eventType": "approval.requested" },
+      "evidence": { "eventType": "approval.decided" },
+      "note": "approval.decided carries the decider, the decision (meaning), the reason, and occurredAt (time)."
+    },
+    {
+      "id": "11.70",
+      "title": "Signature/record linking — signatures linked to their records so they cannot be excised, copied, or transferred",
+      "requirement": "An electronic signature is permanently bound to the record it signs.",
+      "applicableWhen": { "eventType": "approval.decided" },
+      "evidence": { "chainVerified": true },
+      "note": "The approval event is hash-chained into the same tamper-evident record as the action it authorizes; it cannot be moved without breaking verification."
+    }
+  ]
+}

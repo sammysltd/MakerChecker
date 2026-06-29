@@ -1,0 +1,69 @@
+{
+  "id": "annex-11",
+  "framework": "EU GMP Annex 11 (Computerised Systems)",
+  "version": 1,
+  "description": "Maps Annex 11 clauses to the audit events that evidence them in a MakerChecker bundle. A control-to-clause crosswalk, not a certification.",
+  "clauses": [
+    {
+      "id": "4",
+      "title": "Validation",
+      "requirement": "The system supports evidence that records are accurate and alterations are detectable.",
+      "applicableWhen": "always",
+      "evidence": { "chainVerified": true },
+      "note": "Partial: tamper-evidence is provided; lifecycle validation (URS/FS/IQ/OQ/PQ) is the operator's process — see the GxP validation kit."
+    },
+    {
+      "id": "9",
+      "title": "Audit Trails",
+      "requirement": "Build into the system the creation of a record of all GMP-relevant changes and actions.",
+      "applicableWhen": "always",
+      "evidence": { "allOf": [
+        { "chainVerified": true },
+        { "eventType": "audit.genesis" },
+        { "anyOf": [ { "eventType": "skill.invoked" }, { "eventType": "llm.call" } ] }
+      ] },
+      "note": "Every agent action and governance decision is recorded in the hash-chained log."
+    },
+    {
+      "id": "12.1",
+      "title": "Security — access restricted to authorised persons",
+      "requirement": "Only authorised roles may act; unauthorised actions are refused.",
+      "applicableWhen": "always",
+      "evidence": { "anyOf": [
+        { "eventType": "enforcement.blocked", "payloadMatch": { "code": "skill_not_granted" } },
+        { "eventType": "grant.created" }
+      ] }
+    },
+    {
+      "id": "12.4",
+      "title": "Management of who can enter and change data; segregation of duties",
+      "requirement": "The person who prepares an action and the person who authorises it are separated.",
+      "applicableWhen": "always",
+      "evidence": { "anyOf": [
+        { "eventType": "enforcement.sod_violation" },
+        { "eventType": "approval.decided" }
+      ] },
+      "note": "Segregation is enforced at runtime; a conflicting actor records enforcement.sod_violation, and gated actions are decided by a separate identity."
+    },
+    {
+      "id": "14",
+      "title": "Electronic Signature — permanently linked, with time and date",
+      "requirement": "Electronic signatures are permanently linked to their record and carry date/time.",
+      "applicableWhen": { "eventType": "approval.requested" },
+      "evidence": { "allOf": [
+        { "eventType": "approval.decided" },
+        { "chainVerified": true }
+      ] }
+    },
+    {
+      "id": "1",
+      "title": "Risk Management — controls proportional to risk; high-risk actions gated",
+      "requirement": "Higher-risk actions carry stronger controls (a required approval gate).",
+      "applicableWhen": { "eventType": "approval.requested" },
+      "evidence": { "anyOf": [
+        { "eventType": "enforcement.blocked", "payloadMatch": { "code": "high_risk_requires_gate" } },
+        { "eventType": "approval.decided" }
+      ] }
+    }
+  ]
+}

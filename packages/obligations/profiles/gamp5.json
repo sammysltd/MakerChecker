@@ -1,0 +1,56 @@
+{
+  "id": "gamp5",
+  "framework": "GAMP 5 / ALCOA+ data integrity",
+  "version": 1,
+  "description": "Maps the ALCOA+ data-integrity attributes (ISPE GAMP 5, second edition) to the audit events that evidence them in a MakerChecker bundle.",
+  "clauses": [
+    {
+      "id": "alcoa.attributable",
+      "title": "Attributable — every record is traceable to who (or what) created it",
+      "requirement": "Each recorded action carries the acting identity.",
+      "applicableWhen": "always",
+      "evidence": { "anyOf": [ { "eventType": "skill.invoked" }, { "eventType": "llm.call" }, { "eventType": "approval.decided" } ] },
+      "note": "Each event carries an actor; approvals carry the named decider."
+    },
+    {
+      "id": "alcoa.legible-original",
+      "title": "Legible & Original — the record is the durable, first-capture form and remains readable",
+      "requirement": "The original record is preserved and verifiable.",
+      "applicableWhen": "always",
+      "evidence": { "chainVerified": true }
+    },
+    {
+      "id": "alcoa.contemporaneous",
+      "title": "Contemporaneous — recorded at the time of the action",
+      "requirement": "Actions are time-stamped when they occur and committed with their record.",
+      "applicableWhen": "always",
+      "evidence": { "allOf": [ { "chainVerified": true }, { "anyOf": [ { "eventType": "skill.invoked" }, { "eventType": "llm.call" } ] } ] },
+      "note": "occurredAt is captured per event; the state change and its audit event commit in one transaction."
+    },
+    {
+      "id": "alcoa.accurate",
+      "title": "Accurate — the record is correct and tamper-evident",
+      "requirement": "Recorded actions cannot be silently altered.",
+      "applicableWhen": "always",
+      "evidence": { "chainVerified": true }
+    },
+    {
+      "id": "alcoa.complete",
+      "title": "Complete — nothing is removed from or hidden in the record",
+      "requirement": "For a full export, the chain proves nothing was removed, inserted, or reordered.",
+      "applicableWhen": "always",
+      "evidence": { "allOf": [ { "chainVerified": true }, { "eventType": "audit.genesis" } ] },
+      "note": "Genesis-rooted linkage in a full bundle proves completeness; a run bundle proves per-event integrity but not completeness against omission."
+    },
+    {
+      "id": "gamp5.risk-based-control",
+      "title": "Risk-based controls for critical functions",
+      "requirement": "Critical (high-risk) functions require a stronger, gated control.",
+      "applicableWhen": { "eventType": "approval.requested" },
+      "evidence": { "anyOf": [
+        { "eventType": "enforcement.blocked", "payloadMatch": { "code": "high_risk_requires_gate" } },
+        { "eventType": "approval.decided" }
+      ] }
+    }
+  ]
+}
