@@ -1,0 +1,35 @@
+{
+  "name": "@makerchecker/validation-kit",
+  "version": "0.1.0",
+  "description": "Generate a Computer System Validation (IQ/OQ/PQ) report and Requirements Traceability Matrix deterministically from a signed MakerChecker audit bundle. The GxP validation package a regulated QA function drops into its binder.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "mc-validate": "src/cli.js"
+  },
+  "main": "src/index.js",
+  "files": [
+    "src",
+    "protocols",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node scripts/test.mjs",
+    "lint": "true",
+    "typecheck": "true"
+  },
+  "keywords": [
+    "csv",
+    "computer-system-validation",
+    "iq-oq-pq",
+    "gamp5",
+    "21-cfr-part-11",
+    "annex-11",
+    "traceability-matrix",
+    "agent-governance",
+    "makerchecker"
+  ],
+  "engines": {
+    "node": ">=18.4.0"
+  }
+}

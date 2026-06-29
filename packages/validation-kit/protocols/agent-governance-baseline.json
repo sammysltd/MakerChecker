@@ -1,0 +1,100 @@
+{
+  "id": "agent-governance-baseline",
+  "title": "Computer System Validation — AI agent under MakerChecker governance (baseline)",
+  "version": 1,
+  "description": "A reusable, executable CSV protocol for qualifying an AI agent operating behind MakerChecker. User requirements (URS) trace to functional specifications (FS) to IQ/OQ/PQ test cases, each re-derived deterministically from a signed audit bundle. Intended as the validation package a regulated (GxP) QA function drops into its own binder; the operator confirms scope and signs.",
+  "urs": [
+    { "id": "URS-001", "text": "The system shall prevent an agent from performing an action it has not been granted.", "risk": "high" },
+    { "id": "URS-002", "text": "The system shall require an independent, named human to authorise high-risk (consequential) actions, and shall prevent the requester from authorising their own action.", "risk": "high" },
+    { "id": "URS-003", "text": "The system shall record every agent action and governance decision in a secure, time-stamped, tamper-evident audit trail that can be verified independently.", "risk": "high" },
+    { "id": "URS-004", "text": "The system shall enforce fail-closed limits on consequential parameters (amounts, counts).", "risk": "medium" },
+    { "id": "URS-005", "text": "An electronic signature applied to a record shall be permanently linked to that record and carry the signer, the time, and the meaning of the signature.", "risk": "high" }
+  ],
+  "fs": [
+    { "id": "FS-001", "urs": ["URS-001"], "text": "An ungranted skill invocation is refused with enforcement code skill_not_granted before the tool body executes." },
+    { "id": "FS-002", "urs": ["URS-002"], "text": "A high-risk skill parks at an approval gate; it executes only after a decision recorded by a named decider." },
+    { "id": "FS-003", "urs": ["URS-002"], "text": "The run requester cannot decide their own gate (segregation of duties enforced at runtime)." },
+    { "id": "FS-004", "urs": ["URS-003"], "text": "Every event is hash-chained from a genesis bound to the instance, and the full chain verifies offline." },
+    { "id": "FS-005", "urs": ["URS-004"], "text": "An over-limit parameter is refused with enforcement code limit_violation / limit_amount / limit_invocations." },
+    { "id": "FS-006", "urs": ["URS-005"], "text": "The approval decision event records the decider, the decision (meaning), the reason, and the time, and is bound into the same chain as the authorised action." }
+  ],
+  "tests": [
+    {
+      "id": "IQ-001", "stage": "IQ", "fs": ["FS-004"],
+      "title": "Instance initialised and audit chain rooted",
+      "procedure": "Confirm the audit bundle begins at an audit.genesis event bound to the instance and the chain verifies.",
+      "expected": "A genesis event is present and the chain verifies end-to-end.",
+      "applicableWhen": "always",
+      "evidence": { "allOf": [ { "chainVerified": true }, { "eventType": "audit.genesis" } ] }
+    },
+    {
+      "id": "IQ-002", "stage": "IQ", "fs": ["FS-004"],
+      "title": "Tamper-evident audit trail operational",
+      "procedure": "Verify the signed bundle: signature, per-event hashes, and linkage.",
+      "expected": "The bundle verifies; any alteration would fail verification at the altered event.",
+      "applicableWhen": "always",
+      "evidence": { "chainVerified": true }
+    },
+    {
+      "id": "OQ-001", "stage": "OQ", "fs": ["FS-001"],
+      "title": "Deny-by-default enforcement",
+      "procedure": "Attempt an action the agent's role was not granted.",
+      "expected": "The action is refused with skill_not_granted and recorded.",
+      "applicableWhen": "always",
+      "evidence": { "eventType": "enforcement.blocked", "payloadMatch": { "code": "skill_not_granted" } }
+    },
+    {
+      "id": "OQ-002", "stage": "OQ", "fs": ["FS-002"],
+      "title": "High-risk action gated on a named approval",
+      "procedure": "Drive a high-risk skill; confirm it parks at a gate and proceeds only after a recorded decision.",
+      "expected": "An approval is requested and decided by a named decider before the high-risk action runs.",
+      "applicableWhen": { "eventType": "approval.requested" },
+      "evidence": { "allOf": [ { "eventType": "approval.requested" }, { "eventType": "approval.decided" } ] }
+    },
+    {
+      "id": "OQ-003", "stage": "OQ", "fs": ["FS-003"],
+      "title": "Segregation of duties enforced",
+      "procedure": "Attempt to decide a gate as the requester; confirm separation is enforced.",
+      "expected": "A separate identity decides the gate, or a self-approval attempt records enforcement.sod_violation.",
+      "applicableWhen": { "eventType": "approval.requested" },
+      "evidence": { "anyOf": [ { "eventType": "approval.decided" }, { "eventType": "enforcement.sod_violation" } ] }
+    },
+    {
+      "id": "OQ-004", "stage": "OQ", "fs": ["FS-005"],
+      "title": "Fail-closed limits",
+      "procedure": "Submit a parameter over a configured limit.",
+      "expected": "The action is refused with a limit_violation code.",
+      "applicableWhen": { "anyOf": [
+        { "eventType": "enforcement.limit_violation" },
+        { "eventType": "enforcement.blocked", "payloadMatch": { "code": "limit_amount" } },
+        { "eventType": "enforcement.blocked", "payloadMatch": { "code": "limit_invocations" } }
+      ] },
+      "evidence": { "anyOf": [
+        { "eventType": "enforcement.limit_violation" },
+        { "eventType": "enforcement.blocked", "payloadMatch": { "code": "limit_amount" } },
+        { "eventType": "enforcement.blocked", "payloadMatch": { "code": "limit_invocations" } }
+      ] }
+    },
+    {
+      "id": "PQ-001", "stage": "PQ", "fs": ["FS-002", "FS-006"],
+      "title": "End-to-end governed run completes with a signed decision",
+      "procedure": "Execute a representative production workflow end to end under governance.",
+      "expected": "The run starts, a named decision is recorded, the action runs, the run completes, and the chain verifies.",
+      "applicableWhen": "always",
+      "evidence": { "allOf": [
+        { "chainVerified": true },
+        { "eventType": "run.started" },
+        { "eventType": "skill.invoked" },
+        { "eventType": "run.completed" }
+      ] }
+    },
+    {
+      "id": "PQ-002", "stage": "PQ", "fs": ["FS-006"],
+      "title": "Electronic signature linked to its record",
+      "procedure": "Confirm the approval decision carries the decider/meaning/time and is bound into the chain.",
+      "expected": "An approval.decided event is present on a verified chain.",
+      "applicableWhen": { "eventType": "approval.requested" },
+      "evidence": { "allOf": [ { "eventType": "approval.decided" }, { "chainVerified": true } ] }
+    }
+  ]
+}
