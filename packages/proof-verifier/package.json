@@ -1,0 +1,40 @@
+{
+  "name": "@makerchecker/proof-verifier",
+  "version": "0.1.0",
+  "description": "Standalone, zero-dependency, zero-trust verifier for Agent Action Proof Receipt bundles. Verifies a MakerChecker audit bundle offline with no database or server access.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "agent-proof": "src/cli.js"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./core": "./src/verify-core.js",
+    "./node": "./src/node-crypto.js"
+  },
+  "files": [
+    "src",
+    "vectors",
+    "verifier.html",
+    "README.md"
+  ],
+  "scripts": {
+    "build:vectors": "node scripts/build-vectors.mjs",
+    "test": "node scripts/test.mjs",
+    "lint": "true",
+    "typecheck": "true"
+  },
+  "keywords": [
+    "audit",
+    "verification",
+    "ed25519",
+    "rfc8785",
+    "agent-governance",
+    "tamper-evident",
+    "makerchecker"
+  ],
+  "engines": {
+    "node": ">=18.4.0"
+  }
+}

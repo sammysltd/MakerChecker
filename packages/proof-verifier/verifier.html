@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Agent Action Proof — offline verifier</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --line:#30363d; --fg:#e6edf3; --muted:#8b949e;
+          --pass:#2ea043; --fail:#f85149; --accent:#58a6ff; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font:15px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 40px 20px 80px; }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  p.sub { color: var(--muted); margin: 0 0 28px; }
+  .drop { border: 1.5px dashed var(--line); border-radius: 12px; background: var(--panel);
+          padding: 38px 20px; text-align: center; cursor: pointer; transition: border-color .15s, background .15s; }
+  .drop.over { border-color: var(--accent); background: #1b2230; }
+  .drop strong { color: var(--accent); }
+  .hint { color: var(--muted); font-size: 13px; margin-top: 8px; }
+  .row { display:flex; gap:12px; align-items:center; margin-top:16px; flex-wrap: wrap; }
+  label.pin { color: var(--muted); font-size: 13px; display:flex; align-items:center; gap:8px; }
+  .result { margin-top: 26px; border-radius: 12px; border:1px solid var(--line);
+            background: var(--panel); overflow: hidden; display:none; }
+  .result.show { display:block; }
+  .verdict { padding: 18px 20px; font-weight: 700; font-size: 18px; display:flex; align-items:center; gap:12px; }
+  .verdict.pass { background: rgba(46,160,67,.12); color: var(--pass); }
+  .verdict.fail { background: rgba(248,81,73,.12); color: var(--fail); }
+  .dot { width:11px; height:11px; border-radius:50%; background: currentColor; flex: none; }
+  .detail { padding: 6px 20px 18px; }
+  .kv { display:grid; grid-template-columns: 130px 1fr; gap: 4px 14px; font-size: 13px;
+        color: var(--muted); padding: 8px 0; }
+  .kv b { color: var(--fg); font-weight: 600; }
+  code, .mono { font-family: ui-monospace,SFMono-Regular,Menlo,monospace; word-break: break-all; }
+  footer { margin-top: 40px; color: var(--muted); font-size: 12.5px; line-height: 1.7; }
+  footer a { color: var(--accent); }
+  input[type=file] { display:none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Agent Action Proof &mdash; offline verifier</h1>
+  <p class="sub">Drop a signed proof bundle below. Everything runs in this page: no upload, no network,
+  no trust in the system that produced it. Works offline &mdash; save this file and open it anywhere.</p>
+
+  <div class="drop" id="drop">
+    <div>Drop a <strong>bundle.json</strong> here, or click to choose a file</div>
+    <div class="hint">A MakerChecker audit export &mdash; <code>audit export</code> output</div>
+  </div>
+  <input type="file" id="file" accept="application/json,.json" />
+
+  <div class="row">
+    <label class="pin">
+      <input type="checkbox" id="pinToggle" />
+      Pin an expected public key (rejects a bundle re-signed with any other key)
+    </label>
+    <input type="file" id="pinFile" accept=".pem,application/x-pem-file,text/plain" />
+  </div>
+
+  <div class="result" id="result">
+    <div class="verdict" id="verdict"><span class="dot"></span><span id="verdictText"></span></div>
+    <div class="detail" id="detail"></div>
+  </div>
+
+  <footer>
+    Verifies an RFC&nbsp;8785 canonical JSON / SHA-256 hash chain and an Ed25519 manifest signature,
+    per the public audit specification. A bundle proves integrity and origin under the key embedded in it;
+    pin the instance public key (obtained out of band) to also prove which key is legitimate.
+    Ed25519 in the browser requires a recent Chrome, Firefox, or Safari.
+    Reference &amp; CLI: <code>@makerchecker/proof-verifier</code>.
+  </footer>
+</main>
+
+<script type="module">
+// ---- vendored RFC 8785 canonical JSON (identical to the producer's serializer) ----
+function canonicalJson(value) { return ser(value, "$"); }
+function ser(v, path) {
+  if (v === null) return "null";
+  const t = typeof v;
+  if (t === "boolean") return v ? "true" : "false";
+  if (t === "number") { if (!Number.isFinite(v)) throw new Error("non-finite number at " + path); return JSON.stringify(v); }
+  if (t === "string") return JSON.stringify(v);
+  if (t !== "object") throw new Error('unsupported type "' + t + '" at ' + path);
+  if (Array.isArray(v)) return "[" + v.map((x, i) => ser(x === undefined ? null : x, path + "[" + i + "]")).join(",") + "]";
+  const proto = Object.getPrototypeOf(v);
+  if (proto !== Object.prototype && proto !== null) throw new Error("non-plain object at " + path);
+  const keys = Object.keys(v).filter((k) => v[k] !== undefined).sort();
+  return "{" + keys.map((k) => JSON.stringify(k) + ":" + ser(v[k], path + "." + k)).join(",") + "}";
+}
+
+// ---- WebCrypto provider ----
+const enc = new TextEncoder();
+const hex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+async function sha256Hex(s) { return hex(await crypto.subtle.digest("SHA-256", enc.encode(s))); }
+function pemToDer(pem) {
+  const b64 = pem.replace(/-----[^-]+-----/g, "").replace(/\s+/g, "");
+  return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+}
+async function importEd25519(pem) {
+  return crypto.subtle.importKey("spki", pemToDer(pem), { name: "Ed25519" }, true, ["verify"]);
+}
+async function ed25519Verify(pem, message, sigB64) {
+  try {
+    const key = await importEd25519(pem);
+    const sig = Uint8Array.from(atob(sigB64), (c) => c.charCodeAt(0));
+    return await crypto.subtle.verify({ name: "Ed25519" }, key, sig, enc.encode(message));
+  } catch { return false; }
+}
+async function samePublicKeyPem(a, b) {
+  try {
+    const ka = await importEd25519(a), kb = await importEd25519(b);
+    const da = new Uint8Array(await crypto.subtle.exportKey("spki", ka));
+    const db = new Uint8Array(await crypto.subtle.exportKey("spki", kb));
+    return da.length === db.length && da.every((x, i) => x === db[i]);
+  } catch { return false; }
+}
+async function keyFingerprint(pem) { try { return await sha256Hex2(pemToDer(pem)); } catch { return null; } }
+async function sha256Hex2(bytes) { return hex(await crypto.subtle.digest("SHA-256", bytes)); }
+const cryptoProvider = { sha256Hex, ed25519Verify, samePublicKeyPem, keyFingerprint };
+
+// ---- verifier core (inlined; mirrors verify-core.js) ----
+const GENESIS_PREFIX = "makerchecker-genesis:";
+function manifestSigningString(m) {
+  return canonicalJson({ bundleKind: m.bundleKind, schemaVersion: m.schemaVersion, instanceId: m.instanceId,
+    exportedAt: m.exportedAt, runId: m.runId, count: m.count, firstSeq: m.firstSeq, lastSeq: m.lastSeq,
+    headHash: m.headHash, eventHashesDigest: m.eventHashesDigest });
+}
+function hashInput(e) {
+  return { id: e.id, occurredAt: e.occurred_at, actor: e.actor, eventType: e.event_type,
+    entityType: e.entity_type, entityId: e.entity_id, runId: e.run_id, payload: e.payload, prevHash: e.prev_hash };
+}
+const fail = (reason, extra) => ({ ok: false, reason, ...extra });
+async function verifyBundle(bundle, cp, opts = {}) {
+  if (!bundle || typeof bundle !== "object" || !bundle.manifest || !Array.isArray(bundle.events))
+    return fail("not a proof bundle: expected { manifest, events: [] }");
+  const { manifest, events } = bundle;
+  if (opts.expectedPublicKeyPem && !(await cp.samePublicKeyPem(opts.expectedPublicKeyPem, manifest.publicKeyPem)))
+    return fail("manifest public key does not match the pinned key");
+  if (!(await cp.ed25519Verify(manifest.publicKeyPem, manifestSigningString(manifest), manifest.signature)))
+    return fail("manifest signature invalid");
+  if (events.length !== manifest.count) return fail(`event count ${events.length} != manifest count ${manifest.count}`);
+  if ((await cp.sha256Hex(events.map((e) => e.hash).join("\n"))) !== manifest.eventHashesDigest)
+    return fail("event hash set does not match the signed digest");
+  if (manifest.bundleKind === "run") {
+    if (manifest.runId == null) return fail("run bundle manifest is missing runId");
+    const f = events.find((e) => e.run_id !== manifest.runId);
+    if (f) return fail(`event seq ${f.seq} does not belong to run ${manifest.runId}`, { failedSeq: f.seq });
+  } else if (manifest.bundleKind !== "full") return fail(`unknown bundleKind "${manifest.bundleKind}"`);
+  let prev = manifest.bundleKind === "full" ? await cp.sha256Hex(GENESIS_PREFIX + manifest.instanceId) : null;
+  for (const e of events) {
+    if ((await cp.sha256Hex(canonicalJson(hashInput(e)))) !== e.hash)
+      return fail(`event seq ${e.seq} hash mismatch (row tampered)`, { failedSeq: e.seq });
+    if (prev !== null) { if (e.prev_hash !== prev) return fail(`event seq ${e.seq} breaks chain linkage`, { failedSeq: e.seq }); prev = e.hash; }
+  }
+  const head = events.length ? events[events.length - 1].hash : null;
+  if (head !== manifest.headHash) return fail("head hash does not match manifest");
+  if ((events[0]?.seq ?? null) !== manifest.firstSeq) return fail("first seq does not match manifest");
+  if ((events[events.length - 1]?.seq ?? null) !== manifest.lastSeq) return fail("last seq does not match manifest");
+  return { ok: true, count: events.length, bundleKind: manifest.bundleKind, headHash: head,
+    keyFingerprint: await cp.keyFingerprint(manifest.publicKeyPem) };
+}
+
+// ---- UI wiring ----
+const $ = (id) => document.getElementById(id);
+const drop = $("drop"), fileInput = $("file"), pinToggle = $("pinToggle"), pinFile = $("pinFile");
+let pinnedPem = null;
+
+drop.addEventListener("click", () => fileInput.click());
+["dragover", "dragenter"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, () => drop.classList.remove("over")));
+drop.addEventListener("drop", (e) => { e.preventDefault(); if (e.dataTransfer.files[0]) handle(e.dataTransfer.files[0]); });
+fileInput.addEventListener("change", () => { if (fileInput.files[0]) handle(fileInput.files[0]); });
+pinFile.addEventListener("change", async () => { if (pinFile.files[0]) { pinnedPem = await pinFile.files[0].text(); pinToggle.checked = true; } });
+
+async function handle(file) {
+  let bundle;
+  try { bundle = JSON.parse(await file.text()); }
+  catch (e) { return render(fail("not valid JSON: " + e.message)); }
+  const opts = pinToggle.checked && pinnedPem ? { expectedPublicKeyPem: pinnedPem } : {};
+  render(await verifyBundle(bundle, cryptoProvider, opts), file.name, pinToggle.checked && pinnedPem);
+}
+
+function render(result, name, pinned) {
+  const box = $("result"), verdict = $("verdict"), vtext = $("verdictText"), detail = $("detail");
+  box.classList.add("show");
+  verdict.className = "verdict " + (result.ok ? "pass" : "fail");
+  vtext.textContent = result.ok ? "PASS — bundle verified" : "FAIL — do not rely on this bundle";
+  if (result.ok) {
+    const kind = result.bundleKind === "full" ? "full chain (genesis-rooted)" : "single run (run_id-bound)";
+    detail.innerHTML =
+      kv("File", esc(name || "")) + kv("Events", result.count) + kv("Scope", kind) +
+      kv("Head hash", `<span class="mono">${esc(result.headHash)}</span>`) +
+      kv("Key", `<span class="mono">sha256:${esc(result.keyFingerprint || "")}</span>`) +
+      (pinned ? kv("Key pinning", "matched the pinned key") : "");
+  } else {
+    detail.innerHTML = kv("Reason", esc(result.reason)) +
+      (result.failedSeq ? kv("First failure", "event seq " + esc(result.failedSeq)) : "");
+  }
+}
+const kv = (k, v) => `<div class="kv"><b>${k}</b><div>${v}</div></div>`;
+const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+</script>
+</body>
+</html>

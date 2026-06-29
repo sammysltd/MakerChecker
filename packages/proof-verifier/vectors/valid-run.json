@@ -1,0 +1,158 @@
+{
+  "manifest": {
+    "bundleKind": "run",
+    "schemaVersion": 1,
+    "instanceId": "11111111-1111-4111-8111-111111111111",
+    "exportedAt": "2026-06-12T10:00:00.000Z",
+    "runId": "22222222-2222-4222-8222-222222222222",
+    "count": 7,
+    "firstSeq": "2",
+    "lastSeq": "8",
+    "headHash": "08664a25e2828506f5d943e6ae9703cb542da630c6cb0509d2c0c944638ee5b3",
+    "eventHashesDigest": "d1f5fba0db15defa1f10f84f30dfdd52169a88766cb51d53f5aa4a4e8f3d3c7c",
+    "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAnKdCt10Ts7ExQIzFvO2ME06hpng7uY5F4yjtKLOXW04=\n-----END PUBLIC KEY-----\n",
+    "signature": "ROo12y6kBuqvcoE9xeHejBPCuN8h0N1FYhB2dbRyfwaWJ1g0vlTdorbeXVnI9kR++Ib5cTselLqEDOnkoQ5gBw=="
+  },
+  "events": [
+    {
+      "seq": "2",
+      "id": "ae6557d9-6ceb-472c-9df2-40c594df28b3",
+      "occurred_at": "2026-06-12T09:31:00.000Z",
+      "actor": {
+        "kind": "agent",
+        "id": "agent-0001",
+        "role": "case-processor"
+      },
+      "event_type": "run.started",
+      "entity_type": "flow_run",
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "run_id": "22222222-2222-4222-8222-222222222222",
+      "payload": {
+        "flow": "pv-icsr-processing"
+      },
+      "prev_hash": "383904a6ed018b1fb36e082a53644c803311a86fd69e86aaa048eeddf9b8dd2c",
+      "hash": "56f146d988c8719ba781082b224e3cdec0b1cad84d502dbff4dcd44bee32394c"
+    },
+    {
+      "seq": "3",
+      "id": "1ee34ed8-09de-455d-9c3d-d3874cd6adb0",
+      "occurred_at": "2026-06-12T09:32:00.000Z",
+      "actor": {
+        "kind": "agent",
+        "id": "agent-0001",
+        "role": "case-processor"
+      },
+      "event_type": "llm.call",
+      "entity_type": null,
+      "entity_id": null,
+      "run_id": "22222222-2222-4222-8222-222222222222",
+      "payload": {
+        "model": "claude",
+        "tokens": 412
+      },
+      "prev_hash": "56f146d988c8719ba781082b224e3cdec0b1cad84d502dbff4dcd44bee32394c",
+      "hash": "7c98c3ae7ad6d2ab6b75829a3c40481db262722bf04732715500c10519150e4b"
+    },
+    {
+      "seq": "4",
+      "id": "2c9c383e-4729-4710-82e5-44bd1403f865",
+      "occurred_at": "2026-06-12T09:33:00.000Z",
+      "actor": {
+        "kind": "agent",
+        "id": "agent-0001",
+        "role": "case-processor"
+      },
+      "event_type": "enforcement.blocked",
+      "entity_type": null,
+      "entity_id": null,
+      "run_id": "22222222-2222-4222-8222-222222222222",
+      "payload": {
+        "code": "skill_not_granted",
+        "at": "decision",
+        "skill": "e2b-submit@1.0.0"
+      },
+      "prev_hash": "7c98c3ae7ad6d2ab6b75829a3c40481db262722bf04732715500c10519150e4b",
+      "hash": "ca3c15dd6ca8e19facaacdc86f9f1e8c6b977673e1f480a787fdbc77159e4d0a"
+    },
+    {
+      "seq": "5",
+      "id": "39ce56bf-ef30-4d77-a74f-9bb3158da3ee",
+      "occurred_at": "2026-06-12T09:34:00.000Z",
+      "actor": {
+        "kind": "agent",
+        "id": "agent-0001",
+        "role": "case-processor"
+      },
+      "event_type": "approval.requested",
+      "entity_type": "approval",
+      "entity_id": "appr-1",
+      "run_id": "22222222-2222-4222-8222-222222222222",
+      "payload": {
+        "gate": "medical-review",
+        "skill": "e2b-submit@1.0.0"
+      },
+      "prev_hash": "ca3c15dd6ca8e19facaacdc86f9f1e8c6b977673e1f480a787fdbc77159e4d0a",
+      "hash": "c39df83422f73aed594e19e40a909804c4ee480396aa0b5d71755c543549db62"
+    },
+    {
+      "seq": "6",
+      "id": "9999bca3-ae59-47cf-b837-96e420358f23",
+      "occurred_at": "2026-06-12T09:35:00.000Z",
+      "actor": {
+        "kind": "user",
+        "id": "user-0009",
+        "email": "reviewer@example.org"
+      },
+      "event_type": "approval.decided",
+      "entity_type": "approval",
+      "entity_id": "appr-1",
+      "run_id": "22222222-2222-4222-8222-222222222222",
+      "payload": {
+        "decision": "approved",
+        "decider": "user-0009",
+        "reason": "Seriousness confirmed for P-4003; file 15-day expedited ICSR per 21 CFR 314.80"
+      },
+      "prev_hash": "c39df83422f73aed594e19e40a909804c4ee480396aa0b5d71755c543549db62",
+      "hash": "2371e189d827c2a7ff0b118aa69fb617f8b3a5f5c735c551af419a356edac73a"
+    },
+    {
+      "seq": "7",
+      "id": "32ab037c-7a91-499b-b3e7-70897eb171e4",
+      "occurred_at": "2026-06-12T09:36:00.000Z",
+      "actor": {
+        "kind": "agent",
+        "id": "agent-0001",
+        "role": "case-processor"
+      },
+      "event_type": "skill.invoked",
+      "entity_type": null,
+      "entity_id": null,
+      "run_id": "22222222-2222-4222-8222-222222222222",
+      "payload": {
+        "skill": "e2b-submit@1.0.0",
+        "outcome": "filed"
+      },
+      "prev_hash": "2371e189d827c2a7ff0b118aa69fb617f8b3a5f5c735c551af419a356edac73a",
+      "hash": "219870cd84785c6b0d52c671087d937e63b659325bff852f0657f418cb580131"
+    },
+    {
+      "seq": "8",
+      "id": "313c0875-9cb6-4f9a-be10-448559f1316b",
+      "occurred_at": "2026-06-12T09:37:00.000Z",
+      "actor": {
+        "kind": "agent",
+        "id": "agent-0001",
+        "role": "case-processor"
+      },
+      "event_type": "run.completed",
+      "entity_type": "flow_run",
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "run_id": "22222222-2222-4222-8222-222222222222",
+      "payload": {
+        "status": "completed"
+      },
+      "prev_hash": "219870cd84785c6b0d52c671087d937e63b659325bff852f0657f418cb580131",
+      "hash": "08664a25e2828506f5d943e6ae9703cb542da630c6cb0509d2c0c944638ee5b3"
+    }
+  ]
+}

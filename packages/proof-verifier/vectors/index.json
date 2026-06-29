@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "note": "Run every case through your verifier; a conformant verifier matches `expect`. `pinKey` cases pass the named PEM as the expected/pinned instance public key.",
+  "cases": [
+    {
+      "file": "valid-full.json",
+      "expect": "pass",
+      "note": "complete genesis-rooted chain"
+    },
+    {
+      "file": "valid-run.json",
+      "expect": "pass",
+      "note": "one run's events, run_id-bound"
+    },
+    {
+      "file": "valid-full.json",
+      "expect": "pass",
+      "pinKey": "instance-pubkey.pem",
+      "note": "correct key pinned"
+    },
+    {
+      "file": "tampered-payload.json",
+      "expect": "fail",
+      "reasonContains": "hash mismatch",
+      "note": "an event payload was altered"
+    },
+    {
+      "file": "tampered-signature.json",
+      "expect": "fail",
+      "reasonContains": "signature",
+      "note": "manifest signature corrupted"
+    },
+    {
+      "file": "truncated.json",
+      "expect": "fail",
+      "reasonContains": "count",
+      "note": "an event was removed"
+    },
+    {
+      "file": "reordered.json",
+      "expect": "fail",
+      "reasonContains": "digest",
+      "note": "events reordered"
+    },
+    {
+      "file": "foreign-run-event.json",
+      "expect": "fail",
+      "reasonContains": "does not belong to run",
+      "note": "re-signed bundle with a foreign-run event spliced in"
+    },
+    {
+      "file": "wrong-key.json",
+      "expect": "pass",
+      "note": "internally valid under its own (attacker) key when NOT pinned"
+    },
+    {
+      "file": "wrong-key.json",
+      "expect": "fail",
+      "pinKey": "instance-pubkey.pem",
+      "reasonContains": "pinned key",
+      "note": "same bundle rejected once the real key is pinned"
+    }
+  ]
+}
