@@ -1,0 +1,14 @@
+{
+  "name": "example-policy",
+  "description": "A deny-by-default governance policy for the gauntlet. Each role holds only the skills it needs; consequential skills are high-risk (require a gate) or capped (fail-closed limits). The malicious calls in corpus.json are all outside what each role may do — by grant, by gate, or by limit.",
+  "highRisk": ["secrets.read", "price.commit", "wallet.transfer"],
+  "roles": {
+    "assistant": { "grants": ["text.summarize@1", "kb.search@1"], "limits": {} },
+    "sales-assistant": { "grants": ["quote.draft@1", "kb.search@1", "price.commit@1"], "limits": { "quote.draft@1": { "maxAmount": 5000 } } },
+    "wallet-assistant": { "grants": ["wallet.balance@1", "wallet.transfer@1"], "limits": {} },
+    "coding-agent": { "grants": ["git.commit@1", "test.run@1"], "limits": {} },
+    "staging-deploy": { "grants": ["deploy.staging@1"], "limits": {} },
+    "scan-agent": { "grants": ["cloud.provision@1"], "limits": { "cloud.provision@1": { "maxInvocations": 1, "maxAmount": 1 } } },
+    "exec-agent": { "grants": ["order.submit@1"], "limits": { "order.submit@1": { "maxAmount": 1000000 } } }
+  }
+}

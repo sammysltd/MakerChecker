@@ -1,0 +1,32 @@
+{
+  "name": "@makerchecker/injection-gauntlet",
+  "version": "0.1.0",
+  "description": "A runnable corpus + harness proving that structural enforcement stops a fully prompt-injected agent. Assumes the injection wins at the model layer; shows the tool call never executes.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "injection-gauntlet": "src/run.mjs"
+  },
+  "files": [
+    "src",
+    "corpus.json",
+    "policies",
+    "README.md"
+  ],
+  "scripts": {
+    "start": "node src/run.mjs",
+    "test": "node scripts/test.mjs",
+    "lint": "true",
+    "typecheck": "true"
+  },
+  "keywords": [
+    "prompt-injection",
+    "agent-security",
+    "structural-enforcement",
+    "deny-by-default",
+    "makerchecker"
+  ],
+  "engines": {
+    "node": ">=18.4.0"
+  }
+}
