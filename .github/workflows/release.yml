@@ -56,12 +56,17 @@ jobs:
           corepack pnpm -r exec -- npm pkg set version="$VERSION"
 
       - name: Build publishable packages
+        # Build through turbo, not raw `pnpm --filter build`, so the dependency
+        # graph is ordered: turbo's build task is dependsOn ["^build"], which
+        # compiles the SDK (and any shared workspace deps) before the connectors
+        # that import its types. The raw pnpm filter did not guarantee this, so
+        # the connectors' tsc could race ahead of the SDK's dist/ and fail with
+        # "Cannot find module '@makerchecker/sdk'".
         run: >
-          corepack pnpm
-          --filter "@makerchecker/sdk..."
-          --filter "@makerchecker/connector-claude-agent..."
-          --filter "@makerchecker/connector-langchain..."
-          build
+          corepack pnpm exec turbo run build
+          --filter=@makerchecker/sdk
+          --filter=@makerchecker/connector-claude-agent
+          --filter=@makerchecker/connector-langchain
 
       - name: Publish to npm with provenance
         run: corepack pnpm -r publish --access public --provenance --no-git-checks
