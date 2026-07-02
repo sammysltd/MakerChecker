@@ -25,7 +25,7 @@ jobs:
     env:
       TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
@@ -44,7 +44,7 @@ jobs:
   security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           # gitleaks scans the full git history; without depth 0 only the
           # latest commit is fetched and a secret in an earlier commit slips by.
@@ -73,7 +73,7 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Build and boot the stack
         # `up --build` also validates the Dockerfile builds. Booting it is what
         # catches runtime-only failures the image build cannot — e.g. a runtime
@@ -108,7 +108,7 @@ jobs:
   image-scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       # Each job runs on a fresh runner with no shared local image, and the
       # `docker` job above tears its image down. Build our own with an explicit
       # tag (context is the repo root: the Dockerfile COPYs package manifests,
@@ -135,7 +135,7 @@ jobs:
   helm:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: azure/setup-helm@v4
         with:
           version: v4.2.1
@@ -158,7 +158,7 @@ jobs:
   sbom:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       # Build the image so the SBOM reflects exactly what ships (pruned prod
       # node_modules + Alpine OS packages), not just what is in the repo.
       - name: Build server image
@@ -197,7 +197,7 @@ jobs:
       run:
         working-directory: packages/sdk-python
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.12"
