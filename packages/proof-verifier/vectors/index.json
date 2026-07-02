@@ -59,6 +59,18 @@
       "pinKey": "instance-pubkey.pem",
       "reasonContains": "pinned key",
       "note": "same bundle rejected once the real key is pinned"
+    },
+    {
+      "file": "unicode-literal.json",
+      "expect": "pass",
+      "note": "astral emoji + NFC/NFD pair hashed over literal code points: no escaping beyond the mandatory set, no Unicode normalization"
+    },
+    {
+      "file": "ill-formed-string.json",
+      "expect": "fail",
+      "reasonCode": "ill_formed_string",
+      "reasonContains": "ill-formed string",
+      "note": "an event payload carries an unpaired surrogate: I-JSON (RFC 7493) spec violation, a verdict distinct from tamper"
     }
   ]
 }

@@ -16,7 +16,7 @@
  * (`docs/audit-spec.md`, schema version 1).
  */
 
-import { canonicalJson } from "./canonical-json.js";
+import { canonicalJson, IllFormedStringError } from "./canonical-json.js";
 
 /**
  * Genesis derivation prefix, fixed by the audit spec (schema version 1):
@@ -64,7 +64,14 @@ function fail(reason, extra) {
  * Verifies a bundle. Returns
  *   { ok: true, count, bundleKind, headHash, keyFingerprint }
  * or
- *   { ok: false, reason, failedSeq? }.
+ *   { ok: false, reason, reasonCode?, failedSeq?, path? }.
+ *
+ * `reasonCode` is set for machine-distinguishable verdict classes; today the
+ * only code is "ill_formed_string": the bundle violates the spec's I-JSON
+ * (RFC 7493) requirement — an unpaired surrogate in a hashed string — so its
+ * hash is not well-defined under RFC 8785. That is a SPEC-VIOLATION reject,
+ * deliberately distinct from a tamper verdict: nothing is proven altered, but
+ * the bundle can never cross-verify and must not be accepted.
  *
  * @param {object} bundle  parsed { manifest, events }
  * @param {object} crypto  injected crypto provider (see file header)
@@ -86,9 +93,22 @@ export async function verifyBundle(bundle, crypto, opts = {}) {
   }
 
   // 1. Signature over the canonical signing string (excludes publicKeyPem, signature).
+  let signingString;
+  try {
+    signingString = manifestSigningString(manifest);
+  } catch (err) {
+    if (err instanceof IllFormedStringError) {
+      return fail(
+        `manifest contains an ill-formed string (unpaired surrogate) at ${err.path}: ` +
+          "the spec requires I-JSON (RFC 7493) input, so this bundle can never cross-verify",
+        { reasonCode: "ill_formed_string", path: err.path },
+      );
+    }
+    throw err;
+  }
   const sigOk = await crypto.ed25519Verify(
     manifest.publicKeyPem,
-    manifestSigningString(manifest),
+    signingString,
     manifest.signature,
   );
   if (!sigOk) return fail("manifest signature invalid");
@@ -128,7 +148,25 @@ export async function verifyBundle(bundle, crypto, opts = {}) {
       ? await crypto.sha256Hex(GENESIS_PREFIX + manifest.instanceId)
       : null;
   for (const event of events) {
-    const recomputed = await crypto.sha256Hex(canonicalJson(hashInput(event)));
+    let recomputed;
+    try {
+      recomputed = await crypto.sha256Hex(canonicalJson(hashInput(event)));
+    } catch (err) {
+      if (err instanceof IllFormedStringError) {
+        // Spec-violation verdict, distinct from tamper: the event carries a
+        // string that is not I-JSON (RFC 7493), so RFC 8785 defines no bytes
+        // to hash. The buggy pre-I-JSON JS producer emitted the ES2019 \uXXXX
+        // escape here, which no other language's RFC 8785 implementation
+        // reproduces — accepting it would "verify" JS-only semantics. Reject,
+        // fail closed, with the seq and JSON path machine-readable.
+        return fail(
+          `event seq ${event.seq} contains an ill-formed string (unpaired surrogate) at ${err.path}: ` +
+            "the spec requires I-JSON (RFC 7493) input, so this bundle can never cross-verify",
+          { reasonCode: "ill_formed_string", failedSeq: event.seq, path: err.path },
+        );
+      }
+      throw err;
+    }
     if (recomputed !== event.hash) {
       return fail(`event seq ${event.seq} hash mismatch (row tampered)`, { failedSeq: event.seq });
     }

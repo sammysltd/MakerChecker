@@ -7,5 +7,10 @@
  */
 
 export { verifyBundle, GENESIS_PREFIX } from "./verify-core.js";
-export { canonicalJson, CanonicalizationError } from "./canonical-json.js";
+export {
+  canonicalJson,
+  CanonicalizationError,
+  IllFormedStringError,
+  isWellFormedString,
+} from "./canonical-json.js";
 export { nodeCrypto } from "./node-crypto.js";

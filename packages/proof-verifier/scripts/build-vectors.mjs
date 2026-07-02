@@ -176,6 +176,39 @@ function main() {
   //    PASSES on its own and FAILS only when the real key is pinned.
   const wrongKey = makeBundle(events, { instanceId, privateKey: attacker.privateKey, publicKeyPem: attackerPubPem, exportedAt, bundleKind: "full", runId: null });
 
+  // 7. ill-formed-string: the last event's payload carries an unpaired
+  //    surrogate (reachable in production via JSON.parse('{"note":"\ud800"}')).
+  //    Its stored hash is over the exact bytes the buggy pre-I-JSON JS producer
+  //    emitted (ES2019 JSON.stringify escapes a lone surrogate as \ud800 —
+  //    bytes no other language's RFC 8785 implementation reproduces), so this
+  //    is precisely the bundle such a producer would have signed. A conformant
+  //    verifier must REJECT it as a spec violation (reasonCode
+  //    ill_formed_string) — not report tamper, and never "verify" it with
+  //    JS-only semantics. The placeholder trick below recreates the legacy
+  //    bytes without keeping a second, lenient serializer in the corpus.
+  const PLACEHOLDER = "__ILL_FORMED_STRING_PLACEHOLDER__";
+  const illSpecs = [
+    ...specs,
+    { id: randomUUID(), occurred_at: t(8), actor: agent, event_type: "note.recorded", run_id: runId, payload: { note: PLACEHOLDER } },
+  ];
+  const illEvents = buildChain(instanceId, illSpecs);
+  const illLast = illEvents[illEvents.length - 1];
+  illLast.hash = sha256Hex(canonicalJson(hashInput(illLast)).replace(`"${PLACEHOLDER}"`, '"\\ud800"'));
+  illLast.payload.note = "\ud800"; // the actual lone surrogate ships in the vector
+  const illFormedString = makeBundle(illEvents, { ...bundleArgs, bundleKind: "full", runId: null });
+
+  // 8. unicode-literal (POSITIVE): an astral emoji (U+1F600) plus an NFC/NFD
+  //    pair (U+00E9 vs U+0065 U+0301), hashed over the literal code points. It
+  //    must VERIFY: proving the pipeline emits supplementary characters
+  //    literally (RFC 8785 escapes only the mandatory set) and applies no
+  //    Unicode normalization (a normalizing implementation would collapse the
+  //    NFC/NFD pair and fail the hash).
+  const unicodeSpecs = [
+    ...specs,
+    { id: randomUUID(), occurred_at: t(8), actor: agent, event_type: "note.recorded", run_id: runId, payload: { emoji: "\u{1F600}", nfc: "\u00e9", nfd: "e\u0301" } },
+  ];
+  const unicodeLiteral = makeBundle(buildChain(instanceId, unicodeSpecs), { ...bundleArgs, bundleKind: "full", runId: null });
+
   const write = (name, obj) => writeFileSync(join(VECTORS_DIR, name), JSON.stringify(obj, null, 2) + "\n");
   write("valid-full.json", validFull);
   write("valid-run.json", validRun);
@@ -185,6 +218,8 @@ function main() {
   write("reordered.json", reordered);
   write("foreign-run-event.json", foreignRunEvent);
   write("wrong-key.json", wrongKey);
+  write("ill-formed-string.json", illFormedString);
+  write("unicode-literal.json", unicodeLiteral);
   writeFileSync(join(VECTORS_DIR, "instance-pubkey.pem"), publicKeyPem);
 
   const index = {
@@ -201,6 +236,8 @@ function main() {
       { file: "foreign-run-event.json", expect: "fail", reasonContains: "does not belong to run", note: "re-signed bundle with a foreign-run event spliced in" },
       { file: "wrong-key.json", expect: "pass", note: "internally valid under its own (attacker) key when NOT pinned" },
       { file: "wrong-key.json", expect: "fail", pinKey: "instance-pubkey.pem", reasonContains: "pinned key", note: "same bundle rejected once the real key is pinned" },
+      { file: "unicode-literal.json", expect: "pass", note: "astral emoji + NFC/NFD pair hashed over literal code points: no escaping beyond the mandatory set, no Unicode normalization" },
+      { file: "ill-formed-string.json", expect: "fail", reasonCode: "ill_formed_string", reasonContains: "ill-formed string", note: "an event payload carries an unpaired surrogate: I-JSON (RFC 7493) spec violation, a verdict distinct from tamper" },
     ],
   };
   writeFileSync(join(VECTORS_DIR, "index.json"), JSON.stringify(index, null, 2) + "\n");

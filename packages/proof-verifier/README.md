@@ -51,7 +51,7 @@ const result = await verifyBundle(bundle, nodeCrypto, {
   expectedPublicKeyPem, // optional out-of-band key pinning
 });
 // { ok: true, count, bundleKind, headHash, keyFingerprint }
-// | { ok: false, reason, failedSeq? }
+// | { ok: false, reason, reasonCode?, failedSeq?, path? }
 ```
 
 The core (`@makerchecker/proof-verifier/core`) is isomorphic: all cryptography
@@ -71,12 +71,44 @@ Per the [audit spec](../../docs/audit-spec.md):
 6. **Head & bounds** — head hash and first/last seq match the manifest.
 7. **Key pinning (optional)** — rejects a bundle re-signed with any key but the pinned one.
 
+### Spec-violation verdicts (distinct from tamper)
+
+The spec requires hashed input to be **I-JSON (RFC 7493)**: every string —
+object key or value — must be well-formed Unicode. RFC 8785 presumes I-JSON
+and defines no interoperable byte sequence for an unpaired surrogate
+(implementations disagree: ES2019 `JSON.stringify` emits a `\ud800` escape,
+Python/Go RFC 8785 libraries throw or emit different bytes), so a hash over
+such a string can never cross-verify. When a bundle contains one, the verifier
+returns a **machine-readable spec-violation reject**, deliberately distinct
+from a tamper verdict:
+
+```js
+{
+  ok: false,
+  reasonCode: "ill_formed_string", // machine-readable verdict class
+  failedSeq: "9",                  // the offending event (absent for a manifest string)
+  path: "$.payload.note",          // JSON path of the ill-formed string
+  reason: "event seq 9 contains an ill-formed string (unpaired surrogate) at $.payload.note: ..."
+}
+```
+
+`ill_formed_string` proves nothing was altered — it says the bundle violates
+the spec's I-JSON requirement, its hashes were never well-defined, and it must
+not be accepted. Producers running the fixed pipeline can no longer emit such
+bundles (ill-formed strings are rejected at API ingress with HTTP 400 and by
+the serializer itself, fail closed). No Unicode normalization is ever applied:
+NFC and NFD strings are distinct bytes, and characters outside JSON's
+mandatory escape set (including astral characters like U+1F600) are hashed and
+emitted literally — the `unicode-literal` vector proves both properties.
+
 ## Conformance vectors
 
-[`vectors/`](./vectors) is a public corpus: valid full and run bundles plus
-adversarial variants (tampered payload, corrupted signature, truncation,
-reordering, a re-signed foreign-run splice, and a wrong-key forgery), each with
-the verdict a conformant verifier must return in
+[`vectors/`](./vectors) is a public corpus: valid full and run bundles (one
+with astral + NFC/NFD strings proving literal, unnormalized Unicode handling)
+plus adversarial variants (tampered payload, corrupted signature, truncation,
+reordering, a re-signed foreign-run splice, a wrong-key forgery, and an
+ill-formed-string bundle that must be rejected as an I-JSON spec violation),
+each with the verdict a conformant verifier must return in
 [`vectors/index.json`](./vectors/index.json). Any implementation in any language
 can run these and self-certify.
 

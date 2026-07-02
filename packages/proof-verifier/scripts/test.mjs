@@ -42,6 +42,10 @@ for (const c of index.cases) {
     failures.push(`${label}: failed as expected but reason "${result.reason}" lacks "${c.reasonContains}"`);
     continue;
   }
+  if (c.expect === "fail" && c.reasonCode && result.reasonCode !== c.reasonCode) {
+    failures.push(`${label}: expected reasonCode "${c.reasonCode}", got "${result.reasonCode ?? "none"}"`);
+    continue;
+  }
   passed += 1;
   process.stdout.write(`  ok  ${label} -> ${got}${got === "fail" ? ` (${result.reason})` : ` (${result.count} events)`}\n`);
 }

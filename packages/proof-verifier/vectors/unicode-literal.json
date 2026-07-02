@@ -1,19 +1,37 @@
 {
   "manifest": {
-    "bundleKind": "run",
+    "bundleKind": "full",
     "schemaVersion": 1,
     "instanceId": "11111111-1111-4111-8111-111111111111",
     "exportedAt": "2026-06-12T10:00:00.000Z",
-    "runId": "22222222-2222-4222-8222-222222222222",
-    "count": 8,
-    "firstSeq": "2",
-    "lastSeq": "8",
-    "headHash": "f5ab5d1e8308b03d7bec7ff95826980559cdfcf7fbd97caa574a7110c87503f2",
-    "eventHashesDigest": "63f8ea885390881348d5752fa62a40ef527aa45f8d9639f4ecd9796a212e7d86",
+    "runId": null,
+    "count": 9,
+    "firstSeq": "1",
+    "lastSeq": "9",
+    "headHash": "fb01493b318206320b84c099d2266e8ad7085f596b80d935c8445a96ff7d0a4b",
+    "eventHashesDigest": "3205e98a3a3255d5795d41741c67ee0bb6431ae3684853712e177d468a171a5e",
     "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAtAZrcPkaCk+v8mKz+NYQhe8V3qHlMnjwG5pzpSgYa18=\n-----END PUBLIC KEY-----\n",
-    "signature": "YDPVk6k9KYp1O7GsZ33lPYt5n4atgSrHwlBh2OAWjCQEGvD9Al9Nmg18pjO3WVCJmZukUsalBpgFzNLwwux4Ag=="
+    "signature": "ri4+quLn/jxo7y5wH3kpuvgjxUrTU0oAslvpYnNvDYMIRpgvDYVTUcmwWYB7PyBwqPvlv75JDKkIZEzXEgFxCQ=="
   },
   "events": [
+    {
+      "seq": "1",
+      "id": "3a9cd439-910a-436d-befd-1c0bb76fd479",
+      "occurred_at": "2026-06-12T09:30:00.000Z",
+      "actor": {
+        "kind": "system",
+        "id": "instance"
+      },
+      "event_type": "audit.genesis",
+      "entity_type": null,
+      "entity_id": null,
+      "run_id": null,
+      "payload": {
+        "instanceId": "11111111-1111-4111-8111-111111111111"
+      },
+      "prev_hash": "a3223803bd3572c34689d246ee3c15b0c385d9d092cf9c9450dff59c32bf0b30",
+      "hash": "9958ab1671c49af7902ec5dbaafdcb9d8603ab3b835fb7a6926b1fcd40c53a71"
+    },
     {
       "seq": "2",
       "id": "a3bf4c66-cf44-4254-a2b6-df5ce312a3cf",
@@ -73,25 +91,6 @@
       },
       "prev_hash": "015e435097136a3fa9455d4853beadff18fb3ce45d3056cccac07b9937ee44ad",
       "hash": "9ad04a2cc71b961a1a6f8239e4d5f0b3de823736df4606f9f4e3f939bff9786c"
-    },
-    {
-      "seq": "99",
-      "entity_type": null,
-      "entity_id": null,
-      "prev_hash": "9ad04a2cc71b961a1a6f8239e4d5f0b3de823736df4606f9f4e3f939bff9786c",
-      "id": "b498dd93-a24d-4732-9549-07ad6f9d7bc2",
-      "occurred_at": "2026-06-12T09:35:00.000Z",
-      "actor": {
-        "kind": "agent",
-        "id": "agent-0001",
-        "role": "case-processor"
-      },
-      "event_type": "skill.invoked",
-      "run_id": "33333333-3333-4333-8333-333333333333",
-      "payload": {
-        "skill": "x"
-      },
-      "hash": "d00563cb81c80b3bd87e83ec463ce284e8b73333cdcaf55f6778f72e9d9a4100"
     },
     {
       "seq": "5",
@@ -172,6 +171,27 @@
       },
       "prev_hash": "1cbfd5cfada2d4a5b330f3e941c236f1ab3bd59cfba3ee9daf47eb032dd00515",
       "hash": "f5ab5d1e8308b03d7bec7ff95826980559cdfcf7fbd97caa574a7110c87503f2"
+    },
+    {
+      "seq": "9",
+      "id": "1e3374b2-b337-4354-a949-61dbf6189da9",
+      "occurred_at": "2026-06-12T09:38:00.000Z",
+      "actor": {
+        "kind": "agent",
+        "id": "agent-0001",
+        "role": "case-processor"
+      },
+      "event_type": "note.recorded",
+      "entity_type": null,
+      "entity_id": null,
+      "run_id": "22222222-2222-4222-8222-222222222222",
+      "payload": {
+        "emoji": "😀",
+        "nfc": "é",
+        "nfd": "é"
+      },
+      "prev_hash": "f5ab5d1e8308b03d7bec7ff95826980559cdfcf7fbd97caa574a7110c87503f2",
+      "hash": "fb01493b318206320b84c099d2266e8ad7085f596b80d935c8445a96ff7d0a4b"
     }
   ]
 }

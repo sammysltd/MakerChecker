@@ -8,15 +8,15 @@
     "count": 8,
     "firstSeq": "1",
     "lastSeq": "8",
-    "headHash": "08664a25e2828506f5d943e6ae9703cb542da630c6cb0509d2c0c944638ee5b3",
-    "eventHashesDigest": "c66264a199f3753e0fbad03b065617154b85b87af975d50acfc1b5012c0dceb7",
-    "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAnKdCt10Ts7ExQIzFvO2ME06hpng7uY5F4yjtKLOXW04=\n-----END PUBLIC KEY-----\n",
-    "signature": "SopGjkctNALSUcyBobWBX9Pjtct3mud06wPRkULa7DZxJ/VoL7kTOkiGiGizbyLy0acD4uzgXryS+qP7iZZnCA=="
+    "headHash": "f5ab5d1e8308b03d7bec7ff95826980559cdfcf7fbd97caa574a7110c87503f2",
+    "eventHashesDigest": "b24e414ea6d84f067c41037513a52b1b863d3c2cf95fe0cf927ad1f8e43fc51a",
+    "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAtAZrcPkaCk+v8mKz+NYQhe8V3qHlMnjwG5pzpSgYa18=\n-----END PUBLIC KEY-----\n",
+    "signature": "SYl51nvfZX6ezpWBMXdItcJ45aBS1O1RoRVX+F7rctDJbKfMpALufkfwE0Mhpe5dqSuxS4DaqEW/O68MJjMXAA=="
   },
   "events": [
     {
       "seq": "1",
-      "id": "5deb576a-a2dc-4e3d-8af1-96c0e2f240e7",
+      "id": "3a9cd439-910a-436d-befd-1c0bb76fd479",
       "occurred_at": "2026-06-12T09:30:00.000Z",
       "actor": {
         "kind": "system",
@@ -30,11 +30,11 @@
         "instanceId": "11111111-1111-4111-8111-111111111111"
       },
       "prev_hash": "a3223803bd3572c34689d246ee3c15b0c385d9d092cf9c9450dff59c32bf0b30",
-      "hash": "383904a6ed018b1fb36e082a53644c803311a86fd69e86aaa048eeddf9b8dd2c"
+      "hash": "9958ab1671c49af7902ec5dbaafdcb9d8603ab3b835fb7a6926b1fcd40c53a71"
     },
     {
       "seq": "2",
-      "id": "ae6557d9-6ceb-472c-9df2-40c594df28b3",
+      "id": "a3bf4c66-cf44-4254-a2b6-df5ce312a3cf",
       "occurred_at": "2026-06-12T09:31:00.000Z",
       "actor": {
         "kind": "agent",
@@ -48,12 +48,12 @@
       "payload": {
         "flow": "pv-icsr-processing"
       },
-      "prev_hash": "383904a6ed018b1fb36e082a53644c803311a86fd69e86aaa048eeddf9b8dd2c",
-      "hash": "56f146d988c8719ba781082b224e3cdec0b1cad84d502dbff4dcd44bee32394c"
+      "prev_hash": "9958ab1671c49af7902ec5dbaafdcb9d8603ab3b835fb7a6926b1fcd40c53a71",
+      "hash": "2b54c3b14d6a65ca7f6c017c1284fc048fd469ba82cea60ae7da2f77412731fb"
     },
     {
       "seq": "3",
-      "id": "1ee34ed8-09de-455d-9c3d-d3874cd6adb0",
+      "id": "99f2e17a-433f-4b10-bde3-63cab6f6ce8b",
       "occurred_at": "2026-06-12T09:32:00.000Z",
       "actor": {
         "kind": "agent",
@@ -68,12 +68,12 @@
         "model": "claude",
         "tokens": 412
       },
-      "prev_hash": "56f146d988c8719ba781082b224e3cdec0b1cad84d502dbff4dcd44bee32394c",
-      "hash": "7c98c3ae7ad6d2ab6b75829a3c40481db262722bf04732715500c10519150e4b"
+      "prev_hash": "2b54c3b14d6a65ca7f6c017c1284fc048fd469ba82cea60ae7da2f77412731fb",
+      "hash": "015e435097136a3fa9455d4853beadff18fb3ce45d3056cccac07b9937ee44ad"
     },
     {
       "seq": "4",
-      "id": "2c9c383e-4729-4710-82e5-44bd1403f865",
+      "id": "b49c97f6-905a-4ed6-bc6c-79052df12a77",
       "occurred_at": "2026-06-12T09:33:00.000Z",
       "actor": {
         "kind": "agent",
@@ -89,12 +89,12 @@
         "at": "decision",
         "skill": "e2b-submit@1.0.0"
       },
-      "prev_hash": "7c98c3ae7ad6d2ab6b75829a3c40481db262722bf04732715500c10519150e4b",
-      "hash": "ca3c15dd6ca8e19facaacdc86f9f1e8c6b977673e1f480a787fdbc77159e4d0a"
+      "prev_hash": "015e435097136a3fa9455d4853beadff18fb3ce45d3056cccac07b9937ee44ad",
+      "hash": "9ad04a2cc71b961a1a6f8239e4d5f0b3de823736df4606f9f4e3f939bff9786c"
     },
     {
       "seq": "5",
-      "id": "39ce56bf-ef30-4d77-a74f-9bb3158da3ee",
+      "id": "31c20cde-7148-4c2c-a622-f07c5c363866",
       "occurred_at": "2026-06-12T09:34:00.000Z",
       "actor": {
         "kind": "agent",
@@ -109,12 +109,12 @@
         "gate": "medical-review",
         "skill": "e2b-submit@1.0.0"
       },
-      "prev_hash": "ca3c15dd6ca8e19facaacdc86f9f1e8c6b977673e1f480a787fdbc77159e4d0a",
-      "hash": "c39df83422f73aed594e19e40a909804c4ee480396aa0b5d71755c543549db62"
+      "prev_hash": "9ad04a2cc71b961a1a6f8239e4d5f0b3de823736df4606f9f4e3f939bff9786c",
+      "hash": "57f8a59bafeae2f826d31629862688a46c1515a147a3e62702ba0fa4565b2a25"
     },
     {
       "seq": "6",
-      "id": "9999bca3-ae59-47cf-b837-96e420358f23",
+      "id": "e4669a21-bf23-4060-a4cd-1b5d5e08bf30",
       "occurred_at": "2026-06-12T09:35:00.000Z",
       "actor": {
         "kind": "user",
@@ -130,12 +130,12 @@
         "decider": "user-0009",
         "reason": "Seriousness confirmed for P-4003; file 15-day expedited ICSR per 21 CFR 314.80"
       },
-      "prev_hash": "c39df83422f73aed594e19e40a909804c4ee480396aa0b5d71755c543549db62",
-      "hash": "2371e189d827c2a7ff0b118aa69fb617f8b3a5f5c735c551af419a356edac73a"
+      "prev_hash": "57f8a59bafeae2f826d31629862688a46c1515a147a3e62702ba0fa4565b2a25",
+      "hash": "ca3a64bd883cbec2ddf11974f9f8fca1cebb732687e5c8f8277821ddec716709"
     },
     {
       "seq": "7",
-      "id": "32ab037c-7a91-499b-b3e7-70897eb171e4",
+      "id": "cc4c6781-4f65-4a85-94d4-6f646c6525d9",
       "occurred_at": "2026-06-12T09:36:00.000Z",
       "actor": {
         "kind": "agent",
@@ -150,12 +150,12 @@
         "skill": "e2b-submit@1.0.0",
         "outcome": "not-filed"
       },
-      "prev_hash": "2371e189d827c2a7ff0b118aa69fb617f8b3a5f5c735c551af419a356edac73a",
-      "hash": "219870cd84785c6b0d52c671087d937e63b659325bff852f0657f418cb580131"
+      "prev_hash": "ca3a64bd883cbec2ddf11974f9f8fca1cebb732687e5c8f8277821ddec716709",
+      "hash": "1cbfd5cfada2d4a5b330f3e941c236f1ab3bd59cfba3ee9daf47eb032dd00515"
     },
     {
       "seq": "8",
-      "id": "313c0875-9cb6-4f9a-be10-448559f1316b",
+      "id": "4154b87f-6db0-468e-b406-62374019d076",
       "occurred_at": "2026-06-12T09:37:00.000Z",
       "actor": {
         "kind": "agent",
@@ -169,8 +169,8 @@
       "payload": {
         "status": "completed"
       },
-      "prev_hash": "219870cd84785c6b0d52c671087d937e63b659325bff852f0657f418cb580131",
-      "hash": "08664a25e2828506f5d943e6ae9703cb542da630c6cb0509d2c0c944638ee5b3"
+      "prev_hash": "1cbfd5cfada2d4a5b330f3e941c236f1ab3bd59cfba3ee9daf47eb032dd00515",
+      "hash": "f5ab5d1e8308b03d7bec7ff95826980559cdfcf7fbd97caa574a7110c87503f2"
     }
   ]
 }
