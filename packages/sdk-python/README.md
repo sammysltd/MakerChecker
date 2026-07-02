@@ -5,10 +5,10 @@ A typed HTTP client for a running MakerChecker server, plus the `governed_tool` 
 ## Install
 
 ```bash
-pip install makerchecker
+pip install "makerchecker @ git+https://github.com/sammysltd/makerchecker#subdirectory=packages/sdk-python"
 ```
 
-Python 3.10+. Runtime dependency: `httpx`.
+Plain `pip install makerchecker` from PyPI works from the next tagged release. Python 3.10+. Runtime dependency: `httpx`.
 
 ## Use
 

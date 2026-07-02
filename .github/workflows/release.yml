@@ -1,21 +1,28 @@
 name: release
 
-# Publishes the public npm packages (@makerchecker/sdk and the connectors) when a
-# version tag is pushed. The release flow is just:
+# Publishes the public npm packages (@makerchecker/sdk and the connectors) and
+# the Python SDK (makerchecker on PyPI) when a version tag is pushed. The
+# release flow is just:
 #
 #     git tag v1.2.3 && git push origin v1.2.3
 #
-# The job sets every package's version FROM THE TAG before publishing, so you
-# never hand-edit package.json. Without this, a tag silently no-ops: package.json
-# stays at its old version, which is already on the registry, so pnpm skips it and
-# the run goes green having published nothing (this is what made v1.0.1..v1.0.3
-# ship nothing while package.json sat at 1.0.0).
+# Each job sets the package version FROM THE TAG before publishing, so you
+# never hand-edit package.json or pyproject.toml. Without this, a tag silently
+# no-ops: package.json stays at its old version, which is already on the
+# registry, so pnpm skips it and the run goes green having published nothing
+# (this is what made v1.0.1..v1.0.3 ship nothing while package.json sat at
+# 1.0.0).
 #
-# Auth: add an npm "Automation" access token as the repository secret NPM_TOKEN
-# (Settings -> Secrets and variables -> Actions -> New repository secret).
-# `--provenance` attaches a signed build attestation linking each published
-# package to this exact workflow run. `pnpm -r publish` skips private packages
-# (server, web, shared) and any version already on the registry.
+# Auth (npm): add an npm "Automation" access token as the repository secret
+# NPM_TOKEN (Settings -> Secrets and variables -> Actions -> New repository
+# secret). `--provenance` attaches a signed build attestation linking each
+# published package to this exact workflow run. `pnpm -r publish` skips private
+# packages (server, web, shared) and any version already on the registry.
+#
+# Auth (PyPI): no token. The publish-pypi job authenticates via PyPI Trusted
+# Publishing (OIDC): on pypi.org, the `makerchecker` project must list this
+# repo + `release.yml` as a trusted publisher. The `id-token: write` permission
+# below is what lets the job mint the short-lived OIDC token.
 
 on:
   push:
@@ -23,7 +30,7 @@ on:
 
 permissions:
   contents: read
-  id-token: write # required to generate npm provenance
+  id-token: write # required for npm provenance and PyPI Trusted Publishing
 
 jobs:
   publish:
@@ -61,3 +68,34 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
+
+  publish-pypi:
+    runs-on: ubuntu-latest
+    environment: pypi # bind the OIDC claim; also configure this on pypi.org
+    defaults:
+      run:
+        working-directory: packages/sdk-python
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+
+      # Same rule as the npm job: the tag is the single source of truth for the
+      # version. The grep makes a failed rewrite fail the job instead of
+      # silently republishing the old pyproject.toml version.
+      - name: Set package version from the tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "Releasing makerchecker $VERSION"
+          sed -i "s/^version = \".*\"$/version = \"$VERSION\"/" pyproject.toml
+          grep -Fx "version = \"$VERSION\"" pyproject.toml
+
+      - name: Build sdist and wheel
+        run: uv build
+
+      - name: Publish to PyPI via Trusted Publishing
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: packages/sdk-python/dist

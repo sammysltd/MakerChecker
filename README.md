@@ -135,7 +135,7 @@ Connectors keep your tool's name, description, and schema:
 
 - **LangChain** — `governLangChainTool` returns a `DynamicStructuredTool`. See [examples/connectors/langchain](examples/connectors/langchain/README.md).
 - **Claude Agent SDK** — `governClaudeTool` returns an `SdkMcpToolDefinition` for `createSdkMcpServer`. See [packages/connector-claude-agent](packages/connector-claude-agent/README.md).
-- **Python** (CrewAI, LangChain, LlamaIndex, AutoGen) — `create_client` then `governed_tool`; `pip install makerchecker`. See [packages/sdk-python](packages/sdk-python/README.md).
+- **Python** (CrewAI, LangChain, LlamaIndex, AutoGen) — `create_client` then `governed_tool`; `pip install "makerchecker @ git+https://github.com/sammysltd/makerchecker#subdirectory=packages/sdk-python"` (plain `pip install makerchecker` from PyPI works from the next tagged release). See [packages/sdk-python](packages/sdk-python/README.md).
 
 ## Audit and verification
 
