@@ -1,0 +1,55 @@
+{
+  "id": "hipaa-164-312",
+  "framework": "HIPAA Security Rule — Technical Safeguards (45 CFR 164.312)",
+  "version": 1,
+  "description": "Maps the 164.312 technical safeguards to the audit events that evidence them in a MakerChecker bundle. A crosswalk, not a certification or a SRA.",
+  "clauses": [
+    {
+      "id": "164.312(a)(1)",
+      "title": "Access control — allow access only to authorized persons or software programs",
+      "requirement": "Only authorized roles may perform an action; unauthorized access is denied.",
+      "applicableWhen": "always",
+      "evidence": { "anyOf": [
+        { "eventType": "enforcement.blocked", "payloadMatch": { "code": "skill_not_granted" } },
+        { "eventType": "grant.created" }
+      ] }
+    },
+    {
+      "id": "164.312(b)",
+      "title": "Audit controls — record and examine activity in systems that contain or use ePHI",
+      "requirement": "System activity is recorded in an examinable audit trail.",
+      "applicableWhen": "always",
+      "evidence": { "allOf": [
+        { "chainVerified": true },
+        { "eventType": "audit.genesis" },
+        { "anyOf": [ { "eventType": "skill.invoked" }, { "eventType": "llm.call" }, { "eventType": "approval.decided" } ] }
+      ] }
+    },
+    {
+      "id": "164.312(c)(1)",
+      "title": "Integrity — protect ePHI from improper alteration or destruction",
+      "requirement": "Improper alteration of the record is prevented or detectable.",
+      "applicableWhen": "always",
+      "evidence": { "chainVerified": true }
+    },
+    {
+      "id": "164.312(c)(2)",
+      "title": "Mechanism to authenticate ePHI — corroborate that data has not been altered or destroyed",
+      "requirement": "A mechanism exists to confirm records have not been altered.",
+      "applicableWhen": "always",
+      "evidence": { "chainVerified": true },
+      "note": "The hash chain is the corroborating mechanism: any alteration fails verification at the altered seq."
+    },
+    {
+      "id": "164.312(d)",
+      "title": "Person or entity authentication — verify the identity acting on ePHI",
+      "requirement": "Actions are attributable to an authenticated identity.",
+      "applicableWhen": "always",
+      "evidence": { "anyOf": [
+        { "eventType": "approval.decided" },
+        { "eventType": "enforcement.blocked", "payloadMatch": { "code": "skill_not_granted" } }
+      ] },
+      "note": "Decisions require an authenticated decider; unauthenticated gate decisions are refused."
+    }
+  ]
+}

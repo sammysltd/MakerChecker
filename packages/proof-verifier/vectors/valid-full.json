@@ -1,0 +1,176 @@
+{
+  "manifest": {
+    "bundleKind": "full",
+    "schemaVersion": 1,
+    "instanceId": "11111111-1111-4111-8111-111111111111",
+    "exportedAt": "2026-06-12T10:00:00.000Z",
+    "runId": null,
+    "count": 8,
+    "firstSeq": "1",
+    "lastSeq": "8",
+    "headHash": "f5ab5d1e8308b03d7bec7ff95826980559cdfcf7fbd97caa574a7110c87503f2",
+    "eventHashesDigest": "b24e414ea6d84f067c41037513a52b1b863d3c2cf95fe0cf927ad1f8e43fc51a",
+    "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAtAZrcPkaCk+v8mKz+NYQhe8V3qHlMnjwG5pzpSgYa18=\n-----END PUBLIC KEY-----\n",
+    "signature": "SYl51nvfZX6ezpWBMXdItcJ45aBS1O1RoRVX+F7rctDJbKfMpALufkfwE0Mhpe5dqSuxS4DaqEW/O68MJjMXAA=="
+  },
+  "events": [
+    {
+      "seq": "1",
+      "id": "3a9cd439-910a-436d-befd-1c0bb76fd479",
+      "occurred_at": "2026-06-12T09:30:00.000Z",
+      "actor": {
+        "kind": "system",
+        "id": "instance"
+      },
+      "event_type": "audit.genesis",
+      "entity_type": null,
+      "entity_id": null,
+      "run_id": null,
+      "payload": {
+        "instanceId": "11111111-1111-4111-8111-111111111111"
+      },
+      "prev_hash": "a3223803bd3572c34689d246ee3c15b0c385d9d092cf9c9450dff59c32bf0b30",
+      "hash": "9958ab1671c49af7902ec5dbaafdcb9d8603ab3b835fb7a6926b1fcd40c53a71"
+    },
+    {
+      "seq": "2",
+      "id": "a3bf4c66-cf44-4254-a2b6-df5ce312a3cf",
+      "occurred_at": "2026-06-12T09:31:00.000Z",
+      "actor": {
+        "kind": "agent",
+        "id": "agent-0001",
+        "role": "case-processor"
+      },
+      "event_type": "run.started",
+      "entity_type": "flow_run",
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "run_id": "22222222-2222-4222-8222-222222222222",
+      "payload": {
+        "flow": "pv-icsr-processing"
+      },
+      "prev_hash": "9958ab1671c49af7902ec5dbaafdcb9d8603ab3b835fb7a6926b1fcd40c53a71",
+      "hash": "2b54c3b14d6a65ca7f6c017c1284fc048fd469ba82cea60ae7da2f77412731fb"
+    },
+    {
+      "seq": "3",
+      "id": "99f2e17a-433f-4b10-bde3-63cab6f6ce8b",
+      "occurred_at": "2026-06-12T09:32:00.000Z",
+      "actor": {
+        "kind": "agent",
+        "id": "agent-0001",
+        "role": "case-processor"
+      },
+      "event_type": "llm.call",
+      "entity_type": null,
+      "entity_id": null,
+      "run_id": "22222222-2222-4222-8222-222222222222",
+      "payload": {
+        "model": "claude",
+        "tokens": 412
+      },
+      "prev_hash": "2b54c3b14d6a65ca7f6c017c1284fc048fd469ba82cea60ae7da2f77412731fb",
+      "hash": "015e435097136a3fa9455d4853beadff18fb3ce45d3056cccac07b9937ee44ad"
+    },
+    {
+      "seq": "4",
+      "id": "b49c97f6-905a-4ed6-bc6c-79052df12a77",
+      "occurred_at": "2026-06-12T09:33:00.000Z",
+      "actor": {
+        "kind": "agent",
+        "id": "agent-0001",
+        "role": "case-processor"
+      },
+      "event_type": "enforcement.blocked",
+      "entity_type": null,
+      "entity_id": null,
+      "run_id": "22222222-2222-4222-8222-222222222222",
+      "payload": {
+        "code": "skill_not_granted",
+        "at": "decision",
+        "skill": "e2b-submit@1.0.0"
+      },
+      "prev_hash": "015e435097136a3fa9455d4853beadff18fb3ce45d3056cccac07b9937ee44ad",
+      "hash": "9ad04a2cc71b961a1a6f8239e4d5f0b3de823736df4606f9f4e3f939bff9786c"
+    },
+    {
+      "seq": "5",
+      "id": "31c20cde-7148-4c2c-a622-f07c5c363866",
+      "occurred_at": "2026-06-12T09:34:00.000Z",
+      "actor": {
+        "kind": "agent",
+        "id": "agent-0001",
+        "role": "case-processor"
+      },
+      "event_type": "approval.requested",
+      "entity_type": "approval",
+      "entity_id": "appr-1",
+      "run_id": "22222222-2222-4222-8222-222222222222",
+      "payload": {
+        "gate": "medical-review",
+        "skill": "e2b-submit@1.0.0"
+      },
+      "prev_hash": "9ad04a2cc71b961a1a6f8239e4d5f0b3de823736df4606f9f4e3f939bff9786c",
+      "hash": "57f8a59bafeae2f826d31629862688a46c1515a147a3e62702ba0fa4565b2a25"
+    },
+    {
+      "seq": "6",
+      "id": "e4669a21-bf23-4060-a4cd-1b5d5e08bf30",
+      "occurred_at": "2026-06-12T09:35:00.000Z",
+      "actor": {
+        "kind": "user",
+        "id": "user-0009",
+        "email": "reviewer@example.org"
+      },
+      "event_type": "approval.decided",
+      "entity_type": "approval",
+      "entity_id": "appr-1",
+      "run_id": "22222222-2222-4222-8222-222222222222",
+      "payload": {
+        "decision": "approved",
+        "decider": "user-0009",
+        "reason": "Seriousness confirmed for P-4003; file 15-day expedited ICSR per 21 CFR 314.80"
+      },
+      "prev_hash": "57f8a59bafeae2f826d31629862688a46c1515a147a3e62702ba0fa4565b2a25",
+      "hash": "ca3a64bd883cbec2ddf11974f9f8fca1cebb732687e5c8f8277821ddec716709"
+    },
+    {
+      "seq": "7",
+      "id": "cc4c6781-4f65-4a85-94d4-6f646c6525d9",
+      "occurred_at": "2026-06-12T09:36:00.000Z",
+      "actor": {
+        "kind": "agent",
+        "id": "agent-0001",
+        "role": "case-processor"
+      },
+      "event_type": "skill.invoked",
+      "entity_type": null,
+      "entity_id": null,
+      "run_id": "22222222-2222-4222-8222-222222222222",
+      "payload": {
+        "skill": "e2b-submit@1.0.0",
+        "outcome": "filed"
+      },
+      "prev_hash": "ca3a64bd883cbec2ddf11974f9f8fca1cebb732687e5c8f8277821ddec716709",
+      "hash": "1cbfd5cfada2d4a5b330f3e941c236f1ab3bd59cfba3ee9daf47eb032dd00515"
+    },
+    {
+      "seq": "8",
+      "id": "4154b87f-6db0-468e-b406-62374019d076",
+      "occurred_at": "2026-06-12T09:37:00.000Z",
+      "actor": {
+        "kind": "agent",
+        "id": "agent-0001",
+        "role": "case-processor"
+      },
+      "event_type": "run.completed",
+      "entity_type": "flow_run",
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "run_id": "22222222-2222-4222-8222-222222222222",
+      "payload": {
+        "status": "completed"
+      },
+      "prev_hash": "1cbfd5cfada2d4a5b330f3e941c236f1ab3bd59cfba3ee9daf47eb032dd00515",
+      "hash": "f5ab5d1e8308b03d7bec7ff95826980559cdfcf7fbd97caa574a7110c87503f2"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "name": "@makerchecker/obligations",
+  "version": "0.1.0",
+  "description": "Deterministic, offline mapping of a signed MakerChecker audit bundle to named regulatory obligations (21 CFR Part 11, EU Annex 11, GAMP 5, HIPAA 164.312). Emits MET / NOT_EVIDENCED / NOT_APPLICABLE per clause with citing seqs.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "mc-obligations": "src/cli.js"
+  },
+  "main": "src/index.js",
+  "files": [
+    "src",
+    "profiles",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node scripts/test.mjs",
+    "lint": "true",
+    "typecheck": "true"
+  },
+  "keywords": [
+    "compliance",
+    "21-cfr-part-11",
+    "annex-11",
+    "gamp5",
+    "hipaa",
+    "audit",
+    "agent-governance",
+    "makerchecker"
+  ],
+  "engines": {
+    "node": ">=18.4.0"
+  }
+}
