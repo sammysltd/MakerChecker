@@ -3,9 +3,10 @@
 From 2015 to 2019 the Australian government's Robodebt scheme used automated
 income averaging to raise welfare debts and issue debt notices, removing the
 human review that had previously checked each determination. Notices went out
-unreviewed. The scheme wrongly accused roughly 400,000 people and unlawfully
-recovered about A$1.76 billion. A 2023 Royal Commission found it crude, cruel,
-and unlawful.
+unreviewed. The scheme unlawfully raised about A$1.76 billion in debts against
+more than 433,000 people; the roughly A$751 million actually recovered was
+later repaid under a 2020-21 Federal Court settlement. A 2023 Royal Commission
+found it crude, cruel, and unlawful.
 
 Sources:
 - https://robodebt.royalcommission.gov.au/publications/report

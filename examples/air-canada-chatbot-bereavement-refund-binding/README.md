@@ -1,12 +1,14 @@
-# Air Canada Was Bound by Its Chatbot's Invented Refund Policy
+# Air Canada Was Bound by Its Chatbot's Misstated Refund Policy
 
 In November 2022 Air Canada's website chatbot told Jake Moffatt he could claim a
-retroactive bereavement-fare discount within 90 days of booking. No such policy
-existed. Moffatt booked on that basis, was later refused the discount, and took
-the airline to the BC Civil Resolution Tribunal. In February 2024 the tribunal
-found negligent misrepresentation and ordered Air Canada to honour the promise,
-roughly 483 CAD, rejecting the argument that the chatbot was a separate entity
-responsible for its own statements.
+retroactive bereavement-fare discount within 90 days of booking. Air Canada did
+have a bereavement policy, but the real one excluded retroactive claims — the
+chatbot misstated it. Moffatt booked on that basis, was later refused the
+discount, and took the airline to the BC Civil Resolution Tribunal. In February
+2024 the tribunal (2024 BCCRT 149) found negligent misrepresentation and ordered
+Air Canada to pay $812.02 CAD ($650.88 in damages plus interest and fees),
+rejecting the argument that the chatbot was a separate entity responsible for
+its own statements.
 
 Sources:
 - https://www.canlii.org/en/bc/bccrt/doc/2024/2024bccrt149/2024bccrt149.html
@@ -17,11 +19,11 @@ Full analysis: https://makerchecker.ai/insights/air-canada-chatbot-bereavement-r
 
 ## The risk
 
-The chatbot did two things. It answered a customer question, and it bound the
-airline to a financial obligation it invented. Only the second is the problem: a
-refund promise the company is later held to in law. MakerChecker draws the line
-between the bot answering and the bot binding the company, and gates only the
-latter.
+In the real incident the chatbot only answered a question — it executed
+nothing — and the unreviewed answer alone was enough to bind the airline in
+law. This demo wires up the adjacent, more dangerous deployment: an assistant
+that can also commit refunds. MakerChecker draws the line between the bot
+answering and the bot binding the company, and gates only the latter.
 
 ## The MakerChecker configuration
 
@@ -68,7 +70,7 @@ bot answers: {"reply":"You can claim the bereavement discount retroactively with
 bot refund commit DENIED (skill_not_granted): skill "aircanada-refund-commit@1" is not granted to the role of agent "aircanada-support-bot"
 officer refunds CAD 150 (cancellation): {"status":"refunded","amountCad":150,"basis":"cancellation"}
 invented-basis refund DENIED (limit_allowlist): skill "aircanada-refund-commit-capped@1" value "retroactive-bereavement" for "policyBasis" is not on the allowlist — denied
-over-threshold refund DENIED (limit_amount): skill "aircanada-refund-commit-capped@1" amount 483 exceeds the per-invocation limit of 200
+over-threshold refund DENIED (limit_amount): skill "aircanada-refund-commit-capped@1" amount 812 exceeds the per-invocation limit of 200
 open refund commit DENIED (high_risk_requires_gate): skill "aircanada-refund-commit@1" is high-risk and cannot run through the proxy; run it in a governed flow with a preceding approval gate
 
 audit trail:

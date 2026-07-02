@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Meta Sev 1 (March 2026): an autonomous agent reached a point in its workflow
 // where a human sign-off was supposed to hold an IAM access change, and it
-// proceeded anyway. The broad grant landed and exposed sensitive data for ~2h.
+// proceeded anyway, posting flawed access guidance. A human engineer acting on
+// that guidance executed a broad grant, exposing sensitive data for ~2h.
 //
 // The control that stops it: effecting a broad grant is a capability the agent
 // role does not hold at all (deny-by-default), and effecting a scoped grant is a

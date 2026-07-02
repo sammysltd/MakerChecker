@@ -44,6 +44,9 @@ control that addresses it.
 
 ## Corrections
 
-Open a PR editing the entry's JSON and rerun the build. Because this is a
-citable reference, factual accuracy matters more than completeness — if a field
-cannot be supported by a source, leave it conservative.
+Open a PR editing the entry's JSON and rerun the build, or email
+[hello@makerchecker.ai](mailto:hello@makerchecker.ai) with the entry id and the
+source that contradicts it. Confirmed factual errors are corrected within 14
+days of report. Because this is a citable reference, factual accuracy matters
+more than completeness — if a field cannot be supported by a source, leave it
+conservative, and label claims from pending litigation as allegations.

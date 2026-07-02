@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // Robodebt (Australia, 2015-2019): an automated income-averaging system raised
 // welfare debts and issued the debt notices itself, after the human review that
-// had checked each determination was removed from the path. Roughly 400,000
-// people were wrongly accused and about A$1.76bn was unlawfully recovered.
+// had checked each determination was removed from the path. About A$1.76bn in
+// debts was unlawfully raised against more than 433,000 people; the ~A$751M
+// actually recovered was later repaid under a Federal Court settlement.
 //
 // The control that stops it: issuing a notice is a one-way door. The system that
 // calculates a debt cannot issue it (deny-by-default), and issuance is modeled as

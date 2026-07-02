@@ -14,12 +14,12 @@
     {
       "id": "AID-2026-0005",
       "slug": "meta-rogue-agent-sev1-data-exposure",
-      "title": "Meta AI Agent Granted Broad Data Access Without Approval",
+      "title": "Meta AI Agent Skipped Required Human Review; Flawed Guidance Led to Broad Data Access",
       "date": "March 2026",
       "year": 2026,
-      "category": "data-exfiltration",
+      "category": "wrongful-automated-decision",
       "severity": "critical",
-      "oneLineSummary": "An autonomous AI agent at Meta bypassed a required approval checkpoint to effect a broad IAM access grant, exposing sensitive data for approximately two hours.",
+      "oneLineSummary": "An autonomous AI agent at Meta skipped its required human-review checkpoint and posted flawed access guidance; a human engineer acting on that guidance broadened access to sensitive data, which remained exposed for roughly two hours.",
       "controlsThatBlock": [
         "skill_not_granted",
         "high_risk_requires_gate",
@@ -220,7 +220,7 @@
       "year": 2025,
       "category": "data-loss",
       "severity": "critical",
-      "oneLineSummary": "A Replit coding agent deleted 2,396 production database records during an explicit code freeze, then fabricated replacements to hide the loss.",
+      "oneLineSummary": "A Replit coding agent deleted ~2,400 production database records (1,206 executives, 1,196+ companies) during an explicit code freeze, fabricated ~4,000 fake user profiles, and falsely claimed rollback was impossible.",
       "controlsThatBlock": [
         "skill_not_granted",
         "high_risk_requires_gate",
@@ -385,7 +385,7 @@
       "year": 2023,
       "category": "wrongful-automated-decision",
       "severity": "critical",
-      "oneLineSummary": "AI coverage-denial system committed post-acute care denials to Medicare Advantage beneficiaries at 90% error rate without named clinician authorization.",
+      "oneLineSummary": "AI coverage-denial system allegedly committed post-acute care denials to Medicare Advantage beneficiaries without named clinician authorization; the class action alleges — as a lawsuit claim, not an established finding — a 90% reversal rate on appeal.",
       "controlsThatBlock": [
         "skill_not_granted",
         "sod_violation",
@@ -493,7 +493,7 @@
       "year": 2022,
       "category": "unauthorized-financial-action",
       "severity": "critical",
-      "oneLineSummary": "A Citigroup trader dismissed 711 overridable pop-up warnings and executed a $444B basket order instead of the intended $58M, selling ~$1.4B before cancellation and triggering an £61.6M regulatory fine.",
+      "oneLineSummary": "A Citigroup trader clicked through a single pop-up listing 711 warning messages — only the first 18 visible without scrolling — and released a $444B basket order instead of the intended $58M; ~$1.4B sold before cancellation and the FCA/PRA fined Citigroup £61.6M.",
       "controlsThatBlock": [
         "limit_violation",
         "high_risk_requires_gate",
@@ -556,18 +556,15 @@
     {
       "id": "AID-2022-0001",
       "slug": "air-canada-chatbot-bereavement-refund-binding",
-      "title": "Air Canada Chatbot Bound Airline to Invented Bereavement Refund Policy",
+      "title": "Air Canada Held Liable for Chatbot's Misstated Bereavement Refund Policy",
       "date": "November 2022",
       "year": 2022,
       "category": "binding-commitment",
       "severity": "high",
-      "oneLineSummary": "Air Canada's website chatbot invented a bereavement refund policy that no longer existed, a customer booked on that basis, and a BC tribunal ordered the airline to honour the false promise.",
+      "oneLineSummary": "Air Canada's website chatbot misstated the airline's bereavement fare policy as retroactively claimable, a customer booked on that basis, and a BC tribunal ordered the airline to pay $812.02 CAD for negligent misrepresentation.",
       "controlsThatBlock": [
         "skill_not_granted",
-        "sod_violation",
-        "high_risk_requires_gate",
-        "limit_violation",
-        "approval_gate"
+        "high_risk_requires_gate"
       ],
       "reproducible": true,
       "reproPath": "examples/air-canada-chatbot-bereavement-refund-binding",
@@ -595,7 +592,7 @@
       "year": 2015,
       "category": "wrongful-automated-decision",
       "severity": "critical",
-      "oneLineSummary": "Australia's Robodebt automated the calculation and issuance of welfare debts without human review, wrongly accusing 400,000 people and unlawfully recovering A$1.76 billion.",
+      "oneLineSummary": "Australia's Robodebt automated the calculation and issuance of welfare debts without human review, unlawfully raising approximately A$1.76 billion in debts against more than 433,000 people; the roughly A$751 million actually recovered was later repaid under a Federal Court settlement.",
       "controlsThatBlock": [
         "skill_not_granted",
         "high_risk_requires_gate"

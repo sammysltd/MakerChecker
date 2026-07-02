@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Citigroup (2022): a trader meant to sell a $58M basket and built one of $444B,
-// dismissing 711 overridable pop-up warnings on the way to release. ~$1.4B sold
-// before cancellation, briefly crashing the OMX Stockholm 30. The warnings were
+// clicking through a single pop-up listing 711 warning messages (only the first
+// 18 visible without scrolling) on the way to release. ~$1.4B sold before
+// cancellation, briefly crashing the OMX Stockholm 30. The warnings were
 // overridable; nothing was a hard block. FCA/PRA fined Citigroup £61.6M.
 //
 // The control that stops it: submission is split by notional. The capped submit
@@ -9,7 +10,8 @@
 // the ceiling and is refused at the proxy, with no pop-up to dismiss. The only
 // over-cap path is an uncapped submit skill that the execution role does not
 // hold and that is risk_tier high, so it cannot run on the proxy at all without
-// a preceding approval gate. The 711-click override becomes a non-bypassable gate.
+// a preceding approval gate. The clicked-away pop-up of 711 warnings becomes a
+// non-bypassable gate.
 //
 // Run: boot the server (`docker compose up`, or locally with
 // MAKERCHECKER_AUTH_DISABLED=1), build the SDK, then:
@@ -93,8 +95,8 @@ try {
 
 // 4. The only over-cap release path is the uncapped submit skill, which is high
 //    risk. Even with the grant the proxy refuses it outright: it must run through
-//    a governed flow with a preceding approval gate. The warning the trader
-//    dismissed 711 times becomes a gate that cannot be clicked away.
+//    a governed flow with a preceding approval gate. The pop-up of 711 warnings
+//    the trader clicked away becomes a gate that cannot be dismissed.
 try {
   await releaseUncapped({ notional: 444_000_000_000 });
 } catch (err) {

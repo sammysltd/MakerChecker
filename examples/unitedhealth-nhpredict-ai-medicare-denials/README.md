@@ -1,9 +1,10 @@
-# nH Predict: An Algorithm Denying Medicare Care With a 90 Percent Reversal Rate
+# nH Predict: An Algorithm Accused of Denying Medicare Care at a 90 Percent Reversal Rate
 
 A class action filed around November 2023 in Minnesota alleges that UnitedHealth
 and NaviHealth used a model called nH Predict to override treating physicians and
-deny post-acute care to Medicare Advantage members, at a roughly 90 percent error
-rate, relying on the fact that only about 0.2 percent of members appealed. Across
+deny post-acute care to Medicare Advantage members, at an alleged roughly 90
+percent error rate — a lawsuit allegation, not an established finding — relying
+on the fact that only about 0.2 percent of members appealed. Across
 2025 to 2026 the court let breach-of-contract claims proceed and ordered broad
 discovery into the model and how its outputs were used. Sources:
 [CBS News](https://www.cbsnews.com/news/unitedhealth-lawsuit-ai-deny-claims-medicare-advantage-health-insurance-denials/),

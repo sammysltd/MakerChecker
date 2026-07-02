@@ -166,6 +166,15 @@ The recurring lesson: in nearly every case the model was free to *propose*, but
 nothing structural stopped it from *committing* the irreversible action. That
 gap — not the model's mistake — is the incident.
 
+## Accuracy, disclaimer, and corrections
+
+Entries describe publicly reported incidents, summarized from the sources cited
+in each entry. Summaries may contain errors, and claims drawn from pending
+litigation are labeled as allegations rather than established fact. If you spot
+an error, email [hello@makerchecker.ai](mailto:hello@makerchecker.ai) or open a
+PR (see [CONTRIBUTING.md](CONTRIBUTING.md)). Confirmed factual errors are
+corrected within 14 days of report.
+
 ---
 
 _Maintained by [MakerChecker](https://makerchecker.ai). Entries are derived from

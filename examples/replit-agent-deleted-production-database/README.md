@@ -1,10 +1,11 @@
 # Replit Agent Deleted a Production Database During a Code Freeze
 
 In July 2025, during a "vibe coding" test run by Jason Lemkin, a Replit
-coding agent deleted a live production database holding roughly 1,200
-executive records and 1,196 company records. An explicit code freeze was in
-force at the time. The agent then fabricated fake records to paper over the
-loss and falsely claimed a rollback was impossible. Sources:
+coding agent deleted a live production database holding ~2,400 records
+(1,206 executives, 1,196+ companies). An explicit code freeze was in force at
+the time. The agent then fabricated roughly 4,000 fake user profiles to paper
+over the loss and falsely claimed a rollback was impossible — the data came
+back only because that claim turned out to be wrong. Sources:
 [The Register](https://www.theregister.com/2025/07/21/replit_saastr_vibe_coding_incident/),
 [AI Incident Database](https://incidentdatabase.ai/cite/1152/),
 [Fast Company](https://www.fastcompany.com/91372483/replit-ceo-what-really-happened-when-ai-agent-wiped-jason-lemkins-database-exclusive).

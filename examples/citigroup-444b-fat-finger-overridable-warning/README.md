@@ -3,9 +3,11 @@
 On 2 May 2022 a Citigroup trader meant to sell a $58M basket and instead built
 one of $444B. Internal controls blocked $255B, but $189B reached the execution
 algorithm and roughly $1.4B sold before the trader cancelled, briefly crashing
-the OMX Stockholm 30 by about 8 percent. The trader had dismissed 711 pop-up
-warnings on the way to releasing the order. The FCA and PRA fined Citigroup
-£61.6M in May 2024. The warnings were overridable; nothing was a hard block.
+the OMX Stockholm 30 by about 8 percent. On the way to releasing the order the
+trader clicked through a single pop-up listing 711 warning messages, only the
+first 18 of which were visible without scrolling. The FCA and PRA fined
+Citigroup £61.6M in May 2024. The warnings were overridable; nothing was a hard
+block.
 
 Sources:
 - https://www.cnn.com/2024/05/22/investing/citigroup-fine-stock-dump-fat-finger/index.html
@@ -18,7 +20,8 @@ Full analysis: https://makerchecker.ai/insights/citigroup-444b-fat-finger-overri
 
 An execution agent submits a basket order whose notional is orders of magnitude
 larger than intended. The releasing identity sees warnings but clears them the
-same way the trader cleared 711 pop-ups: by clicking through. No notional ceiling
+same way the trader cleared a pop-up listing 711 of them: by clicking through
+without reading. No notional ceiling
 the role cannot exceed on its own, and no second person whose sign-off the order
 cannot proceed without.
 
@@ -84,5 +87,6 @@ Ed25519-signed audit log.
 This does not stop the wrong number being entered or validate the economics of
 the trade. A fat-fingered number is still fat-fingered. What changes is that the
 order cannot be released on the agent's own authority once it crosses the ceiling,
-and the warning the trader dismissed 711 times becomes a gate requiring another
-person's sign-off. The missing hard block is supplied; the typo is not caught.
+and the pop-up of 711 warnings the trader clicked away becomes a gate requiring
+another person's sign-off. The missing hard block is supplied; the typo is not
+caught.

@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 // Air Canada (2022): a website chatbot told a customer he could claim a
-// retroactive bereavement-fare discount within 90 days. No such policy existed.
-// A tribunal later held the airline to the invented promise. The harm was not
-// the wrong answer — it was the chatbot binding the company to a financial
-// obligation it had no authority to make.
+// retroactive bereavement-fare discount within 90 days. The airline did have a
+// bereavement policy, but the real one excluded retroactive claims — the bot
+// misstated it. A tribunal (2024 BCCRT 149) found negligent misrepresentation
+// and ordered Air Canada to pay $812.02 CAD. The chatbot executed nothing; the
+// unreviewed answer alone bound the company. This demo wires up the adjacent
+// deployment where the assistant can also commit refunds.
 //
 // The control that stops it: answering is reversible and ungated; committing a
 // refund is not. The support role holds no commit grant at all (deny-by-default).
@@ -88,7 +90,7 @@ console.log("bot answers:", JSON.stringify(await botAnswer({
 // 2. The bot tries to commit the invented refund — denied by default. The support
 //    role holds no commit grant, so the obligation never attaches to the airline.
 try {
-  await botCommit({ amountCad: 483, policyBasis: "retroactive-bereavement" });
+  await botCommit({ amountCad: 812, policyBasis: "retroactive-bereavement" });
 } catch (err) {
   if (!(err instanceof GovernanceDeniedError)) throw err;
   console.log(`bot refund commit DENIED (${err.code}): ${err.reason}`);
@@ -108,7 +110,7 @@ try {
 
 // 5. An amount over the threshold — refused even on a valid basis (fail closed).
 try {
-  await officerCapped({ amountCad: 483, policyBasis: "cancellation" });
+  await officerCapped({ amountCad: 812, policyBasis: "cancellation" });
 } catch (err) {
   if (!(err instanceof GovernanceDeniedError)) throw err;
   console.log(`over-threshold refund DENIED (${err.code}): ${err.reason}`);
@@ -118,7 +120,7 @@ try {
 //    refund of any amount or on a non-standard basis must run through a governed
 //    flow with a preceding approval gate, decided by a named officer.
 try {
-  await officerOpen({ amountCad: 483, policyBasis: "retroactive-bereavement" });
+  await officerOpen({ amountCad: 812, policyBasis: "retroactive-bereavement" });
 } catch (err) {
   if (!(err instanceof GovernanceDeniedError)) throw err;
   console.log(`open refund commit DENIED (${err.code}): ${err.reason}`);

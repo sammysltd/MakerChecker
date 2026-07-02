@@ -19,7 +19,7 @@ copy, the canonical reference is not.
 
 | ID | Date | Incident | Category | Severity |
 |---|---|---|---|---|
-| [`AID-2026-0005`](entries/AID-2026-0005.md) | March 2026 | Meta AI Agent Granted Broad Data Access Without Approval | Data exfiltration | critical |
+| [`AID-2026-0005`](entries/AID-2026-0005.md) | March 2026 | Meta AI Agent Skipped Required Human Review; Flawed Guidance Led to Broad Data Access | Wrongful automated decision | critical |
 | [`AID-2026-0004`](entries/AID-2026-0004.md) | May 4, 2026 | Morse Code Prompt Injection Drained Grok-Connected Wallet of $150K | Binding commitment | critical |
 | [`AID-2026-0003`](entries/AID-2026-0003.md) | May 9-10, 2026 | DN42 Network Scan Agent Spawned $6,531 AWS Bill via Uncontrolled Provisioning Loop | Runaway execution | critical |
 | [`AID-2026-0002`](entries/AID-2026-0002.md) | 25 April 2026 | Cursor Agent Deleted Production Database and Backups via Over-Privileged Railway Token | Data loss | critical |
@@ -35,7 +35,7 @@ copy, the canonical reference is not.
 | [`AID-2023-0001`](entries/AID-2023-0001.md) | December 18, 2023 | Chevrolet of Watsonville: Prompt-Injected Chatbot Attempts $80,999 Binding Offer | Binding commitment | high |
 | [`AID-2022-0003`](entries/AID-2022-0003.md) | May 2, 2022 | Citigroup $444B Basket: Dismissible Warnings, No Hard Block | Unauthorized financial action | critical |
 | [`AID-2022-0002`](entries/AID-2022-0002.md) | 2022 | Cigna PxDx Batch Rubber-Stamp Denials | Binding commitment | critical |
-| [`AID-2022-0001`](entries/AID-2022-0001.md) | November 2022 | Air Canada Chatbot Bound Airline to Invented Bereavement Refund Policy | Binding commitment | high |
+| [`AID-2022-0001`](entries/AID-2022-0001.md) | November 2022 | Air Canada Held Liable for Chatbot's Misstated Bereavement Refund Policy | Binding commitment | high |
 | [`AID-2015-0001`](entries/AID-2015-0001.md) | 2015-2019 | Australia Robodebt: Automated Debt Issuance Without Human Review | Wrongful automated decision | critical |
 | [`AID-2013-0001`](entries/AID-2013-0001.md) | August 16, 2013 | Everbright Securities Arbitrage System Runaway Orders with Undisclosed Insider Hedge Cover Trade | Runaway execution | critical |
 | [`AID-2012-0001`](entries/AID-2012-0001.md) | August 1, 2012 | Knight Capital $440M Runaway Trading Loss | Runaway execution | critical |
@@ -48,13 +48,22 @@ Every incident maps to one or more structural controls. Across the catalogue:
 |---|---|
 | High-risk approval gate (high_risk_requires_gate) | 20 |
 | Deny-by-default (skill_not_granted) | 19 |
-| Fail-closed limits (limit_violation) | 7 |
-| Segregation of duties (sod_violation) | 6 |
-| Named approval gate | 3 |
+| Fail-closed limits (limit_violation) | 6 |
+| Segregation of duties (sod_violation) | 5 |
+| Named approval gate | 2 |
 
 The recurring lesson: in nearly every case the model was free to *propose*, but
 nothing structural stopped it from *committing* the irreversible action. That
 gap — not the model's mistake — is the incident.
+
+## Accuracy, disclaimer, and corrections
+
+Entries describe publicly reported incidents, summarized from the sources cited
+in each entry. Summaries may contain errors, and claims drawn from pending
+litigation are labeled as allegations rather than established fact. If you spot
+an error, email [hello@makerchecker.ai](mailto:hello@makerchecker.ai) or open a
+PR (see [CONTRIBUTING.md](CONTRIBUTING.md)). Confirmed factual errors are
+corrected within 14 days of report.
 
 ---
 

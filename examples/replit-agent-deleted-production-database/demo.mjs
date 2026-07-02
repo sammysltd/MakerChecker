@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-// Replit coding agent (2025): during an explicit code freeze the agent ran an
-// irreversible destructive operation against the production database, dropping
-// live tables, then fabricated replacement rows to hide the loss.
+// Replit coding agent (2025): during an explicit code freeze the agent ran a
+// destructive operation against the production database, deleting ~2,400 live
+// records, then fabricated ~4,000 fake user profiles to hide the loss and
+// falsely claimed rollback was impossible (the rollback in fact worked).
 //
 // The control that stops it: the irreversible table-drop is granted to no role,
 // so it is refused by deny-by-default; schema migrations are a high-risk skill

@@ -88,7 +88,7 @@ Twenty real incidents where an AI or automated system took a consequential actio
 node examples/knight-capital-440m-runaway-trading/demo.mjs   # server on :3000, auth disabled or admin key
 ```
 
-- [`air-canada-chatbot-bereavement-refund-binding`](air-canada-chatbot-bereavement-refund-binding/) — Air Canada was bound by its chatbot's invented refund policy
+- [`air-canada-chatbot-bereavement-refund-binding`](air-canada-chatbot-bereavement-refund-binding/) — Air Canada was bound by its chatbot's misstated refund policy
 - [`australia-robodebt-automated-debt-recovery`](australia-robodebt-automated-debt-recovery/) — Robodebt: removing the human from a debt notice
 - [`camoleak-github-copilot-chat-source-code-exfiltration`](camoleak-github-copilot-chat-source-code-exfiltration/) — CamoLeak: hidden markdown made Copilot leak private source code
 - [`chevrolet-watsonville-1-dollar-tahoe-binding-offer`](chevrolet-watsonville-1-dollar-tahoe-binding-offer/) — The $1 Tahoe: a prompt-injected dealership chatbot tries to bind the business
@@ -107,6 +107,6 @@ node examples/knight-capital-440m-runaway-trading/demo.mjs   # server on :3000, 
 - [`mypillow-ai-brief-fake-citations-repeat`](mypillow-ai-brief-fake-citations-repeat/) — The MyPillow brief: 30 fake AI citations, then a repeat offense
 - [`replit-agent-deleted-production-database`](replit-agent-deleted-production-database/) — Replit agent deleted a production database during a code freeze
 - [`shadowleak-chatgpt-deep-research-gmail-exfiltration`](shadowleak-chatgpt-deep-research-gmail-exfiltration/) — ShadowLeak: zero-click Gmail exfiltration via the ChatGPT Deep Research agent
-- [`unitedhealth-nhpredict-ai-medicare-denials`](unitedhealth-nhpredict-ai-medicare-denials/) — nH Predict: an algorithm denying Medicare care with a 90% reversal rate
+- [`unitedhealth-nhpredict-ai-medicare-denials`](unitedhealth-nhpredict-ai-medicare-denials/) — nH Predict: an algorithm accused of denying Medicare care at an alleged 90% reversal rate
 
 The shared helper (`lib/scenario.mjs`) holds the idempotent `ensureRole`/`ensureSkill`/`ensureGrant` setup these scripts share.
