@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { CanonicalizationError, canonicalJson } from "./canonical-json.js";
+import {
+  CanonicalizationError,
+  canonicalJson,
+  findIllFormedString,
+  IllFormedStringError,
+} from "./canonical-json.js";
 
 describe("canonicalJson — RFC 8785 conformance", () => {
   it("serializes literals", () => {
@@ -104,5 +109,56 @@ describe("canonicalJson — adversarial inputs", () => {
     expect(() => canonicalJson({ outer: { inner: [1, NaN] } })).toThrow(
       /\$\.outer\.inner\[1\]/,
     );
+  });
+});
+
+describe("canonicalJson — I-JSON (RFC 7493) well-formed strings", () => {
+  it("rejects a lone high surrogate, fail closed, with the JSON path", () => {
+    // Reachable via the API: JSON.parse('{"note":"\ud800"}') succeeds and
+    // yields this exact string. RFC 8785 assumes I-JSON input; hashing the
+    // ES2019 \ud800 escape can never cross-verify in Python/Go.
+    const loneHigh = JSON.parse('{"payload":{"note":"\\ud800"}}') as Record<string, unknown>;
+    expect(() => canonicalJson(loneHigh)).toThrow(IllFormedStringError);
+    expect(() => canonicalJson(loneHigh)).toThrow(
+      "ill-formed Unicode (unpaired surrogate) in string at $.payload.note",
+    );
+    // The typed error is also a CanonicalizationError, so existing catch sites hold.
+    expect(() => canonicalJson(loneHigh)).toThrow(CanonicalizationError);
+  });
+
+  it("rejects a lone low surrogate", () => {
+    expect(() => canonicalJson({ v: "\udfff" })).toThrow(IllFormedStringError);
+    expect(() => canonicalJson({ v: "tail\udc00" })).toThrow(/\$\.v/);
+  });
+
+  it("rejects a reversed pair and a high surrogate followed by a non-low unit", () => {
+    expect(() => canonicalJson(["\udc00\ud800"])).toThrow(/\$\[0\]/);
+    expect(() => canonicalJson({ v: "\ud800x" })).toThrow(IllFormedStringError);
+  });
+
+  it("rejects an unpaired surrogate in an object KEY, naming the member path", () => {
+    const badKey = JSON.parse('{"\\ud800k":1}') as Record<string, unknown>;
+    expect(() => canonicalJson(badKey)).toThrow(IllFormedStringError);
+    expect(() => canonicalJson(badKey)).toThrow(/at \$\./);
+  });
+
+  it("PASSES a valid astral pair (U+1F600) unchanged and serializes it literally", () => {
+    // RFC 8785 emits characters above the escape set literally: the astral
+    // pair must appear as the actual character, never as \\ud83d\\ude00 escapes.
+    expect(canonicalJson({ emoji: "\u{1F600}" })).toBe('{"emoji":"\u{1F600}"}');
+    expect(canonicalJson("\u{1F600}")).toBe('"\u{1F600}"');
+    // NFC/NFD forms stay distinct, byte for byte: no normalization is applied.
+    expect(canonicalJson({ nfc: "\u00e9", nfd: "e\u0301" })).toBe(
+      '{"nfc":"\u00e9","nfd":"e\u0301"}',
+    );
+  });
+
+  it("findIllFormedString reports the same path canonicalJson throws for", () => {
+    const bad = { outer: { list: ["ok", "\ud800"] } };
+    expect(findIllFormedString(bad)).toBe("$.outer.list[1]");
+    expect(() => canonicalJson(bad)).toThrow("$.outer.list[1]");
+    expect(findIllFormedString({ fine: "😀", also: ["é"] })).toBeNull();
+    expect(findIllFormedString("\udc00")).toBe("$");
+    expect(findIllFormedString(42)).toBeNull();
   });
 });

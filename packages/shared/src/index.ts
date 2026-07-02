@@ -1,4 +1,10 @@
-export { canonicalJson, CanonicalizationError } from "./canonical-json.js";
+export {
+  canonicalJson,
+  CanonicalizationError,
+  findIllFormedString,
+  IllFormedStringError,
+  isWellFormedString,
+} from "./canonical-json.js";
 export {
   AgentStep,
   ApprovalGateApprovals,

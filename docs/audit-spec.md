@@ -12,6 +12,8 @@ All hashing and signing operates on **RFC 8785 (JSON Canonicalization Scheme)** 
 - Object keys sorted by UTF-16 code units (plain lexicographic sort of code units).
 - Numbers serialized per the ECMAScript `Number::toString` algorithm (what `JSON.stringify` produces). Non-finite numbers are invalid.
 - Object members with `undefined` values are omitted; `null` is serialized as `null`.
+- Input **must be I-JSON (RFC 7493)**: every string — object key or value — must be well-formed Unicode. An unpaired surrogate has no interoperable RFC 8785 serialization (RFC 8785 presumes I-JSON input; implementations disagree on ill-formed strings), so it is **rejected before hashing, fail closed**: the API refuses such a payload with HTTP 400, the serializer throws, and a conformant verifier rejects a bundle containing one as a *spec violation* (verdict `ill_formed_string`), distinct from tamper.
+- No Unicode normalization is applied anywhere: NFC and NFD forms of the same text are distinct strings and hash differently; characters outside JSON's mandatory escape set (including supplementary-plane characters such as U+1F600) are emitted literally, never as `\uXXXX` escapes.
 
 ## 2. Event hash
 
@@ -34,7 +36,7 @@ hash = SHA-256( canonicalJson({
 Notes:
 
 - Key names in the hashed object are exactly as above (camelCase). After canonical key sorting the serialized member order is: `actor`, `entityId`, `entityType`, `eventType`, `id`, `occurredAt`, `payload`, `prevHash`, `runId`.
-- `occurredAt` is stored in the database as **text** (ISO 8601 UTC, e.g. `2026-06-12T09:30:00.123Z`) and hashed byte-for-byte as stored. It is not a `timestamptz`: timestamp types reformat on round-trip, breaking exact recomputation. Fixed-format UTC ISO strings sort lexicographically in chronological order.
+- `occurredAt` is stored in the database as **text** in exactly the grammar `YYYY-MM-DDTHH:MM:SS.mmmZ` (RFC 3339 UTC with exactly three fractional-second digits and uppercase `T` and `Z`, i.e. the output of ECMAScript `Date.prototype.toISOString`, e.g. `2026-06-12T09:30:00.123Z`) and hashed byte-for-byte as stored. It is not a `timestamptz`: timestamp types reformat on round-trip, breaking exact recomputation. Fixed-format UTC ISO strings sort lexicographically in chronological order.
 - **`seq` is excluded from the hash.** `seq` is a database identity column that records only storage order; identity columns leave gaps when transactions abort, so `seq` values carry no integrity meaning. Chain order is defined solely by `prevHash` linkage. A verifier must not assume `seq` values are contiguous.
 
 ## 3. Genesis and chain rule

@@ -4,7 +4,12 @@ import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import swagger from "@fastify/swagger";
-import { isApprovalGate, SCHEMA_VERSION, type FlowDefinition } from "@makerchecker/shared";
+import {
+  findIllFormedString,
+  isApprovalGate,
+  SCHEMA_VERSION,
+  type FlowDefinition,
+} from "@makerchecker/shared";
 import { Type } from "@sinclair/typebox";
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 
@@ -146,6 +151,26 @@ export async function buildApp(
       "unhandled error",
     );
     return reply.status(500).send({ error: "internal error" });
+  });
+
+  // I-JSON ingress guard (fail closed, one chokepoint for every route): a JSON
+  // body is the only place request-supplied strings enter the audit/hash path
+  // (run trigger input, approval reasons, admin CRUD, proxy payloads), and
+  // JSON.parse happily accepts a lone-surrogate escape ('{"note":"\ud800"}').
+  // Such a string is not I-JSON (RFC 7493), so it has no interoperable RFC 8785
+  // serialization: hashing it would produce a chain event that can never
+  // cross-verify, and the canonicalizer now throws on it deep inside the audit
+  // transaction (a 500). Reject it here, before validation and every handler,
+  // with a clear 400 naming the offending JSON path. Valid data is untouched —
+  // this only rejects input whose hash was never well-defined.
+  app.addHook("preValidation", async (req, reply) => {
+    if (req.body === undefined || req.body === null) return;
+    const path = findIllFormedString(req.body);
+    if (path !== null) {
+      return reply.status(400).send({
+        error: `payload contains ill-formed Unicode (unpaired surrogate) at ${path}`,
+      });
+    }
   });
 
   // Security middleware, registered BEFORE any route so it covers /healthz,

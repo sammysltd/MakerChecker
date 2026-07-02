@@ -218,6 +218,77 @@ describe("security hardening", () => {
     });
   });
 
+  describe("I-JSON ingress guard (well-formed Unicode, fail closed)", () => {
+    afterEach(() => {
+      delete process.env.MAKERCHECKER_AUTH_DISABLED;
+    });
+
+    it("rejects a lone surrogate in a run input with a 400 naming the JSON path", async () => {
+      process.env.MAKERCHECKER_AUTH_DISABLED = "1";
+      const app = await buildApp(stubCtx);
+      // Raw body: JSON.parse accepts the lone-surrogate escape, but such a
+      // string is not I-JSON and has no interoperable RFC 8785 serialization.
+      // It must be a clean 400 at ingress, not a 500 from the canonicalizer
+      // throwing deep inside the audit transaction.
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/flows/recon/runs",
+        headers: { "content-type": "application/json" },
+        payload: '{"input":{"note":"\\ud800"}}',
+      });
+      expect(res.statusCode).toBe(400);
+      expect(res.json()).toEqual({
+        error: "payload contains ill-formed Unicode (unpaired surrogate) at $.input.note",
+      });
+      await app.close();
+    });
+
+    it("rejects a lone surrogate in an object KEY", async () => {
+      process.env.MAKERCHECKER_AUTH_DISABLED = "1";
+      const app = await buildApp(stubCtx);
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/flows/recon/runs",
+        headers: { "content-type": "application/json" },
+        payload: '{"input":{"\\udc00key":1}}',
+      });
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toContain("ill-formed Unicode (unpaired surrogate)");
+      await app.close();
+    });
+
+    it("rejects a lone surrogate in an approval decision reason", async () => {
+      process.env.MAKERCHECKER_AUTH_DISABLED = "1";
+      const app = await buildApp(stubCtx);
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/approvals/11111111-1111-1111-1111-111111111111/decision",
+        headers: { "content-type": "application/json" },
+        payload: '{"decision":"approved","reason":"ok\\udfff"}',
+      });
+      expect(res.statusCode).toBe(400);
+      expect(res.json()).toEqual({
+        error: "payload contains ill-formed Unicode (unpaired surrogate) at $.reason",
+      });
+      await app.close();
+    });
+
+    it("is inert for well-formed Unicode (astral emoji, NFC/NFD pairs)", async () => {
+      process.env.MAKERCHECKER_AUTH_DISABLED = "1";
+      const app = await buildApp(stubCtx);
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/flows/recon/runs",
+        payload: { input: { emoji: "\u{1F600}", nfc: "é", nfd: "é" } },
+      });
+      // The guard must not fire (the stub ctx fails later, in the engine, for
+      // unrelated reasons); valid data is never rejected and never re-encoded.
+      expect(res.statusCode).not.toBe(400);
+      expect(res.body).not.toContain("ill-formed Unicode");
+      await app.close();
+    });
+  });
+
   describe("id param validation and error handling", () => {
     afterEach(() => {
       delete process.env.MAKERCHECKER_AUTH_DISABLED;
