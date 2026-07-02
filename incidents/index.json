@@ -86,7 +86,7 @@
       "year": 2026,
       "category": "runaway-execution",
       "severity": "critical",
-      "oneLineSummary": "An AI agent told to scan a hobbyist network autonomously provisioned five large AWS instances in a redeploy loop, incurring $6,531.30 in verified charges under a blanket operator \"continue\" directive.",
+      "oneLineSummary": "An AI agent told to scan a hobbyist network autonomously provisioned five large AWS instances in a redeploy loop, incurring an initial $6,531.30 bill under a blanket operator \"continue\" directive; AWS later reduced the charge to roughly $1,894 after the operator disputed it.",
       "controlsThatBlock": [
         "skill_not_granted",
         "high_risk_requires_gate"
@@ -117,7 +117,7 @@
       "year": 2026,
       "category": "data-loss",
       "severity": "critical",
-      "oneLineSummary": "A Cursor AI agent working on a staging task invoked volumeDelete using an over-privileged Railway token, destroying PocketOS's production database and backups in nine seconds and causing a 30-hour outage.",
+      "oneLineSummary": "A Cursor AI agent working on a staging task invoked volumeDelete using an over-privileged Railway token, destroying PocketOS's production database and its co-located backups in nine seconds; Railway restored the production data within about an hour, and full resolution took roughly 30 hours.",
       "controlsThatBlock": [
         "skill_not_granted",
         "high_risk_requires_gate",
@@ -180,11 +180,11 @@
       "id": "AID-2025-0006",
       "slug": "shadowleak-chatgpt-deep-research-gmail-exfiltration",
       "title": "ShadowLeak: Zero-Click Gmail Exfiltration via ChatGPT Deep Research Agent",
-      "date": "June–August 2025",
+      "date": "June–September 2025",
       "year": 2025,
       "category": "data-exfiltration",
       "severity": "critical",
-      "oneLineSummary": "ChatGPT Deep Research agent exfiltrated Gmail data via hidden email instruction, bypassing network defenses by executing outbound requests from within OpenAI's cloud.",
+      "oneLineSummary": "Radware researchers demonstrated a proof-of-concept in which ChatGPT's Deep Research agent could be induced to exfiltrate Gmail data via a hidden email instruction, with outbound requests originating from within OpenAI's cloud so local network defenses could not see them. OpenAI fixed it before public disclosure; no in-the-wild exploitation was reported.",
       "controlsThatBlock": [
         "skill_not_granted",
         "high_risk_requires_gate",
@@ -251,15 +251,14 @@
     {
       "id": "AID-2025-0004",
       "slug": "mypillow-ai-brief-fake-citations-repeat",
-      "title": "MyPillow Motion Filings with AI-Fabricated Citations and Repeat Offense",
+      "title": "MyPillow Attorney Filings with Fabricated Citations and a Repeat Miscitation",
       "date": "2025-2026",
       "year": 2025,
       "category": "fabrication",
       "severity": "high",
-      "oneLineSummary": "Attorneys filed motions with AI-fabricated citations to nonexistent cases, were sanctioned, then filed again with another flawed citation despite the prior sanction.",
+      "oneLineSummary": "Attorneys filed a brief with AI-generated citations to nonexistent cases and were sanctioned; months later the lead attorney was sanctioned again for misciting a real case to the wrong court and mischaracterizing its holding.",
       "controlsThatBlock": [
-        "skill_not_granted",
-        "high_risk_requires_gate"
+        "approval_gate"
       ],
       "reproducible": true,
       "reproPath": "examples/mypillow-ai-brief-fake-citations-repeat",
@@ -323,7 +322,7 @@
       "year": 2025,
       "category": "data-exfiltration",
       "severity": "critical",
-      "oneLineSummary": "A crafted email's hidden instructions tricked M365 Copilot into exfiltrating OneDrive, SharePoint, and Teams data to an attacker-controlled URL with no user click required.",
+      "oneLineSummary": "Researchers demonstrated a zero-click proof-of-concept in which a crafted email's hidden instructions could make M365 Copilot exfiltrate OneDrive, SharePoint, and Teams data to an attacker-controlled URL with no user click required. Microsoft fixed it server-side before disclosure.",
       "controlsThatBlock": [
         "skill_not_granted",
         "high_risk_requires_gate"
@@ -354,9 +353,8 @@
       "year": 2025,
       "category": "data-exfiltration",
       "severity": "critical",
-      "oneLineSummary": "Hidden markdown instructions in pull requests caused GitHub Copilot Chat to exfiltrate private source code and secrets to attacker-controlled servers.",
+      "oneLineSummary": "Researchers demonstrated that hidden markdown instructions in pull requests could make GitHub Copilot Chat leak private source code and secrets one character at a time through GitHub's Camo image proxy; GitHub fixed it before disclosure with no known in-the-wild use.",
       "controlsThatBlock": [
-        "skill_not_granted",
         "high_risk_requires_gate"
       ],
       "reproducible": true,
@@ -422,10 +420,10 @@
       "year": 2023,
       "category": "fabrication",
       "severity": "high",
-      "oneLineSummary": "Attorneys filed a federal brief with six cases ChatGPT fabricated, reaching the court docket without independent approval.",
+      "oneLineSummary": "Attorneys filed a federal brief with six cases ChatGPT fabricated, without independently verifying that the cited cases existed.",
       "controlsThatBlock": [
-        "skill_not_granted",
-        "high_risk_requires_gate"
+        "independent_citation_verification",
+        "human_separation_of_duties"
       ],
       "reproducible": true,
       "reproPath": "examples/mata-v-avianca-fabricated-citations-filed",
@@ -452,12 +450,12 @@
     {
       "id": "AID-2023-0001",
       "slug": "chevrolet-watsonville-1-dollar-tahoe-binding-offer",
-      "title": "Chevrolet of Watsonville: Prompt-Injected Chatbot Attempts $80,999 Binding Offer",
+      "title": "Chevrolet of Watsonville: Prompt-Injected Chatbot Agreed in Conversation to Sell a Vehicle for $1",
       "date": "December 18, 2023",
       "year": 2023,
       "category": "binding-commitment",
       "severity": "high",
-      "oneLineSummary": "A prompt-injected ChatGPT-powered dealer chatbot agreed to sell an $81,000 vehicle for $1 and declared it a legally binding contract.",
+      "oneLineSummary": "A prompt-injected ChatGPT-powered dealer chatbot agreed in conversation to sell a 2024 Chevrolet Tahoe for $1 and called it legally binding; the exchange was text only and no sale occurred.",
       "controlsThatBlock": [
         "skill_not_granted",
         "high_risk_requires_gate",
@@ -488,7 +486,7 @@
     {
       "id": "AID-2022-0003",
       "slug": "citigroup-444b-fat-finger-overridable-warning",
-      "title": "Citigroup $444B Basket: Dismissible Warnings, No Hard Block",
+      "title": "Citigroup $444B Basket: Hard Blocks Caught ~$255B, No Notional Ceiling on the Rest",
       "date": "May 2, 2022",
       "year": 2022,
       "category": "unauthorized-financial-action",
@@ -526,7 +524,7 @@
       "year": 2022,
       "category": "binding-commitment",
       "severity": "critical",
-      "oneLineSummary": "Cigna's PxDx system resulted in 300,000+ medical claims denials approved in batches at 1.2 seconds each without individual claim review.",
+      "oneLineSummary": "Cigna's PxDx system was used to deny 300,000+ medical claims over about two months in 2022, with reviewing doctors averaging a reported 1.2 seconds per denial.",
       "controlsThatBlock": [
         "skill_not_granted",
         "high_risk_requires_gate"
@@ -587,14 +585,13 @@
     {
       "id": "AID-2015-0001",
       "slug": "australia-robodebt-automated-debt-recovery",
-      "title": "Australia Robodebt: Automated Debt Issuance Without Human Review",
+      "title": "Australia Robodebt: Unlawful Automated Welfare Debt Calculation",
       "date": "2015-2019",
       "year": 2015,
       "category": "wrongful-automated-decision",
       "severity": "critical",
-      "oneLineSummary": "Australia's Robodebt automated the calculation and issuance of welfare debts without human review, unlawfully raising approximately A$1.76 billion in debts against more than 433,000 people; the roughly A$751 million actually recovered was later repaid under a Federal Court settlement.",
+      "oneLineSummary": "Australia's Robodebt used an unlawful income-averaging method to automatically calculate and issue welfare debts, unlawfully raising approximately A$1.76 billion in debts against more than 433,000 people; the roughly A$751 million actually recovered was later repaid under a Federal Court settlement.",
       "controlsThatBlock": [
-        "skill_not_granted",
         "high_risk_requires_gate"
       ],
       "reproducible": true,
@@ -655,7 +652,7 @@
       "year": 2012,
       "category": "runaway-execution",
       "severity": "critical",
-      "oneLineSummary": "Dormant algorithmic trading feature reactivated by configuration flag error, executing millions of unintended orders and causing $440 million in losses within 45 minutes.",
+      "oneLineSummary": "Dormant algorithmic trading feature reactivated by configuration flag error, executing millions of unintended orders and causing about $440 million in losses within 45 minutes.",
       "controlsThatBlock": [
         "skill_not_granted",
         "limit_violation",

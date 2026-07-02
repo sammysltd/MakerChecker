@@ -1,21 +1,20 @@
 {
   "id": "AID-2025-0004",
   "slug": "mypillow-ai-brief-fake-citations-repeat",
-  "title": "MyPillow Motion Filings with AI-Fabricated Citations and Repeat Offense",
+  "title": "MyPillow Attorney Filings with Fabricated Citations and a Repeat Miscitation",
   "incidentYear": 2025,
   "incidentDateText": "2025-2026",
   "category": "fabrication",
   "severity": "high",
-  "oneLineSummary": "Attorneys filed motions with AI-fabricated citations to nonexistent cases, were sanctioned, then filed again with another flawed citation despite the prior sanction.",
-  "whatHappened": "In 2025, attorneys for Mike Lindell filed a Denver motion containing approximately 30 defective citations produced by an AI system, including citations to nonexistent cases. Judge Nina Wang fined the attorneys $3,000 each in July 2025. Despite this sanction, in May 2026, attorney Christopher Kachouroff and his firm were sanctioned again—$5,000—after filing another motion with a flawed AI-generated citation in a later filing. The repeat offense occurred without any intervening approval gate that would have required human verification of the citation accuracy before filing.",
-  "agentAction": "The attorney submitted motions containing AI-generated fabricated citations to the court docket without mandatory human approval of the citation verification results.",
-  "irreversibleEffect": "Fabricated citations entered into the court record; attorney sanctions ($3,000 in first instance, $5,000 in second) imposed; damage to professional reputation; potential bar discipline exposure.",
-  "rootCause": "No governance control requiring approval of the irreversible filing action. Filing with the court lacked a mandatory approval gate that would trigger on every submission and require human review of citation verification before docket submission. The first sanction was not architecturally built into the system to prevent recurrence through automated governance.",
+  "oneLineSummary": "Attorneys filed a brief with AI-generated citations to nonexistent cases and were sanctioned; months later the lead attorney was sanctioned again for misciting a real case to the wrong court and mischaracterizing its holding.",
+  "whatHappened": "In 2025, attorneys for Mike Lindell filed a response brief in a Denver federal case (Coomer v. Lindell) that contained nearly 30 defective citations, including citations to nonexistent cases and misquotations of real cases. Christopher Kachouroff admitted he had used an AI tool while drafting that brief. Judge Nina Wang sanctioned Kachouroff and his law firm $3,000 and co-counsel Jennifer DeMaster $3,000 in July 2025. In May 2026, the court sanctioned Kachouroff a further $5,000 for a separate error in a later post-trial brief: he cited a real case, Capital Solutions, LLC v. Konica Minolta Business Solutions USA, Inc., but attributed that District of Kansas decision to the Tenth Circuit and mischaracterized its holding. Kachouroff denied using generative AI for the second brief, and the court made no finding that AI caused it, ruling only that the citation was defective and should have been caught by a reasonable review regardless of whether AI was used. The court declined to refer Kachouroff to the Virginia bar for discipline.",
+  "agentAction": "A human attorney filed the briefs. The citations were not independently verified before filing. The first brief contained nonexistent cases (AI use in drafting was admitted); the second contained a real case attributed to the wrong court and mischaracterized (AI involvement was disputed and not confirmed by the court).",
+  "irreversibleEffect": "Defective citations entered the court record: nonexistent cases in the first brief and a real case miscited and mischaracterized in the second. Monetary sanctions were imposed ($3,000 each on Kachouroff and DeMaster in the first instance, $5,000 on Kachouroff in the second), with reputational harm. The judge declined to refer the attorneys for bar discipline.",
+  "rootCause": "No independent verification of the cited cases occurred before filing. A reasonable inquiry, or review by a second person, would have confirmed whether each cited case existed, came from the court it was attributed to, and stood for the stated proposition. The first sanction did not lead to a citation-verification step, so a similar error recurred in a later filing.",
   "controlsThatBlock": [
-    "skill_not_granted",
-    "high_risk_requires_gate"
+    "approval_gate"
   ],
-  "makercheckerRefusal": "high_risk_requires_gate: Filing to court is published as a high-risk skill; the proxy categorically refuses direct submission outside a governed flow with a preceding approval gate. The gate fires on every submission (including resubmissions), forcing human review of the citation verification record before docket entry is permitted.",
+  "makercheckerRefusal": "approval_gate: Court filings route through a maker-checker approval gate that requires an independent reviewer to verify every cited case (that it exists, comes from the court it is attributed to, and stands for the stated proposition) against the source before the brief can be filed. Because a human, not an agent, filed these briefs, the relevant control is independent citation verification by a second person, not an automated block on the filing action. Such review would have caught the nonexistent cases in the first brief and the miscited, mischaracterized case in the second.",
   "sources": [
     {
       "title": "Colorado Sun - Mike Lindell's Attorneys Fined for AI-Generated Filing",
